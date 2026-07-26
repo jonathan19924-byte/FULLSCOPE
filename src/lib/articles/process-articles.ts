@@ -339,7 +339,7 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
     .select("id, source_name, source_lean, title, description, published_at")
     .eq("processed", false)
     .order("published_at", { ascending: false })
-    .limit(100);
+    .limit(1000);
 
   if (fetchError) {
     console.error("Error fetching unprocessed articles:", fetchError.message);
@@ -352,7 +352,7 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
       // Phase A — topic clustering
       let clusters: ClusterResult[] = [];
       try {
-        const raw = await callClaude(buildClusteringPrompt(unprocessed), 2000);
+        const raw = await callClaude(buildClusteringPrompt(unprocessed), 4000);
         const clusteringResponse = parseClaudeJson<ClusteringResponse>(raw);
         clusters = (clusteringResponse.clusters ?? []).filter(
           (c) => Array.isArray(c.article_indices) && c.article_indices.length >= 2,

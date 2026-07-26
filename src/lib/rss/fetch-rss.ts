@@ -37,21 +37,43 @@ export interface FeedConfig {
 }
 
 export const FEEDS: FeedConfig[] = [
-  { name: "Reuters", url: "https://feeds.reuters.com/reuters/topNews", lean: "centre" },
-  { name: "Associated Press", url: "https://rsshub.app/apnews/topics/apf-topnews", lean: "centre" },
+  // centre
+  { name: "PBS NewsHour", url: "https://www.pbs.org/newshour/feeds/rss/headlines", lean: "centre" },
+  { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/main", lean: "centre" },
   { name: "BBC News", url: "https://feeds.bbci.co.uk/news/rss.xml", lean: "centre" },
+  { name: "ABC News", url: "https://abcnews.go.com/abcnews/topstories", lean: "centre" },
+  // left
   { name: "NPR", url: "https://feeds.npr.org/1001/rss.xml", lean: "left" },
   { name: "The Guardian", url: "https://www.theguardian.com/us/rss", lean: "left" },
   { name: "Democracy Now", url: "https://www.democracynow.org/democracynow.rss", lean: "left" },
+  { name: "Vox", url: "https://www.vox.com/rss/index.xml", lean: "left" },
+  { name: "The Intercept", url: "https://theintercept.com/feed/?lang=en", lean: "left" },
+  { name: "Mother Jones", url: "https://www.motherjones.com/feed/", lean: "left" },
+  // right
   { name: "Fox News", url: "https://moxie.foxnews.com/feedburner/latest.xml", lean: "right" },
   { name: "The Daily Wire", url: "https://www.dailywire.com/feeds/rss.xml", lean: "right" },
   { name: "New York Post", url: "https://nypost.com/feed/", lean: "right" },
+  { name: "National Review", url: "https://www.nationalreview.com/feed/", lean: "right" },
+  { name: "Washington Examiner", url: "https://www.washingtonexaminer.com/tag/news.rss", lean: "right" },
+  { name: "The Federalist", url: "https://thefederalist.com/feed/", lean: "right" },
+  // international
   { name: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml", lean: "international" },
   { name: "France 24", url: "https://www.france24.com/en/rss", lean: "international" },
+  { name: "Deutsche Welle", url: "https://rss.dw.com/rdf/rss-en-all", lean: "international" },
+  { name: "The Japan Times", url: "https://www.japantimes.co.jp/feed/", lean: "international" },
+  // technology
   { name: "The Verge", url: "https://www.theverge.com/rss/index.xml", lean: "technology" },
   { name: "Wired", url: "https://www.wired.com/feed/rss", lean: "technology" },
+  { name: "TechCrunch", url: "https://techcrunch.com/feed/", lean: "technology" },
+  { name: "Ars Technica", url: "https://feeds.arstechnica.com/arstechnica/index", lean: "technology" },
+  // science
   { name: "Science Daily", url: "https://www.sciencedaily.com/rss/all.xml", lean: "science" },
+  { name: "NASA", url: "https://www.nasa.gov/news-release/feed/", lean: "science" },
+  { name: "Space.com", url: "https://www.space.com/feeds/all", lean: "science" },
+  // middle_east
   { name: "Times of Israel", url: "https://www.timesofisrael.com/feed/", lean: "middle_east" },
+  { name: "Jerusalem Post", url: "https://www.jpost.com/rss/rssfeedsfrontpage.aspx", lean: "middle_east" },
+  { name: "Al-Monitor", url: "https://www.al-monitor.com/rss", lean: "middle_east" },
 ];
 
 interface RawArticleRow {
@@ -115,7 +137,7 @@ function stripHtml(value: string): string {
 }
 
 function parsePublishedAt(item: Record<string, unknown>): string | null {
-  const raw = item.pubDate ?? item.published ?? item.updated ?? item.date;
+  const raw = item.pubDate ?? item.published ?? item.updated ?? item.date ?? item["dc:date"];
   const text = textOf(raw);
   if (!text) return null;
   const date = new Date(text);
@@ -134,6 +156,14 @@ function extractItems(parsed: Record<string, unknown>): Record<string, unknown>[
   const atomEntries = feed?.entry;
   if (atomEntries) {
     return Array.isArray(atomEntries) ? (atomEntries as Record<string, unknown>[]) : [atomEntries as Record<string, unknown>];
+  }
+
+  // RSS 1.0 / RDF (e.g. Deutsche Welle): <item> elements are siblings of
+  // <channel> directly under <rdf:RDF>, not nested inside channel.
+  const rdf = parsed["rdf:RDF"] as Record<string, unknown> | undefined;
+  const rdfItems = rdf?.item;
+  if (rdfItems) {
+    return Array.isArray(rdfItems) ? (rdfItems as Record<string, unknown>[]) : [rdfItems as Record<string, unknown>];
   }
 
   return [];
