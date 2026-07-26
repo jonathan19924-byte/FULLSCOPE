@@ -19,6 +19,15 @@ export function generateStaticParams() {
   return getSeedStorySlugs().map((slug) => ({ slug }));
 }
 
+/** This route always renders dynamically anyway (the root layout reads
+ * cookies() for the auth check on every request). With an empty seed set
+ * (e.g. Hebrew mode, where seed-stories.json is gated off), generateStaticParams
+ * returns [] and Next.js otherwise tries to build a static fallback shell for
+ * this route — which then hits that cookies() call with no request scope and
+ * throws DYNAMIC_SERVER_USAGE instead of falling back to per-request
+ * rendering. Forcing dynamic rendering explicitly sidesteps that. */
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {
