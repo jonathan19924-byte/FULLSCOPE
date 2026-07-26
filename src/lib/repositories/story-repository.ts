@@ -19,9 +19,15 @@ import type {
 import seedStories from "@/lib/data/seed-stories.json";
 import seedStandalonePosts from "@/lib/data/seed-standalone-posts.json";
 import { createClient } from "@/lib/supabase/server";
+import { LOCALE } from "@/lib/locale";
 
-const stories = seedStories as unknown as StoryWithPosts[];
-const standalonePosts = seedStandalonePosts as unknown as StandaloneSeedPost[];
+/** The static seed set is English-only demo content — only relevant while
+ * running in English mode. In Hebrew mode it would otherwise sit permanently
+ * mixed into every listing, search, and category filter alongside real
+ * generated Hebrew stories. Gated (not deleted) so switching back to English
+ * later restores it automatically. */
+const stories = LOCALE === "en" ? (seedStories as unknown as StoryWithPosts[]) : [];
+const standalonePosts = LOCALE === "en" ? (seedStandalonePosts as unknown as StandaloneSeedPost[]) : [];
 
 interface GeneratedStoryRow {
   id: string;
