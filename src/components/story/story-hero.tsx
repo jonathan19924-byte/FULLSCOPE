@@ -25,7 +25,7 @@ export function StoryHero({ story }: { story: Story }) {
           <Icon className={cn("size-14", meta.text)} strokeWidth={1.25} />
           <span
             className={cn(
-              "absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
+              "absolute start-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
               meta.text,
             )}
           >

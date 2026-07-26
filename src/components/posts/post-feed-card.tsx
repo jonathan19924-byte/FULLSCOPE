@@ -66,7 +66,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <Dialog>
           <DialogTrigger
-            render={<div className="cursor-pointer text-left" />}
+            render={<div className="cursor-pointer text-start" />}
           >
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
               <span className="text-sm font-medium text-foreground">{post.displayName}</span>

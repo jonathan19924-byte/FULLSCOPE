@@ -79,10 +79,10 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
             strokeWidth={1.25}
           />
         )}
-        <div className="absolute right-2.5 top-2.5">
+        <div className="absolute end-2.5 top-2.5">
           <BookmarkButton slug={story.slug} title={story.title} />
         </div>
-        <div className="absolute left-3 top-2.5 flex items-center gap-1.5">
+        <div className="absolute start-3 top-2.5 flex items-center gap-1.5">
           <span
             className={cn(
               "rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",

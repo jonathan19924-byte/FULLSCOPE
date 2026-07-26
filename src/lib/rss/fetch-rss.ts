@@ -1,5 +1,6 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { XMLParser } from "fast-xml-parser";
+import { LOCALE } from "../locale";
 
 /**
  * Untyped on purpose: raw_articles isn't part of src/lib/supabase/database.types.ts
@@ -79,6 +80,62 @@ export const FEEDS: FeedConfig[] = [
   { name: "Jerusalem Post", url: "https://www.jpost.com/rss/rssfeedsfrontpage.aspx", lean: "middle_east" },
   { name: "Al-Monitor", url: "https://www.al-monitor.com/rss", lean: "middle_east" },
 ];
+
+/**
+ * Hebrew/Israeli source set for the NEXT_PUBLIC_LOCALE=he pivot (see
+ * src/lib/locale.ts). All 36 user-supplied sources were live-tested; 35 are
+ * genuinely Hebrew (confirmed by decoding real article titles) — Arab48 was
+ * dropped at the user's request since it's Arabic, not Hebrew. `lean` here
+ * is a rough approximation (Israeli politics don't reduce to a US-style
+ * left/right axis) — kept only for source metadata, not for how
+ * process-articles.ts frames each story's two perspectives.
+ */
+export const HEBREW_FEEDS: FeedConfig[] = [
+  // centre / mainstream
+  { name: "Ynet", url: "https://www.ynet.co.il/Integration/StoryRss2.xml", lean: "centre" },
+  { name: "Ynetnews", url: "https://www.ynetnews.com/Integration/StoryRss3082.xml", lean: "centre" },
+  { name: "Walla News", url: "https://rss.walla.co.il/feed/1?type=main", lean: "centre" },
+  { name: "Mako / N12", url: "https://rcs.mako.co.il/rss/news-military.xml", lean: "centre" },
+  { name: "Maariv", url: "https://www.maariv.co.il/rss/rssfeeds.aspx", lean: "centre" },
+  { name: "Israel Hayom", url: "https://www.israelhayom.com/feed/", lean: "centre" },
+  { name: "The Times of Israel", url: "https://www.timesofisrael.com/feed/", lean: "centre" },
+  { name: "The Jerusalem Post", url: "https://www.jpost.com/rss/rssallnews", lean: "centre" },
+  { name: "Now 14", url: "https://www.c14.co.il/feed/", lean: "centre" },
+  { name: "MivzakLive", url: "https://www.mivzaklive.co.il/feed/", lean: "centre" },
+  { name: "Zman Yisrael", url: "https://www.zman.co.il/feed/", lean: "centre" },
+  { name: "Haipo", url: "https://haipo.co.il/feed/", lean: "centre" },
+  { name: "Cursorinfo", url: "https://cursorinfo.co.il/feed/", lean: "centre" },
+  // left / progressive
+  { name: "Davar", url: "https://www.davar1.co.il/feed/", lean: "left" },
+  { name: "+972 Magazine", url: "https://www.972mag.com/feed/", lean: "left" },
+  { name: "Local Call", url: "https://www.mekomit.co.il/feed/", lean: "left" },
+  { name: "HaMakom", url: "https://www.ha-makom.co.il/feed/", lean: "left" },
+  { name: "Shakuf", url: "https://shakuf.co.il/feed/", lean: "left" },
+  { name: "Kol Ha'ir", url: "https://www.kolhair.co.il/feed/", lean: "left" },
+  // right / religious-nationalist
+  { name: "Israel National News", url: "https://www.inn.co.il/Rss.aspx", lean: "right" },
+  { name: "Srugim", url: "https://www.srugim.co.il/feed", lean: "right" },
+  { name: "Kipa", url: "https://www.kipa.co.il/feed/", lean: "right" },
+  { name: "JDN", url: "https://www.jdn.co.il/feed/", lean: "right" },
+  { name: "Kore", url: "https://www.kore.co.il/rss", lean: "right" },
+  { name: "The Jewish Press", url: "https://jewishpress.com/feed/", lean: "right" },
+  { name: "Israel Defense", url: "https://www.israeldefense.co.il/rss.xml", lean: "right" },
+  // business
+  { name: "Globes", url: "https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=2", lean: "centre" },
+  {
+    name: "Globes English",
+    url: "https://en.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=942",
+    lean: "centre",
+  },
+  // technology
+  { name: "Geektime", url: "https://www.geektime.co.il/feed/", lean: "technology" },
+  { name: "People and Computers", url: "https://www.pc.co.il/feed/", lean: "technology" },
+  { name: "TGspot", url: "https://www.tgspot.co.il/feed/", lean: "technology" },
+  { name: "Poenta", url: "https://www.poenta.co.il/feed/", lean: "technology" },
+  { name: "NoCamels", url: "https://nocamels.com/feed/", lean: "technology" },
+];
+
+export const ACTIVE_FEEDS: FeedConfig[] = LOCALE === "he" ? HEBREW_FEEDS : FEEDS;
 
 interface RawArticleRow {
   source_name: string;
@@ -210,6 +267,17 @@ async function fetchFeedArticles(feed: FeedConfig): Promise<RawArticleRow[]> {
   return rows;
 }
 
+/** Supabase errors are plain objects with a `.message` (not real Error
+ * instances), so `instanceof Error` misses them and they'd otherwise log as
+ * the unhelpful "[object Object]". */
+function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "object" && err !== null && "message" in err) {
+    return String((err as { message: unknown }).message);
+  }
+  return String(err);
+}
+
 async function processFeed(
   feed: FeedConfig,
   supabase: ReturnType<typeof createRawArticlesClient>,
@@ -235,7 +303,7 @@ async function processFeed(
     console.log(`Saved ${saved} new articles from ${feed.name}`);
     return { name: feed.name, saved };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = describeError(err);
     console.error(`Error fetching ${feed.name}: ${message}`);
     return { name: feed.name, saved: 0, error: message };
   }
@@ -248,7 +316,7 @@ export async function fetchAllFeeds(): Promise<FetchAllFeedsResult> {
   // Vercel's function timeout (10s on Hobby) since each feed can take a few
   // seconds on its own. Each feed's errors are caught individually (above),
   // so Promise.all never rejects here.
-  const results = await Promise.all(FEEDS.map((feed) => processFeed(feed, supabase)));
+  const results = await Promise.all(ACTIVE_FEEDS.map((feed) => processFeed(feed, supabase)));
   const totalSaved = results.reduce((sum, r) => sum + r.saved, 0);
 
   console.log(`Fetch complete. Total new articles saved: ${totalSaved}`);

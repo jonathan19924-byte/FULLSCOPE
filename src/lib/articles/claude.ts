@@ -43,6 +43,16 @@ export async function callClaude(prompt: string, maxTokens: number): Promise<str
   return text;
 }
 
+/** Hebrew abbreviations use gershayim (״, U+05F4) — visually similar to a
+ * straight double-quote but a distinct character. Claude sometimes writes a
+ * plain ASCII `"` instead (e.g. inside "בג"ץ"), which breaks JSON string
+ * parsing since it looks like the string terminator. This detects a quote
+ * sitting directly between two Hebrew letters (never legitimate JSON syntax
+ * in that position) and corrects it to the proper gershayim character. */
+function fixHebrewGershayim(raw: string): string {
+  return raw.replace(/([֐-׿])"([֐-׿])/g, "$1״$2");
+}
+
 /** Claude is asked to "return ONLY valid JSON" but sometimes wraps it in a
  * ```json fence anyway — this strips that before parsing. */
 export function parseClaudeJson<T>(raw: string): T {
@@ -51,5 +61,5 @@ export function parseClaudeJson<T>(raw: string): T {
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
-  return JSON.parse(stripped) as T;
+  return JSON.parse(fixHebrewGershayim(stripped)) as T;
 }

@@ -46,7 +46,7 @@ function ComingSoonRow({
           description: "Full accounts aren't part of this preview yet.",
         })
       }
-      className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50"
+      className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-muted/50"
     >
       <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
         <Icon className="size-4.5 text-muted-foreground" strokeWidth={1.75} />
@@ -55,7 +55,7 @@ function ComingSoonRow({
         <p className="font-medium text-foreground">{title}</p>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+      <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" strokeWidth={1.75} />
     </button>
   );
 }
@@ -105,7 +105,7 @@ export function SettingsPageClient() {
           aria-label="Back"
           className="flex size-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
         >
-          <ArrowLeft className="size-5" strokeWidth={1.75} />
+          <ArrowLeft className="size-5 rtl:rotate-180" strokeWidth={1.75} />
         </button>
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           Settings

@@ -18,7 +18,7 @@ export function SourcesList({ sources }: { sources: Source[] }) {
         {sources.map((source, i) => (
           <li
             key={i}
-            className="flex items-center gap-2 rounded-full border border-border/60 bg-card py-1.5 pl-2 pr-3"
+            className="flex items-center gap-2 rounded-full border border-border/60 bg-card py-1.5 ps-2 pe-3"
           >
             <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">
               <Newspaper className="size-3.5 text-muted-foreground" strokeWidth={1.75} />

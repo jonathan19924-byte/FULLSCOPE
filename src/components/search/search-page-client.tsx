@@ -25,7 +25,7 @@ export function SearchPageClient({ stories }: { stories: StoryWithPosts[] }) {
 
       <div className="relative flex items-center">
         <SearchIcon
-          className="pointer-events-none absolute left-4 size-4.5 text-muted-foreground"
+          className="pointer-events-none absolute start-4 size-4.5 text-muted-foreground"
           strokeWidth={1.75}
         />
         <input
@@ -37,7 +37,7 @@ export function SearchPageClient({ stories }: { stories: StoryWithPosts[] }) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by title, topic, person, place…"
           aria-label="Search stories"
-          className="h-12 w-full rounded-full border border-border bg-muted/50 pl-11 pr-11 text-[15px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
+          className="h-12 w-full rounded-full border border-border bg-muted/50 ps-11 pe-11 text-[15px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
         />
         {query && (
           <Button
@@ -46,7 +46,7 @@ export function SearchPageClient({ stories }: { stories: StoryWithPosts[] }) {
             size="icon"
             aria-label="Clear search"
             onClick={() => setQuery("")}
-            className="absolute right-1.5 rounded-full"
+            className="absolute end-1.5 rounded-full"
           >
             <X className="size-4" strokeWidth={1.75} />
           </Button>

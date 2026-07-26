@@ -20,7 +20,7 @@ function PerspectiveCard({ label, perspective }: { label: string; perspective: P
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full flex-col gap-2 p-4 text-left"
+        className="flex w-full flex-col gap-2 p-4 text-start"
       >
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-serif text-lg font-semibold text-foreground">
