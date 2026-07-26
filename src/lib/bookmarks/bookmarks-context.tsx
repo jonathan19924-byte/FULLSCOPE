@@ -1,61 +1,39 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-const STORAGE_KEY = "fullscope:bookmarks";
-
-function readStoredSlugs(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((s) => typeof s === "string") : [];
-  } catch {
-    return [];
-  }
-}
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { toggleBookmarkAction } from "./actions";
 
 interface BookmarksContextValue {
   bookmarkedSlugs: string[];
   isBookmarked: (slug: string) => boolean;
   toggleBookmark: (slug: string) => void;
-  /** False until the browser's saved bookmarks have loaded, to avoid a flash of "not bookmarked". */
   isReady: boolean;
 }
 
 const BookmarksContext = createContext<BookmarksContextValue | null>(null);
 
-export function BookmarksProvider({ children }: { children: React.ReactNode }) {
-  const [bookmarkedSlugs, setBookmarkedSlugs] = useState<string[]>([]);
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    setBookmarkedSlugs(readStoredSlugs());
-    setIsReady(true);
-
-    function onStorage(event: StorageEvent) {
-      if (event.key === STORAGE_KEY) {
-        setBookmarkedSlugs(readStoredSlugs());
-      }
-    }
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
+export function BookmarksProvider({
+  initialSlugs,
+  children,
+}: {
+  initialSlugs: string[];
+  children: React.ReactNode;
+}) {
+  const [bookmarkedSlugs, setBookmarkedSlugs] = useState<string[]>(initialSlugs);
 
   const toggleBookmark = useCallback((slug: string) => {
     setBookmarkedSlugs((current) => {
-      const next = current.includes(slug)
-        ? current.filter((s) => s !== slug)
-        : [...current, slug];
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      const wasBookmarked = current.includes(slug);
+      const next = wasBookmarked ? current.filter((s) => s !== slug) : [...current, slug];
+
+      toggleBookmarkAction(slug).then((result) => {
+        if ("error" in result) {
+          setBookmarkedSlugs((c) =>
+            wasBookmarked ? (c.includes(slug) ? c : [...c, slug]) : c.filter((s) => s !== slug),
+          );
+        }
+      });
+
       return next;
     });
   }, []);
@@ -66,8 +44,8 @@ export function BookmarksProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ bookmarkedSlugs, isBookmarked, toggleBookmark, isReady }),
-    [bookmarkedSlugs, isBookmarked, toggleBookmark, isReady],
+    () => ({ bookmarkedSlugs, isBookmarked, toggleBookmark, isReady: true }),
+    [bookmarkedSlugs, isBookmarked, toggleBookmark],
   );
 
   return (

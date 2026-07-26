@@ -14,23 +14,16 @@ export function SourcesList({ sources }: { sources: Source[] }) {
           Supporting references reported this story — not FullScope stories themselves.
         </p>
       </div>
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-wrap gap-2">
         {sources.map((source, i) => (
           <li
             key={i}
-            className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3"
+            className="flex items-center gap-2 rounded-full border border-border/60 bg-card py-1.5 pl-2 pr-3"
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
-              <Newspaper className="size-4 text-muted-foreground" strokeWidth={1.75} />
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted">
+              <Newspaper className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
             </span>
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-medium text-foreground">
-                {source.publisher}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {source.sourceType ?? "News"}
-              </span>
-            </div>
+            <span className="text-sm font-medium text-foreground">{source.publisher}</span>
           </li>
         ))}
       </ul>

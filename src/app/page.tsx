@@ -1,15 +1,27 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { BadgeCheck, Clock, Newspaper, Scale, Search } from "lucide-react";
 import { CATEGORIES, type Category } from "@/types/domain";
-import { getFeaturedStory, getStoriesByCategory } from "@/lib/services/story-service";
+import {
+  getFeaturedStory,
+  getStoriesByCategory,
+  listStorySummaries,
+} from "@/lib/services/story-service";
 import { CategoryFilter } from "@/components/story/category-filter";
 import { StoryCard } from "@/components/story/story-card";
+import { MostDiscussed } from "@/components/story/most-discussed";
 import { EmptyState } from "@/components/shared/empty-state";
 
 function parseCategory(raw: string | string[] | undefined): Category | "All" {
   const value = Array.isArray(raw) ? raw[0] : raw;
   return (CATEGORIES as string[]).includes(value ?? "") ? (value as Category) : "All";
 }
+
+const VALUE_PROPS = [
+  { icon: BadgeCheck, label: "Verified facts" },
+  { icon: Clock, label: "Timelines" },
+  { icon: Scale, label: "Two perspectives" },
+  { icon: Newspaper, label: "Sources" },
+] as const;
 
 export default async function HomePage({
   searchParams,
@@ -22,17 +34,40 @@ export default async function HomePage({
   const stories = await getStoriesByCategory(category);
   const featured = category === "All" ? await getFeaturedStory() : undefined;
   const latest = featured ? stories.filter((s) => s.slug !== featured.slug) : stories;
+  const allStories = await listStorySummaries();
+
+  const counts = {
+    All: allStories.length,
+    Politics: allStories.filter((s) => s.category === "Politics").length,
+    World: allStories.filter((s) => s.category === "World").length,
+    Technology: allStories.filter((s) => s.category === "Technology").length,
+    Science: allStories.filter((s) => s.category === "Science").length,
+  } as Record<Category | "All", number>;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 pt-6 pb-8 sm:pt-10">
-      <div className="flex flex-col gap-1.5">
-        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+      <div className="flex flex-col gap-2 border-b border-border/60 pb-6">
+        <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground">
           FullScope
         </h1>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          Understand the story, not just the headline — verified facts, a
-          timeline, and both sides in one place.
+        <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
+          One story, two sides, zero spin.
         </p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-xs font-medium text-muted-foreground">
+          <span>{allStories.length} stories</span>
+          <span aria-hidden>·</span>
+          <span>{CATEGORIES.length} categories</span>
+          <span aria-hidden>·</span>
+          <span>every story, both sides</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground">
+          {VALUE_PROPS.map(({ icon: Icon, label }) => (
+            <span key={label} className="flex items-center gap-1.5">
+              <Icon className="size-3.5" strokeWidth={1.75} />
+              {label}
+            </span>
+          ))}
+        </div>
       </div>
 
       <Link
@@ -43,7 +78,7 @@ export default async function HomePage({
         Search stories, people, places…
       </Link>
 
-      <CategoryFilter selected={category} />
+      <CategoryFilter selected={category} counts={counts} />
 
       {stories.length === 0 ? (
         <EmptyState
@@ -66,6 +101,8 @@ export default async function HomePage({
               <StoryCard story={featured} variant="featured" />
             </section>
           )}
+
+          {category === "All" && <MostDiscussed stories={allStories} />}
 
           <section aria-label="Latest stories" className="flex flex-col gap-4">
             {latest.length > 0 && (

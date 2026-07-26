@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search as SearchIcon, X } from "lucide-react";
 import type { StoryWithPosts } from "@/types/domain";
-import { matchesQuery, toSummary } from "@/lib/services/story-service";
+import { matchesQuery, toSummary } from "@/lib/services/story-summary";
 import { StoryCard } from "@/components/story/story-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";

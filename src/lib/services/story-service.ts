@@ -1,20 +1,17 @@
-import type { Category, StorySummary, StoryWithPosts } from "@/types/domain";
-import { getAllStories, getStoryBySlug } from "@/lib/repositories/story-repository";
+import type {
+  Category,
+  SeedPostWithStory,
+  StorySummary,
+  StoryWithPosts,
+} from "@/types/domain";
+import {
+  getAllStories,
+  getStandaloneSeedPosts,
+  getStoryBySlug,
+} from "@/lib/repositories/story-repository";
+import { matchesQuery, toSummary } from "./story-summary";
 
-export { getStoryBySlug };
-
-export function toSummary(story: StoryWithPosts): StorySummary {
-  return {
-    id: story.id,
-    slug: story.slug,
-    title: story.title,
-    category: story.category,
-    summary: story.summary,
-    publishedAt: story.publishedAt,
-    readingTimeMinutes: story.readingTimeMinutes,
-    postCount: story.posts.length,
-  };
-}
+export { getStoryBySlug, getStandaloneSeedPosts, matchesQuery, toSummary };
 
 /** Newest-first list of every story, as lightweight summaries for cards. */
 export async function listStorySummaries(): Promise<StorySummary[]> {
@@ -48,40 +45,27 @@ export async function getStoriesByCategory(
   return summaries.filter((s) => s.category === category);
 }
 
-/**
- * Free-text match across title, summary, category, and the full story body
- * (what happened + both perspectives). The seed data doesn't tag individual
- * stories with structured person/company/country fields, so matching the
- * full text is how a search for e.g. "Iran" or "Live Nation" still works.
- * Exported (not just used internally) so the client-side Search page can
- * run the identical match against data it already has in memory.
- */
-export function matchesQuery(story: StoryWithPosts, query: string): boolean {
-  const trimmed = query.trim().toLowerCase();
-  if (!trimmed) return false;
-
-  const haystack = [
-    story.title,
-    story.summary,
-    story.category,
-    story.whatHappened,
-    story.perspectiveA.name,
-    story.perspectiveA.summary,
-    story.perspectiveB.name,
-    story.perspectiveB.summary,
-    ...story.sources.map((s) => s.publisher),
-  ]
-    .join(" ")
-    .toLowerCase();
-  return haystack.includes(trimmed);
-}
-
 export async function searchStories(query: string): Promise<StorySummary[]> {
   const stories = await getAllStories();
   return stories
     .filter((story) => matchesQuery(story, query))
     .map(toSummary)
     .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+}
+
+/** Every seeded post across every story, newest-first, for the Posts feed. */
+export async function getAllSeedPosts(): Promise<SeedPostWithStory[]> {
+  const stories = await getAllStories();
+  return stories
+    .flatMap((story) =>
+      story.posts.map((post) => ({
+        ...post,
+        storySlug: story.slug,
+        storyTitle: story.title,
+        storyCategory: story.category,
+      })),
+    )
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 
 /** Up to 3 other stories in the same category, for the Story Page footer. */

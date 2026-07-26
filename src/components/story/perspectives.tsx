@@ -1,19 +1,52 @@
+"use client";
+
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import type { Perspective } from "@/types/domain";
+import { cn } from "@/lib/utils";
+
+const TEASER_LENGTH = 140;
 
 function PerspectiveCard({ label, perspective }: { label: string; perspective: Perspective }) {
+  const [expanded, setExpanded] = useState(false);
+  const teaser =
+    perspective.summary.length > TEASER_LENGTH
+      ? `${perspective.summary.slice(0, TEASER_LENGTH).trim()}…`
+      : perspective.summary;
+
   return (
-    <article className="flex flex-1 flex-col gap-3 rounded-2xl border border-border/60 bg-card p-4">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </span>
-        <h3 className="font-serif text-lg font-semibold text-foreground">
-          {perspective.name}
-        </h3>
-      </div>
-      <p className="text-sm leading-relaxed text-foreground/90">{perspective.summary}</p>
-      {perspective.claims.length > 0 && (
-        <div className="flex flex-col gap-1.5 border-t border-border/60 pt-3">
+    <article className="flex flex-1 flex-col rounded-2xl border border-border/60 bg-card">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="flex w-full flex-col gap-2 p-4 text-left"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-serif text-lg font-semibold text-foreground">
+            <span className="sr-only">{label}: </span>
+            {perspective.name}
+          </h3>
+          <ChevronDown
+            className={cn(
+              "mt-1 size-4 shrink-0 text-muted-foreground transition-transform",
+              expanded && "rotate-180",
+            )}
+            strokeWidth={1.75}
+          />
+        </div>
+        <p className="text-sm leading-relaxed text-foreground/90">
+          {expanded ? perspective.summary : teaser}
+        </p>
+        {!expanded && (
+          <span className="text-xs font-medium text-foreground underline underline-offset-2">
+            Read full perspective
+          </span>
+        )}
+      </button>
+
+      {expanded && perspective.claims.length > 0 && (
+        <div className="flex flex-col gap-1.5 border-t border-border/60 p-4 pt-3">
           <span className="text-xs font-medium text-muted-foreground">Key claims</span>
           <ul className="flex flex-col gap-1.5">
             {perspective.claims.map((claim, i) => (
@@ -23,6 +56,13 @@ function PerspectiveCard({ label, perspective }: { label: string; perspective: P
               </li>
             ))}
           </ul>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="mt-2 self-start text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            Show less
+          </button>
         </div>
       )}
     </article>

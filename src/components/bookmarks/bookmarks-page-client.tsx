@@ -17,7 +17,7 @@ export function BookmarksPageClient({ stories }: { stories: StorySummary[] }) {
           Bookmarks
         </h1>
         <p className="text-sm text-muted-foreground">
-          Saved on this device only — they&apos;ll stay here even after you close the browser.
+          Saved to your account — available wherever you sign in.
         </p>
       </div>
 

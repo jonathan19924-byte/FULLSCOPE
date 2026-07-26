@@ -5,6 +5,7 @@ import { CATEGORY_META } from "@/lib/category";
 import { formatUpdatedAt, formatReadingTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { BookmarkButton } from "@/components/shared/bookmark-button";
+import { PerspectiveBar } from "@/components/story/perspective-bar";
 
 interface StoryCardProps {
   story: StorySummary;
@@ -49,10 +50,13 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
     <Link
       href={`/story/${story.slug}`}
       className={cn(
-        "group/story-card relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card transition-colors hover:border-border",
+        "group/story-card relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        isFeatured ? "border-border" : "border-border/60 hover:border-border",
         className,
       )}
     >
+      <div className={cn("h-[3px] w-full shrink-0", meta.accent)} aria-hidden />
+
       <div
         className={cn(
           "relative flex items-center justify-center overflow-hidden bg-gradient-to-br",
@@ -67,7 +71,7 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
         <div className="absolute right-2.5 top-2.5">
           <BookmarkButton slug={story.slug} title={story.title} />
         </div>
-        <div className="absolute left-3 top-2.5">
+        <div className="absolute left-3 top-2.5 flex items-center gap-1.5">
           <span
             className={cn(
               "rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
@@ -76,6 +80,11 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
           >
             {story.category}
           </span>
+          {isFeatured && (
+            <span className="rounded-full bg-foreground/90 px-2.5 py-1 text-xs font-medium text-background backdrop-blur-sm">
+              Top Story
+            </span>
+          )}
         </div>
       </div>
 
@@ -96,6 +105,7 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
         >
           {story.summary}
         </p>
+        <PerspectiveBar perspectiveA={story.perspectiveA} perspectiveB={story.perspectiveB} />
         <div className="mt-auto flex items-center gap-3 pt-2 text-xs text-muted-foreground">
           <span>{formatUpdatedAt(story.publishedAt)}</span>
           <span className="flex items-center gap-1">

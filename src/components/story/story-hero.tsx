@@ -12,23 +12,26 @@ export function StoryHero({ story }: { story: Story }) {
 
   return (
     <header className="flex flex-col gap-4">
-      <div
-        className={cn(
-          "relative flex h-36 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br sm:h-44",
-          meta.gradient,
-        )}
-        role="img"
-        aria-label={`${story.category} story`}
-      >
-        <Icon className={cn("size-14", meta.text)} strokeWidth={1.25} />
-        <span
+      <div className="overflow-hidden rounded-2xl">
+        <div className={cn("h-[3px] w-full", meta.accent)} aria-hidden />
+        <div
           className={cn(
-            "absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
-            meta.text,
+            "relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br sm:h-44",
+            meta.gradient,
           )}
+          role="img"
+          aria-label={`${story.category} story`}
         >
-          {story.category}
-        </span>
+          <Icon className={cn("size-14", meta.text)} strokeWidth={1.25} />
+          <span
+            className={cn(
+              "absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
+              meta.text,
+            )}
+          >
+            {story.category}
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">

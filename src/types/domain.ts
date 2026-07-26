@@ -74,6 +74,11 @@ export interface StoryWithPosts extends Story {
   posts: Post[];
 }
 
+export interface PerspectiveTally {
+  name: string;
+  postCount: number;
+}
+
 export interface StorySummary
   extends Pick<
     Story,
@@ -86,4 +91,40 @@ export interface StorySummary
     | "readingTimeMinutes"
   > {
   postCount: number;
+  perspectiveA: PerspectiveTally;
+  perspectiveB: PerspectiveTally;
+}
+
+/** A seeded story reaction, flattened with the story it belongs to — used on the Posts feed. */
+export interface SeedPostWithStory extends Post {
+  storySlug: string;
+  storyTitle: string;
+  storyCategory: Category;
+}
+
+/** A seeded post with no related story — appears only on the general Posts feed. */
+export interface StandaloneSeedPost {
+  id: string;
+  displayName: string;
+  content: string;
+  isGenerated: boolean;
+  likeCount: number;
+  replyCount: number;
+  createdAt: string;
+}
+
+/**
+ * A post a reader creates (Create tab). Stored server-side, tied to the
+ * signed-in account that created it, and visible to everyone alongside the
+ * seeded posts.
+ */
+export interface CommunityPost {
+  id: string;
+  userId: string;
+  displayName: string;
+  content: string;
+  createdAt: string;
+  relatedStorySlug?: string;
+  relatedStoryTitle?: string;
+  relatedStoryCategory?: Category;
 }

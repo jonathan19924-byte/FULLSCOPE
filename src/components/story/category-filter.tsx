@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils";
 
 interface CategoryFilterProps {
   selected: Category | "All";
+  counts: Record<Category | "All", number>;
 }
 
-export function CategoryFilter({ selected }: CategoryFilterProps) {
+export function CategoryFilter({ selected, counts }: CategoryFilterProps) {
   const options: (Category | "All")[] = ["All", ...CATEGORIES];
 
   return (
@@ -30,6 +31,7 @@ export function CategoryFilter({ selected }: CategoryFilterProps) {
             )}
           >
             {option}
+            <span className={cn(isActive ? "opacity-70" : "opacity-60")}> ({counts[option]})</span>
           </Link>
         );
       })}

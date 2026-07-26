@@ -15,6 +15,8 @@ interface CategoryMeta {
   bg: string;
   border: string;
   gradient: string;
+  /** Solid category color, used sparingly for the thin accent rule on story cards. */
+  accent: string;
 }
 
 export const CATEGORY_META: Record<Category, CategoryMeta> = {
@@ -25,6 +27,7 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
     bg: "bg-politics-bg",
     border: "border-politics/30",
     gradient: "from-politics/25 via-politics/10 to-transparent",
+    accent: "bg-politics",
   },
   World: {
     label: "World",
@@ -33,6 +36,7 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
     bg: "bg-world-bg",
     border: "border-world/30",
     gradient: "from-world/25 via-world/10 to-transparent",
+    accent: "bg-world",
   },
   Technology: {
     label: "Technology",
@@ -41,6 +45,7 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
     bg: "bg-technology-bg",
     border: "border-technology/30",
     gradient: "from-technology/25 via-technology/10 to-transparent",
+    accent: "bg-technology",
   },
   Science: {
     label: "Science",
@@ -49,5 +54,6 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
     bg: "bg-science-bg",
     border: "border-science/30",
     gradient: "from-science/25 via-science/10 to-transparent",
+    accent: "bg-science",
   },
 };

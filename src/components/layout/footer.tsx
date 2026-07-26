@@ -17,10 +17,16 @@ export function Footer() {
             Search
           </Link>
           <Link
-            href="/bookmarks"
+            href="/create"
             className="hover:text-foreground transition-colors"
           >
-            Bookmarks
+            Create
+          </Link>
+          <Link
+            href="/posts"
+            className="hover:text-foreground transition-colors"
+          >
+            Posts
           </Link>
           <Link
             href="/feedback"

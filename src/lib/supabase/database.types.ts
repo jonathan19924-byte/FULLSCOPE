@@ -25,6 +25,7 @@ export interface Database {
           published_at: string;
           reading_time_minutes: number;
           created_at: string;
+          generated_at: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["stories"]["Row"]> &
           Pick<
@@ -41,6 +42,7 @@ export interface Database {
             | "published_at"
           >;
         Update: Partial<Database["public"]["Tables"]["stories"]["Row"]>;
+        Relationships: [];
       };
       posts: {
         Row: {
@@ -60,6 +62,7 @@ export interface Database {
             "story_id" | "display_name" | "perspective" | "content"
           >;
         Update: Partial<Database["public"]["Tables"]["posts"]["Row"]>;
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -71,21 +74,42 @@ export interface Database {
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> &
           Pick<Database["public"]["Tables"]["profiles"]["Row"], "user_id">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Relationships: [];
       };
       bookmarks: {
         Row: {
           id: string;
           user_id: string;
-          story_id: string;
+          story_slug: string;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["bookmarks"]["Row"]> &
           Pick<
             Database["public"]["Tables"]["bookmarks"]["Row"],
-            "user_id" | "story_id"
+            "user_id" | "story_slug"
           >;
         Update: Partial<Database["public"]["Tables"]["bookmarks"]["Row"]>;
+        Relationships: [];
+      };
+      community_posts: {
+        Row: {
+          id: string;
+          user_id: string;
+          content: string;
+          related_story_slug: string | null;
+          related_story_title: string | null;
+          related_story_category: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["community_posts"]["Row"]> &
+          Pick<Database["public"]["Tables"]["community_posts"]["Row"], "user_id" | "content">;
+        Update: Partial<Database["public"]["Tables"]["community_posts"]["Row"]>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }

@@ -15,7 +15,7 @@ Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Data
 
-All content comes from `fullscope-seed-april20.md`, parsed once into `src/lib/data/seed-stories.json` by `scripts/parse-seed.mjs`. The app reads that JSON file through `src/lib/repositories` and `src/lib/services` — the only two places that would need to change if this were later replaced with a live API.
+All content comes from `fullscope-seed-july23.md`, parsed once into `src/lib/data/seed-stories.json` and `src/lib/data/seed-standalone-posts.json` by `scripts/parse-seed.mjs`. The app reads those JSON files through `src/lib/repositories` and `src/lib/services` — the only two places that would need to change if this were later replaced with a live API.
 
 ## Bookmarks
 

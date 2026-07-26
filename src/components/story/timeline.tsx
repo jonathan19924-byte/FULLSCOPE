@@ -1,16 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import type { Fact } from "@/types/domain";
+import { BadgeCheck, CircleAlert, CircleHelp, Newspaper } from "lucide-react";
+import type { Confidence, Fact } from "@/types/domain";
 import { cn } from "@/lib/utils";
 
 const COLLAPSE_LENGTH = 120;
+
+const CONFIDENCE_META: Record<
+  Confidence,
+  { label: string; icon: typeof BadgeCheck; className: string }
+> = {
+  confirmed: {
+    label: "Confirmed",
+    icon: BadgeCheck,
+    className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+  },
+  reported: {
+    label: "Reported",
+    icon: Newspaper,
+    className: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
+  },
+  disputed: {
+    label: "Disputed",
+    icon: CircleAlert,
+    className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
+  },
+  unknown: {
+    label: "Unknown",
+    icon: CircleHelp,
+    className: "bg-muted text-muted-foreground",
+  },
+};
 
 function TimelineEntry({ fact, index }: { fact: Fact; index: number }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = fact.text.length > COLLAPSE_LENGTH;
   const displayText =
     isLong && !expanded ? `${fact.text.slice(0, COLLAPSE_LENGTH).trim()}…` : fact.text;
+  const meta = CONFIDENCE_META[fact.confidence];
+  const Icon = meta.icon;
 
   return (
     <li className="relative flex gap-4 pb-6 last:pb-0">
@@ -21,14 +50,21 @@ function TimelineEntry({ fact, index }: { fact: Fact; index: number }) {
         <span className="mt-1 w-px flex-1 bg-border/70 last:hidden" aria-hidden />
       </div>
       <div className="flex-1 pt-0.5">
+        <span
+          className={cn(
+            "mb-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
+            meta.className,
+          )}
+        >
+          <Icon className="size-3" strokeWidth={2} />
+          {meta.label}
+        </span>
         <p className="text-sm leading-relaxed text-foreground/90">{displayText}</p>
         {isLong && (
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className={cn(
-              "mt-1 text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground",
-            )}
+            className="mt-1 text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
             {expanded ? "Show less" : "Read more"}
           </button>
@@ -43,9 +79,15 @@ export function Timeline({ facts }: { facts: Fact[] }) {
 
   return (
     <section aria-labelledby="timeline-heading" className="flex flex-col gap-3">
-      <h2 id="timeline-heading" className="font-serif text-lg font-semibold text-foreground">
-        Timeline
-      </h2>
+      <div>
+        <h2 id="timeline-heading" className="font-serif text-lg font-semibold text-foreground">
+          Timeline
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Reported by named news sources. FullScope does not independently
+          verify claims beyond what those sources state.
+        </p>
+      </div>
       <ol className="flex flex-col">
         {facts.map((fact, i) => (
           <TimelineEntry key={i} fact={fact} index={i} />

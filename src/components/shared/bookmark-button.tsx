@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter, usePathname } from "next/navigation";
 import { Bookmark } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useBookmarks } from "@/lib/bookmarks/bookmarks-context";
+import { useUser } from "@/components/auth/user-provider";
 
 interface BookmarkButtonProps {
   slug: string;
@@ -20,11 +22,21 @@ export function BookmarkButton({
   className,
 }: BookmarkButtonProps) {
   const { isBookmarked, toggleBookmark, isReady } = useBookmarks();
+  const { user } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
   const bookmarked = isReady && isBookmarked(slug);
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!user) {
+      toast("Sign in to bookmark stories");
+      router.push(`/sign-in?next=${encodeURIComponent(pathname)}`);
+      return;
+    }
+
     toggleBookmark(slug);
     toast(bookmarked ? "Removed from bookmarks" : "Saved to bookmarks", {
       description: title,

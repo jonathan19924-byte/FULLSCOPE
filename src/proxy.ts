@@ -1,15 +1,18 @@
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { updateSession } from "@/lib/supabase/proxy";
 
 /**
- * This MVP has no login and no Supabase project configured (see AGENTS.md —
- * no accounts, bookmarks stored locally on the device). The Supabase-backed
- * session refresh that used to live here (see lib/supabase/proxy.ts) crashed
- * every request with "Your project's URL and Key are required to create a
- * Supabase client!" because no .env.local exists. Left as a no-op passthrough;
- * lib/supabase/proxy.ts is kept, unused, for a future version that adds real
- * accounts.
+ * Refreshes the Supabase auth session cookie on every request and redirects
+ * unauthenticated visitors away from the personal-only routes (/bookmarks,
+ * /profile). Story browsing (/, /story/[slug], /search, /posts) and /create
+ * stay open to everyone — /create only requires a session at submit time.
  */
-export function proxy(_request: NextRequest) {
-  return NextResponse.next();
+export function proxy(request: NextRequest) {
+  return updateSession(request);
 }
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};

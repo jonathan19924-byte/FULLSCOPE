@@ -3,6 +3,9 @@ import { Geist, Geist_Mono, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SiteShell } from "@/components/layout/site-shell";
+import { createClient } from "@/lib/supabase/server";
+import { getBookmarkedSlugs } from "@/lib/bookmarks/get-bookmarks";
+import { getCommunityPosts } from "@/lib/posts/get-community-posts";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -29,11 +32,18 @@ export const metadata: Metadata = {
     "FullScope groups the news into Stories: verified facts, timelines, multiple perspectives, and public reaction in one place.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const initialBookmarkedSlugs = user ? await getBookmarkedSlugs() : [];
+  const initialCommunityPosts = await getCommunityPosts();
+
   return (
     <html
       lang="en"
@@ -47,7 +57,11 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <Providers>
+        <Providers
+          initialUser={user}
+          initialBookmarkedSlugs={initialBookmarkedSlugs}
+          initialCommunityPosts={initialCommunityPosts}
+        >
           <SiteShell>{children}</SiteShell>
         </Providers>
       </body>
