@@ -17,7 +17,7 @@ function parseCategory(raw: string | string[] | undefined): Category | "All" {
 }
 
 const VALUE_PROPS = [
-  { icon: BadgeCheck, label: "Verified facts" },
+  { icon: BadgeCheck, label: "Named sources" },
   { icon: Clock, label: "Timelines" },
   { icon: Scale, label: "Two perspectives" },
   { icon: Newspaper, label: "Sources" },
