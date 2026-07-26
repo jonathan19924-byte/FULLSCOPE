@@ -42,6 +42,9 @@ export const FEEDS: FeedConfig[] = [
   { name: "CBS News", url: "https://www.cbsnews.com/latest/rss/main", lean: "centre" },
   { name: "BBC News", url: "https://feeds.bbci.co.uk/news/rss.xml", lean: "centre" },
   { name: "ABC News", url: "https://abcnews.go.com/abcnews/topstories", lean: "centre" },
+  // Google's own feed terms restrict this to "personal, non-commercial"
+  // reader use — included at the user's explicit request despite that.
+  { name: "Google News", url: "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en", lean: "centre" },
   // left
   { name: "NPR", url: "https://feeds.npr.org/1001/rss.xml", lean: "left" },
   { name: "The Guardian", url: "https://www.theguardian.com/us/rss", lean: "left" },
@@ -61,6 +64,7 @@ export const FEEDS: FeedConfig[] = [
   { name: "France 24", url: "https://www.france24.com/en/rss", lean: "international" },
   { name: "Deutsche Welle", url: "https://rss.dw.com/rdf/rss-en-all", lean: "international" },
   { name: "The Japan Times", url: "https://www.japantimes.co.jp/feed/", lean: "international" },
+  { name: "UN News", url: "https://news.un.org/feed/subscribe/en/news/all/rss.xml", lean: "international" },
   // technology
   { name: "The Verge", url: "https://www.theverge.com/rss/index.xml", lean: "technology" },
   { name: "Wired", url: "https://www.wired.com/feed/rss", lean: "technology" },
