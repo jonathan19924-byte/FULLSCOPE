@@ -244,6 +244,45 @@ async function getStoryCount(supabase: SupabaseAdmin): Promise<number> {
   return count ?? 0;
 }
 
+/** The per-cluster cap check in the main loop below only swaps one-for-one
+ * once already AT the cap — it never shrinks the count back down if it's
+ * already OVER the cap (e.g. from stories inserted outside this pipeline,
+ * like seed data). That let the story count drift up to 79 and just sit
+ * there indefinitely. This runs once per invocation as a hard backstop:
+ * whatever the count is, trim the oldest rows until it's at MAX_STORIES. */
+async function enforceStoryCap(supabase: SupabaseAdmin): Promise<{ title: string }[]> {
+  const count = await getStoryCount(supabase);
+  const overshoot = count - MAX_STORIES;
+  if (overshoot <= 0) return [];
+
+  const { data: toRemove, error } = await supabase
+    .from("stories")
+    .select("id, title")
+    .order("generated_at", { ascending: true, nullsFirst: true })
+    .limit(overshoot);
+
+  if (error) {
+    console.error("Error fetching overshoot stories for cap enforcement:", error.message);
+    return [];
+  }
+  if (!toRemove || toRemove.length === 0) return [];
+
+  const { error: deleteError } = await supabase
+    .from("stories")
+    .delete()
+    .in(
+      "id",
+      toRemove.map((row) => row.id),
+    );
+  if (deleteError) {
+    console.error("Error deleting overshoot stories for cap enforcement:", deleteError.message);
+    return [];
+  }
+
+  console.log(`Trimmed ${toRemove.length} stories to enforce the ${MAX_STORIES}-story cap`);
+  return toRemove.map((row) => ({ title: row.title }));
+}
+
 /** Marks a cluster's source articles processed immediately after it's been
  * attempted (success, clean skip, or generation error) — rather than
  * batching this at the very end of the whole run — so an interrupted run
@@ -568,7 +607,11 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
   const dedupResult = await dedupeStories(supabase);
   removedStories.push(...dedupResult.removed);
 
-  // Phase F — backfill photos for any story that doesn't have one yet.
+  // Phase F — hard backstop: trim back down to MAX_STORIES if anything
+  // (seed data, a past bug, etc.) pushed the count over it.
+  removedStories.push(...(await enforceStoryCap(supabase)));
+
+  // Phase G — backfill photos for any story that doesn't have one yet.
   await backfillMissingImages(supabase);
 
   const totalStories = await getStoryCount(supabase);
