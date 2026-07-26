@@ -77,6 +77,7 @@ interface StoryGenerationResponse {
   key_differences_cause: string;
   key_differences_impact: string;
   sources: string;
+  image_keywords: string;
 }
 
 interface PostGenerationResponse {
@@ -189,7 +190,8 @@ Return ONLY valid JSON with this exact structure:
   "what_happened_timeline": ["event 1", "event 2", "event 3"],
   "key_differences_cause": "One sentence explaining why people disagree on the cause",
   "key_differences_impact": "One sentence explaining why people disagree on the impact",
-  "sources": "comma separated list of source names used"
+  "sources": "comma separated list of source names used",
+  "image_keywords": "2-5 word phrase in ENGLISH (regardless of what language the rest of this response is in) describing a concrete, photographable visual scene for this story — e.g. 'soldier military funeral', 'wildfire forest smoke', 'stock market trading floor'. This is used to search a stock photo library, which only understands English, so it must always be English even when everything else is Hebrew."
 }${LOCALE === "he" ? HEBREW_OUTPUT_INSTRUCTION : ""}`;
 }
 
@@ -319,6 +321,28 @@ async function dedupeStories(
   return { mergedCount: removed.length, removed };
 }
 
+/** Stories generated before `image_keywords` existed (or Hebrew stories from
+ * before this fix) have no English search phrase to fall back on — this
+ * derives one from the title+summary with a small, cheap Claude call.
+ * Pexels' index is effectively English-only, so searching with a Hebrew (or
+ * any non-English) title directly tends to return unrelated results rather
+ * than a clean "no match" — this is what caused e.g. a bathroom photo on a
+ * story about a soldier recognition ruling. */
+async function deriveImageKeywords(title: string, summary: string): Promise<string | null> {
+  try {
+    const prompt = `Give a short (2-5 word) ENGLISH phrase describing a concrete, photographable visual scene for this news story — e.g. "soldier military funeral", "wildfire forest smoke", "stock market trading floor". Respond with ONLY the phrase, no punctuation, no quotes, no explanation, always in English regardless of the story's language.
+
+Title: ${title}
+Summary: ${summary}`;
+    const raw = await callClaude(prompt, 30);
+    const cleaned = raw.trim().replace(/^["']|["']$/g, "");
+    return cleaned || null;
+  } catch (err) {
+    console.error("Error deriving image keywords:", describeError(err));
+    return null;
+  }
+}
+
 /** Backfills a photo for any story that doesn't have one yet — covers
  * stories generated before Pexels was wired in, and any story where the
  * lookup came up empty at generation time. Cheap (Pexels is free) and the
@@ -327,7 +351,7 @@ async function dedupeStories(
 async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
   const { data: rows, error } = await supabase
     .from("stories")
-    .select("id, title, category")
+    .select("id, title, summary, category")
     .is("image_url", null);
 
   if (error) {
@@ -338,7 +362,8 @@ async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
 
   let backfilled = 0;
   for (const row of rows) {
-    const imageUrl = await findStoryImage(row.title, row.category);
+    const keywords = await deriveImageKeywords(row.title, row.summary);
+    const imageUrl = await findStoryImage(keywords ?? row.title, row.category);
     if (!imageUrl) continue;
 
     const { error: updateError } = await supabase
@@ -455,7 +480,7 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
             .sort()
             .at(-1);
 
-          const imageUrl = await findStoryImage(story.title, story.category);
+          const imageUrl = await findStoryImage(story.image_keywords, story.category);
 
           const storyRow = {
             slug: slugify(story.title),
