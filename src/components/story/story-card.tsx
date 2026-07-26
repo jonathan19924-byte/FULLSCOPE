@@ -60,9 +60,8 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
 
       <div
         className={cn(
-          "relative flex items-center justify-center overflow-hidden bg-gradient-to-br",
+          "relative flex aspect-[16/10] items-center justify-center overflow-hidden bg-gradient-to-br",
           meta.gradient,
-          isFeatured ? "h-36 sm:h-44" : "h-24",
         )}
       >
         {story.imageUrl ? (
