@@ -1,5 +1,6 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { callClaude, parseClaudeJson } from "./claude";
+import { findStoryImage } from "./pexels";
 import { sendPipelineSummaryEmail } from "../notifications/email";
 
 /**
@@ -287,6 +288,44 @@ async function dedupeStories(
   return { mergedCount: removed.length, removed };
 }
 
+/** Backfills a photo for any story that doesn't have one yet — covers
+ * stories generated before Pexels was wired in, and any story where the
+ * lookup came up empty at generation time. Cheap (Pexels is free) and the
+ * story count is capped low enough that this is never more than a handful
+ * of requests per run. */
+async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
+  const { data: rows, error } = await supabase
+    .from("stories")
+    .select("id, title, category")
+    .is("image_url", null);
+
+  if (error) {
+    console.error("Error fetching stories missing images:", error.message);
+    return 0;
+  }
+  if (!rows || rows.length === 0) return 0;
+
+  let backfilled = 0;
+  for (const row of rows) {
+    const imageUrl = await findStoryImage(row.title, row.category);
+    if (!imageUrl) continue;
+
+    const { error: updateError } = await supabase
+      .from("stories")
+      .update({ image_url: imageUrl })
+      .eq("id", row.id);
+
+    if (updateError) {
+      console.error(`Error saving backfilled image for "${row.title}":`, updateError.message);
+      continue;
+    }
+    backfilled += 1;
+  }
+
+  if (backfilled > 0) console.log(`Backfilled images for ${backfilled} existing stories`);
+  return backfilled;
+}
+
 export async function processArticles(): Promise<ProcessArticlesResult> {
   const supabase = createProcessingClient();
 
@@ -384,6 +423,8 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
             .sort()
             .at(-1);
 
+          const imageUrl = await findStoryImage(story.title, story.category);
+
           const storyRow = {
             slug: slugify(story.title),
             title: story.title,
@@ -410,6 +451,7 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
               .map((publisher) => ({ publisher })),
             published_at: mostRecentPublishedAt ?? new Date().toISOString(),
             generated_at: new Date().toISOString(),
+            image_url: imageUrl,
           };
 
           const { data: insertedStory, error: insertError } = await supabase
@@ -468,6 +510,9 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
   // found anything new, since duplicates can exist from past runs.
   const dedupResult = await dedupeStories(supabase);
   removedStories.push(...dedupResult.removed);
+
+  // Phase F — backfill photos for any story that doesn't have one yet.
+  await backfillMissingImages(supabase);
 
   const totalStories = await getStoryCount(supabase);
   console.log(

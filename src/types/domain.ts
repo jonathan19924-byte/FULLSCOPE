@@ -68,6 +68,7 @@ export interface Story {
   entities: Entities;
   publishedAt: string;
   readingTimeMinutes: number;
+  imageUrl?: string;
 }
 
 export interface StoryWithPosts extends Story {
@@ -89,6 +90,7 @@ export interface StorySummary
     | "summary"
     | "publishedAt"
     | "readingTimeMinutes"
+    | "imageUrl"
   > {
   postCount: number;
   perspectiveA: PerspectiveTally;

@@ -16,6 +16,7 @@ export function toSummary(story: StoryWithPosts): StorySummary {
     summary: story.summary,
     publishedAt: story.publishedAt,
     readingTimeMinutes: story.readingTimeMinutes,
+    imageUrl: story.imageUrl,
     postCount: story.posts.length,
     perspectiveA: {
       name: story.perspectiveA.name,

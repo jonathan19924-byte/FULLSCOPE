@@ -39,6 +39,7 @@ interface GeneratedStoryRow {
   entities: unknown;
   published_at: string;
   reading_time_minutes: number;
+  image_url: string | null;
 }
 
 interface GeneratedPostRow {
@@ -98,6 +99,7 @@ function mapStoryRow(row: GeneratedStoryRow, postRows: GeneratedPostRow[]): Stor
     entities: row.entities as Entities,
     publishedAt: row.published_at,
     readingTimeMinutes: row.reading_time_minutes,
+    imageUrl: row.image_url ?? undefined,
     posts: postRows.map(mapPostRow),
   };
 }

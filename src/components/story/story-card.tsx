@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Clock } from "lucide-react";
 import type { StorySummary } from "@/types/domain";
 import { CATEGORY_META } from "@/lib/category";
@@ -64,10 +65,21 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
           isFeatured ? "h-36 sm:h-44" : "h-24",
         )}
       >
-        <Icon
-          className={cn(meta.text, isFeatured ? "size-12" : "size-8")}
-          strokeWidth={1.25}
-        />
+        {story.imageUrl ? (
+          <Image
+            src={story.imageUrl}
+            alt=""
+            fill
+            sizes={isFeatured ? "100vw" : "(min-width: 640px) 50vw, 100vw"}
+            className="object-cover"
+            priority={isFeatured}
+          />
+        ) : (
+          <Icon
+            className={cn(meta.text, isFeatured ? "size-12" : "size-8")}
+            strokeWidth={1.25}
+          />
+        )}
         <div className="absolute right-2.5 top-2.5">
           <BookmarkButton slug={story.slug} title={story.title} />
         </div>
