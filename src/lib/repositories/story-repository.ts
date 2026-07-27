@@ -159,8 +159,20 @@ export async function getAllStories(): Promise<StoryWithPosts[]> {
 }
 
 export async function getStoryBySlug(
-  slug: string,
+  rawSlug: string,
 ): Promise<StoryWithPosts | undefined> {
+  // The dynamic route's `params.slug` sometimes arrives still
+  // percent-encoded (observed to differ between generateMetadata and the
+  // page component for the same request, for non-ASCII slugs — a Next.js
+  // 16 quirk). decodeURIComponent is a safe no-op on an already-decoded
+  // string, so normalizing here covers both cases.
+  let slug = rawSlug;
+  try {
+    slug = decodeURIComponent(rawSlug);
+  } catch {
+    // Malformed percent-encoding — fall back to the raw value.
+  }
+
   const seedMatch = stories.find((story) => story.slug === slug);
   if (seedMatch) return seedMatch;
 
@@ -198,14 +210,3 @@ export async function getStandaloneSeedPosts(): Promise<StandaloneSeedPost[]> {
   return standalonePosts;
 }
 
-/**
- * Seed-only slugs, for `generateStaticParams` — that hook runs at build
- * time with no HTTP request in scope, so it can't use the cookies-based
- * Supabase client that `getAllStories()` now needs for generated stories.
- * The app renders every story page dynamically anyway (per-request, since
- * the root layout checks auth), so this only pre-renders the stable seed
- * set; generated-story slugs still render fine on demand at request time.
- */
-export function getSeedStorySlugs(): string[] {
-  return stories.map((story) => story.slug);
-}

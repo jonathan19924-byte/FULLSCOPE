@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getSeedStorySlugs } from "@/lib/repositories/story-repository";
 import { getStoryBySlug, getRelatedStories, toSummary } from "@/lib/services/story-service";
 import { StoryHero } from "@/components/story/story-hero";
 import { ReadingProgress } from "@/components/story/reading-progress";
@@ -15,17 +14,15 @@ import { SourcesList } from "@/components/story/sources-list";
 import { RelatedStories } from "@/components/story/related-stories";
 import { Separator } from "@/components/ui/separator";
 
-export function generateStaticParams() {
-  return getSeedStorySlugs().map((slug) => ({ slug }));
-}
-
 /** This route always renders dynamically anyway (the root layout reads
- * cookies() for the auth check on every request). With an empty seed set
- * (e.g. Hebrew mode, where seed-stories.json is gated off), generateStaticParams
- * returns [] and Next.js otherwise tries to build a static fallback shell for
- * this route — which then hits that cookies() call with no request scope and
- * throws DYNAMIC_SERVER_USAGE instead of falling back to per-request
- * rendering. Forcing dynamic rendering explicitly sidesteps that. */
+ * cookies() for the auth check on every request). generateStaticParams was
+ * removed entirely — pairing it with an empty array (e.g. Hebrew mode, where
+ * seed-stories.json is gated off) still made Next.js 16 attempt a static
+ * fallback shell for unlisted params, which hit that cookies() call with no
+ * request scope, threw DYNAMIC_SERVER_USAGE, and got silently swallowed by
+ * getStoryBySlug's error handling as "story not found" — intermittently
+ * breaking real stories in production. Dropping generateStaticParams so this
+ * route has no static-generation machinery at all avoids that path entirely. */
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
