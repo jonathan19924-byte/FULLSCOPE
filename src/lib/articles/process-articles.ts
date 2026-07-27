@@ -2,6 +2,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { callClaude, parseClaudeJson } from "./claude";
 import { findStoryImage } from "./pexels";
 import { sendPipelineSummaryEmail } from "../notifications/email";
+import { recordPipelineHeartbeat } from "./pipeline-health";
 import { LOCALE } from "../locale";
 import { ACTIVE_FEEDS } from "../rss/fetch-rss";
 
@@ -432,6 +433,20 @@ async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
 }
 
 export async function processArticles(): Promise<ProcessArticlesResult> {
+  try {
+    const result = await runProcessArticles();
+    await recordPipelineHeartbeat(
+      "success",
+      `Processed ${result.processedCount} articles, created ${result.newStoryCount} stories, merged ${result.mergedDuplicateCount} duplicates, total ${result.totalStories}.`,
+    );
+    return result;
+  } catch (err) {
+    await recordPipelineHeartbeat("error", describeError(err));
+    throw err;
+  }
+}
+
+async function runProcessArticles(): Promise<ProcessArticlesResult> {
   const supabase = createProcessingClient();
 
   let processedCount = 0;
