@@ -8,7 +8,11 @@ name: Process Articles
 # Actions has no such limit.
 on:
   schedule:
-    - cron: "0 7 * * *"
+    # Off the top of the hour on purpose — GitHub's own docs warn that
+    # exact-hour schedules are more likely to be delayed or dropped during
+    # high load (the top of every hour is peak contention). 7:00 UTC never
+    # fired on 2026-07-27; this is the documented mitigation.
+    - cron: "13 7 * * *"
   workflow_dispatch: {}
 
 jobs:
