@@ -18,6 +18,7 @@ export function CommunityPosts({ storySlug }: { storySlug: string }) {
     createdAt: p.createdAt,
     likeCount: 0,
     replyCount: 0,
+    contributionTheme: p.contributionTheme,
   }));
 
   return (

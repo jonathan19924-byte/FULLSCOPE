@@ -100,10 +100,26 @@ export interface Database {
           related_story_title: string | null;
           related_story_category: string | null;
           created_at: string;
+          credited_at: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["community_posts"]["Row"]> &
           Pick<Database["public"]["Tables"]["community_posts"]["Row"], "user_id" | "content">;
         Update: Partial<Database["public"]["Tables"]["community_posts"]["Row"]>;
+        Relationships: [];
+      };
+      post_contributions: {
+        Row: {
+          id: string;
+          story_id: string;
+          story_slug: string;
+          post_ids: string[];
+          theme: string;
+          update_target: string;
+          added_text: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["post_contributions"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["post_contributions"]["Row"]>;
         Relationships: [];
       };
     };

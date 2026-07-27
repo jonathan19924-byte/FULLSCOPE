@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -40,6 +40,9 @@ export interface FeedPost {
   likeCount: number;
   replyCount: number;
   story?: { slug: string; title: string; category: Category };
+  /** Set when this post was one of several distinct readers making the same
+   * point that got folded into the story's own content. */
+  contributionTheme?: string;
 }
 
 export function PostFeedCard({ post }: { post: FeedPost }) {
@@ -74,6 +77,15 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
               <span className="text-xs text-muted-foreground">· {formatUpdatedAt(post.createdAt)}</span>
             </div>
             <p className="text-sm leading-relaxed text-foreground/90">{post.content}</p>
+            {post.contributionTheme && (
+              <span
+                title={post.contributionTheme}
+                className="flex w-fit items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+              >
+                <Sparkles className="size-3" strokeWidth={1.75} />
+                Shaped this story
+              </span>
+            )}
           </DialogTrigger>
 
           <DialogContent className="sm:max-w-md">

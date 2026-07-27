@@ -1,0 +1,29 @@
+name: Check Story Trends
+
+# Scans real reader posts every couple of hours for a point made by several
+# distinct users that isn't yet reflected in the story, and folds it in
+# when found. Runs on GitHub Actions rather than Vercel cron because the
+# Vercel Hobby plan only supports daily cron frequency — see
+# process-articles.yml for the same reasoning.
+on:
+  schedule:
+    # Off the top of the hour, same reasoning as process-articles.yml.
+    - cron: "17 */2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  check-trends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run check-trends
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

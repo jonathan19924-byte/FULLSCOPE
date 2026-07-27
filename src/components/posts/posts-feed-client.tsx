@@ -36,6 +36,7 @@ export function PostsFeedClient({
               category: p.relatedStoryCategory,
             }
           : undefined,
+      contributionTheme: p.contributionTheme,
     }));
 
     const fromSeed: FeedPost[] = seedPosts.map((p) => ({

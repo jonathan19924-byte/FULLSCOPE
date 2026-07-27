@@ -129,4 +129,8 @@ export interface CommunityPost {
   relatedStorySlug?: string;
   relatedStoryTitle?: string;
   relatedStoryCategory?: Category;
+  /** Set when this post was part of a reader trend (3+ distinct users
+   * making the same point) that got folded into the story — see
+   * src/lib/articles/trend-detection.ts. The theme text, for display. */
+  contributionTheme?: string;
 }

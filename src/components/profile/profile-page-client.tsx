@@ -20,6 +20,7 @@ export function ProfilePageClient() {
   const displayName = email ? email.split("@")[0] : "Guest Reader";
 
   const myPostCount = communityPosts.filter((p) => p.userId === user?.id).length;
+  const myContributions = communityPosts.filter((p) => p.userId === user?.id && p.contributionTheme);
 
   const stats = [
     { label: "Posts", value: isReady ? myPostCount : 0 },
@@ -92,17 +93,40 @@ export function ProfilePageClient() {
           <TrendingUp className="size-4" strokeWidth={1.75} />
           Your impact
         </h2>
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border px-6 py-8 text-center">
-          <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-            <TrendingUp className="size-5 text-muted-foreground" strokeWidth={1.5} />
+        {myContributions.length > 0 ? (
+          <ul className="flex flex-col gap-2">
+            {myContributions.map((post) => (
+              <li
+                key={post.id}
+                className="flex flex-col gap-1 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4"
+              >
+                <p className="text-sm font-medium text-foreground">{post.contributionTheme}</p>
+                <p className="text-xs text-muted-foreground">
+                  Your post shaped{" "}
+                  {post.relatedStorySlug ? (
+                    <Link href={`/story/${post.relatedStorySlug}`} className="underline underline-offset-2">
+                      {post.relatedStoryTitle ?? "this story"}
+                    </Link>
+                  ) : (
+                    (post.relatedStoryTitle ?? "a story")
+                  )}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border px-6 py-8 text-center">
+            <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+              <TrendingUp className="size-5 text-muted-foreground" strokeWidth={1.5} />
+            </div>
+            <p className="font-medium text-foreground">
+              Your activity hasn&apos;t shaped any stories yet
+            </p>
+            <p className="max-w-xs text-sm text-muted-foreground">
+              When several readers make the same point, we fold it into the story — add posts to have a chance at shaping the narrative.
+            </p>
           </div>
-          <p className="font-medium text-foreground">
-            Your activity hasn&apos;t shaped any stories yet
-          </p>
-          <p className="max-w-xs text-sm text-muted-foreground">
-            Bookmark and share stories to help us understand what matters to you.
-          </p>
-        </div>
+        )}
       </section>
 
       <section className="flex flex-col gap-3">
