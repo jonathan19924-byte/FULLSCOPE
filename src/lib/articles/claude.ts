@@ -43,14 +43,110 @@ export async function callClaude(prompt: string, maxTokens: number): Promise<str
   return text;
 }
 
-/** Hebrew abbreviations use gershayim (״, U+05F4) — visually similar to a
- * straight double-quote but a distinct character. Claude sometimes writes a
- * plain ASCII `"` instead (e.g. inside "בג"ץ"), which breaks JSON string
- * parsing since it looks like the string terminator. This detects a quote
- * sitting directly between two Hebrew letters (never legitimate JSON syntax
- * in that position) and corrects it to the proper gershayim character. */
-function fixHebrewGershayim(raw: string): string {
-  return raw.replace(/([֐-׿])"([֐-׿])/g, "$1״$2");
+const HEBREW_LETTER = /[֐-׿]/;
+
+/** A `"` immediately followed by `,` is ambiguous on its own — Hebrew (and
+ * English) prose routinely has a quoted phrase end right before a natural
+ * sentence-comma (e.g. `...לשלוח אותם ל"צד האדום", וכי...`), which looks
+ * identical, locally, to a real JSON value ending before the next key or
+ * array element. The disambiguator is what's on the FAR side of the comma:
+ * a real object separator is followed by `"someKey":`, and a real array
+ * separator is followed by another element ending in `,` or `]` — prose
+ * just continues with more plain text instead. This confirms one of those
+ * shapes before trusting the comma. */
+function commaIsRealSeparator(raw: string, commaIndex: number): boolean {
+  let k = commaIndex + 1;
+  while (k < raw.length && /\s/.test(raw[k])) k++;
+  if (raw[k] !== '"') return false;
+
+  let m = k + 1;
+  while (m < raw.length && raw[m] !== '"') {
+    if (raw[m] === "\\") m++;
+    m++;
+  }
+  if (m >= raw.length) return false;
+
+  let p = m + 1;
+  while (p < raw.length && /\s/.test(raw[p])) p++;
+  return raw[p] === ":" || raw[p] === "," || raw[p] === "]";
+}
+
+/** Repairs stray unescaped `"` characters inside JSON string values —
+ * observed with Hebrew abbreviations that use gershayim (״, U+05F4, visually
+ * similar to a straight quote but a distinct character, e.g. "בג"ץ") and,
+ * separately, with quoted speech inside a sentence (e.g. a soldier quoted as
+ * saying "לצד האדום"). Both cases produce a plain ASCII `"` mid-string, which
+ * looks like the string terminator to a JSON parser and breaks parsing.
+ *
+ * Rather than pattern-matching specific cases (fragile — a quote can be
+ * adjacent to a Hebrew letter, or separated by spaces around a whole quoted
+ * phrase, or both), this walks the raw text tracking string-open/closed
+ * state and, on every `"` encountered while already inside a string, checks
+ * whether what follows is a valid JSON continuation. `:`, `}`, `]`, and
+ * end-of-input are unambiguous. `,` needs the extra check above since prose
+ * commas are common. If it's not a real terminator, it's a stray quote that
+ * needs repairing — as gershayim if it sits directly between two Hebrew
+ * letters (the common abbreviation case, and the nicer-looking fix),
+ * otherwise as an escaped `\"` (preserves a quoted phrase's punctuation). */
+function repairStrayQuotes(raw: string): string {
+  let result = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < raw.length; i++) {
+    const char = raw[i];
+
+    if (!inString) {
+      result += char;
+      if (char === '"') inString = true;
+      continue;
+    }
+
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      result += char;
+      escaped = true;
+      continue;
+    }
+
+    if (char !== '"') {
+      result += char;
+      continue;
+    }
+
+    // We're inside a string and hit an unescaped quote — decide whether
+    // it's the real closing quote or a stray one.
+    let j = i + 1;
+    while (j < raw.length && /\s/.test(raw[j])) j++;
+    const next = raw[j];
+    const isRealTerminator =
+      next === undefined ||
+      next === ":" ||
+      next === "}" ||
+      next === "]" ||
+      (next === "," && commaIsRealSeparator(raw, j));
+
+    if (isRealTerminator) {
+      result += char;
+      inString = false;
+      continue;
+    }
+
+    const prevChar = raw[i - 1];
+    const nextChar = raw[i + 1];
+    if (prevChar && nextChar && HEBREW_LETTER.test(prevChar) && HEBREW_LETTER.test(nextChar)) {
+      result += "״";
+    } else {
+      result += '\\"';
+    }
+  }
+
+  return result;
 }
 
 /** Claude is asked to "return ONLY valid JSON" but sometimes wraps it in a
@@ -61,5 +157,5 @@ export function parseClaudeJson<T>(raw: string): T {
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
-  return JSON.parse(fixHebrewGershayim(stripped)) as T;
+  return JSON.parse(repairStrayQuotes(stripped)) as T;
 }

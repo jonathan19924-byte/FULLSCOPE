@@ -150,7 +150,7 @@ Articles:
 ${list}${LOCALE === "he" ? "\n\nWrite each \"topic_name\" in Hebrew. Keep JSON keys and the \"category\" value in English exactly as specified." : ""}`;
 }
 
-function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): string {
+export function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): string {
   const list = articles
     .map((a) => `${a.source_name} (${a.source_lean}): ${a.title} — ${a.description ?? ""}`)
     .join("\n");
@@ -161,12 +161,22 @@ function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): string 
   // the story). In Hebrew mode, let Claude pick whichever two real,
   // substantively different perspectives actually divide people on THIS
   // specific story, instead of forcing a US label onto it.
+  // Naming the STANCE ("security-first response") instead of the GROUP
+  // holding it ("the right", "settlers") is the actual neutrality lever here
+  // — group labels are inherently more loaded than argument labels, and a
+  // prompt that only says "name the perspective" drifts between the two
+  // per story, often landing on an asymmetric mix (one side named by its
+  // argument, the other by a political/demographic label) that reads as
+  // biased even when the underlying content isn't.
+  const nameNeutrality = `Name each perspective by the STANCE or ARGUMENT it makes, never by the group/identity holding it — e.g. "security-first response" or "restraint and de-escalation", not "the right", "the left", a political party, or a demographic label (settlers, Haredim, etc.). Phrase both names with the same register and specificity so neither side reads as the neutral default and the other as a loaded label.`;
+
   const perspectiveInstructions =
     LOCALE === "he"
       ? `- Identify the two most relevant, real perspectives that actually divide people on THIS specific story — for example (not exhaustive, pick whatever genuinely fits): security-first vs. rights-first, religious vs. secular, coalition vs. opposition, government vs. civil-society critics, hawkish vs. dovish. Do not force a generic left/right label if it doesn't fit the story.
-- "perspective_a_name"/"perspective_b_name": short name for each actual perspective (2-4 words), specific to this story`
-      : `- "perspective_a_name": short name for the left/progressive perspective (2-4 words)
-- "perspective_b_name": short name for the right/conservative perspective (2-4 words)`;
+- "perspective_a_name"/"perspective_b_name": short name (2-4 words) for each actual perspective. ${nameNeutrality}`
+      : `- "perspective_a_name": short name (2-4 words) for the left/progressive stance on this specific story
+- "perspective_b_name": short name (2-4 words) for the right/conservative stance on this specific story
+- ${nameNeutrality}`;
 
   return `You are a news editor for FullScope, a news platform that shows every story from multiple perspectives. Based on the following articles about ${topicName}, generate a complete story entry.
 
