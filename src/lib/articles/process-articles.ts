@@ -45,6 +45,18 @@ type SupabaseAdmin = ReturnType<typeof createProcessingClient>;
  * with its posts, via ON DELETE CASCADE) when a new one would exceed it. */
 const MAX_STORIES = 60;
 
+/** Story generation is sequential per cluster (~60-105s each, observed live:
+ * 19 stories in 24m48s) — that has to stay sequential since each one checks
+ * and enforces the MAX_STORIES cap before the next runs. A large backlog (a
+ * quiet day, or a previous run getting cut off) can produce more clusters
+ * than fit in any fixed timeout. Rather than raising the timeout indefinitely,
+ * cap how many get generated per run so runtime stays predictable — anything
+ * left over simply stays "unprocessed" and gets picked up by the next run
+ * (see the cron schedule in process-articles.yml, which now runs every few
+ * hours instead of once a day specifically so a big backlog clears within
+ * the same day instead of waiting 24h). */
+const MAX_CLUSTERS_PER_RUN = 10;
+
 interface RawArticleRow {
   id: string;
   source_name: string;
@@ -497,9 +509,14 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
       try {
         const raw = await callClaude(buildClusteringPrompt(unprocessed), 4000);
         const clusteringResponse = parseClaudeJson<ClusteringResponse>(raw);
-        clusters = (clusteringResponse.clusters ?? []).filter(
-          (c) => Array.isArray(c.article_indices) && c.article_indices.length >= 2,
-        );
+        clusters = (clusteringResponse.clusters ?? [])
+          .filter((c) => Array.isArray(c.article_indices) && c.article_indices.length >= 2)
+          // Best-corroborated (most sources) clusters generated first when a
+          // run can't fit them all — an event 5 sources are covering is a
+          // better bet to actually matter than one just barely past the
+          // 2-source minimum.
+          .sort((a, b) => b.article_indices.length - a.article_indices.length)
+          .slice(0, MAX_CLUSTERS_PER_RUN);
       } catch (err) {
         console.error("Error clustering articles:", describeError(err));
       }

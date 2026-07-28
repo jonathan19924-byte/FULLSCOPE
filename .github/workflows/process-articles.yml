@@ -1,18 +1,25 @@
 name: Process Articles
 
 # Runs Stage 2 of the pipeline (topic clustering + story/post generation via
-# Claude) daily at 7am UTC — one hour after the Vercel-hosted RSS fetch cron
-# (see vercel.json). Lives here instead of a Vercel cron because a full
-# day's generation work can take several minutes, well past Vercel Hobby's
-# ~10s function limit (confirmed by a real timeout in testing). GitHub
-# Actions has no such limit.
+# Claude). Lives here instead of a Vercel cron because generation work can
+# take several minutes, well past Vercel Hobby's ~10s function limit
+# (confirmed by a real timeout in testing). GitHub Actions has no such limit.
+#
+# Runs every 3 hours rather than once a day: process-articles.ts now caps
+# how many stories it generates per invocation (MAX_CLUSTERS_PER_RUN, to keep
+# each run's duration predictable), so a backlog bigger than one run can
+# handle needs multiple passes to fully clear — running every few hours lets
+# that happen within the same day instead of readers waiting a full 24h for
+# a big day's stories to show up. A quiet run (nothing new to cluster) exits
+# in seconds, so the extra frequency costs almost nothing when there's
+# nothing to do.
 on:
   schedule:
     # Off the top of the hour on purpose — GitHub's own docs warn that
     # exact-hour schedules are more likely to be delayed or dropped during
     # high load (the top of every hour is peak contention). 7:00 UTC never
     # fired on 2026-07-27; this is the documented mitigation.
-    - cron: "13 7 * * *"
+    - cron: "13 */3 * * *"
   workflow_dispatch: {}
 
 jobs:
