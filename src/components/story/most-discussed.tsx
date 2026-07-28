@@ -2,43 +2,52 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, TrendingUp } from "lucide-react";
 import type { StorySummary } from "@/types/domain";
 import { usePosts } from "@/lib/posts/posts-context";
 import { CATEGORY_META } from "@/lib/category";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 
+const TRENDING_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 export function MostDiscussed({ stories }: { stories: StorySummary[] }) {
   const { communityPosts } = usePosts();
 
   const top = useMemo(() => {
-    const localCountBySlug = new Map<string, number>();
+    // Same 24h window as StorySummary.recentPostCount — a story's rank
+    // fades as engagement cools instead of an old burst of activity
+    // keeping it pinned at the top forever.
+    const localRecentCountBySlug = new Map<string, number>();
     for (const post of communityPosts) {
       if (!post.relatedStorySlug) continue;
-      localCountBySlug.set(
+      if (Date.now() - new Date(post.createdAt).getTime() > TRENDING_WINDOW_MS) continue;
+      localRecentCountBySlug.set(
         post.relatedStorySlug,
-        (localCountBySlug.get(post.relatedStorySlug) ?? 0) + 1,
+        (localRecentCountBySlug.get(post.relatedStorySlug) ?? 0) + 1,
       );
     }
 
     return [...stories]
       .map((story) => ({
         story,
-        totalPosts: story.postCount + (localCountBySlug.get(story.slug) ?? 0),
+        recentPosts: story.recentPostCount + (localRecentCountBySlug.get(story.slug) ?? 0),
       }))
-      .filter((s) => s.totalPosts > 0)
-      .sort((a, b) => b.totalPosts - a.totalPosts)
+      .filter((s) => s.recentPosts > 0)
+      .sort((a, b) => b.recentPosts - a.recentPosts)
       .slice(0, 3);
   }, [stories, communityPosts]);
 
   if (top.length === 0) return null;
 
   return (
-    <section aria-label={t.story.mostDiscussedAria} className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium text-muted-foreground">{t.story.mostDiscussed}</h2>
+    <section aria-label={t.story.trendingAria} className="flex flex-col gap-3">
+      <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+        <TrendingUp className="size-4" strokeWidth={1.75} />
+        {t.story.trendingNow}
+      </h2>
       <div className="flex flex-col gap-2">
-        {top.map(({ story, totalPosts }) => {
+        {top.map(({ story, recentPosts }) => {
           const meta = CATEGORY_META[story.category];
           const Icon = meta.icon;
           return (
@@ -63,7 +72,7 @@ export function MostDiscussed({ stories }: { stories: StorySummary[] }) {
               </div>
               <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                 <MessageSquare className="size-3.5" strokeWidth={1.75} />
-                {totalPosts}
+                {recentPosts}
               </span>
             </Link>
           );

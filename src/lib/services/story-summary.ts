@@ -1,5 +1,7 @@
 import type { StorySummary, StoryWithPosts } from "@/types/domain";
 
+const TRENDING_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 /**
  * Pure, repository-free functions — kept separate from story-service.ts
  * because that file imports the repository (now server-only, since it reads
@@ -18,6 +20,9 @@ export function toSummary(story: StoryWithPosts): StorySummary {
     readingTimeMinutes: story.readingTimeMinutes,
     imageUrl: story.imageUrl,
     postCount: story.posts.length,
+    recentPostCount: story.posts.filter(
+      (p) => Date.now() - new Date(p.createdAt).getTime() <= TRENDING_WINDOW_MS,
+    ).length,
     perspectiveA: {
       name: story.perspectiveA.name,
       postCount: story.posts.filter((p) => p.perspective === "A").length,

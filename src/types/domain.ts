@@ -93,6 +93,11 @@ export interface StorySummary
     | "imageUrl"
   > {
   postCount: number;
+  /** Posts (generated + real reader posts) created in the last 24h — the
+   * basis for the "Trending now" ranking, distinct from postCount (all-time
+   * volume) so a story's trending rank fades as engagement cools rather
+   * than staying pinned by an old burst of activity forever. */
+  recentPostCount: number;
   perspectiveA: PerspectiveTally;
   perspectiveB: PerspectiveTally;
 }
