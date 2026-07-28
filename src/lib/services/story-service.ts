@@ -6,6 +6,7 @@ import type {
 } from "@/types/domain";
 import {
   getAllStories,
+  getArchivedStories,
   getStandaloneSeedPosts,
   getStoryBySlug,
 } from "@/lib/repositories/story-repository";
@@ -19,6 +20,13 @@ export async function listStorySummaries(): Promise<StorySummary[]> {
   return stories
     .map(toSummary)
     .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+}
+
+/** Stories removed from the main feed (cap eviction or dedup merge), newest
+ * archived first — for the Home page's History tab. */
+export async function listArchivedStorySummaries(): Promise<StorySummary[]> {
+  const stories = await getArchivedStories();
+  return stories.map(toSummary);
 }
 
 /** The single most recent story, used for the Home page's featured slot. */

@@ -19,6 +19,7 @@ export function toSummary(story: StoryWithPosts): StorySummary {
     publishedAt: story.publishedAt,
     readingTimeMinutes: story.readingTimeMinutes,
     imageUrl: story.imageUrl,
+    archivedAt: story.archivedAt,
     postCount: story.posts.length,
     recentPostCount: story.posts.filter(
       (p) => Date.now() - new Date(p.createdAt).getTime() <= TRENDING_WINDOW_MS,

@@ -263,9 +263,23 @@ Stories:
 ${list}`;
 }
 
+/** Live (non-archived) story count — the number the MAX_STORIES cap is
+ * measured against. Archived stories don't count toward it; they're already
+ * out of the feed. */
 async function getStoryCount(supabase: SupabaseAdmin): Promise<number> {
-  const { count } = await supabase.from("stories").select("id", { count: "exact", head: true });
+  const { count } = await supabase
+    .from("stories")
+    .select("id", { count: "exact", head: true })
+    .is("archived_at", null);
   return count ?? 0;
+}
+
+/** Removes a story from the main feed without deleting it — its posts,
+ * likes, and contributions all stay intact, and it becomes visible in the
+ * Home page's History tab instead of disappearing entirely. */
+async function archiveStory(supabase: SupabaseAdmin, id: string): Promise<{ error: { message: string } | null }> {
+  const { error } = await supabase.from("stories").update({ archived_at: new Date().toISOString() }).eq("id", id);
+  return { error };
 }
 
 /** The per-cluster cap check in the main loop below only swaps one-for-one
@@ -282,6 +296,7 @@ async function enforceStoryCap(supabase: SupabaseAdmin): Promise<{ title: string
   const { data: toRemove, error } = await supabase
     .from("stories")
     .select("id, title")
+    .is("archived_at", null)
     .order("generated_at", { ascending: true, nullsFirst: true })
     .limit(overshoot);
 
@@ -291,20 +306,18 @@ async function enforceStoryCap(supabase: SupabaseAdmin): Promise<{ title: string
   }
   if (!toRemove || toRemove.length === 0) return [];
 
-  const { error: deleteError } = await supabase
-    .from("stories")
-    .delete()
-    .in(
-      "id",
-      toRemove.map((row) => row.id),
-    );
-  if (deleteError) {
-    console.error("Error deleting overshoot stories for cap enforcement:", deleteError.message);
-    return [];
+  const archived: { title: string }[] = [];
+  for (const row of toRemove) {
+    const { error: archiveError } = await archiveStory(supabase, row.id);
+    if (archiveError) {
+      console.error(`Error archiving overshoot story "${row.title}":`, archiveError.message);
+      continue;
+    }
+    archived.push({ title: row.title });
   }
 
-  console.log(`Trimmed ${toRemove.length} stories to enforce the ${MAX_STORIES}-story cap`);
-  return toRemove.map((row) => ({ title: row.title }));
+  console.log(`Archived ${archived.length} stories to enforce the ${MAX_STORIES}-story cap`);
+  return archived;
 }
 
 /** Marks a cluster's source articles processed immediately after it's been
@@ -341,6 +354,7 @@ async function dedupeStories(
   const { data: allStories, error } = await supabase
     .from("stories")
     .select("id, slug, title, summary, category, generated_at")
+    .is("archived_at", null)
     .order("generated_at", { ascending: false });
 
   if (error) {
@@ -372,14 +386,14 @@ async function dedupeStories(
 
     const actuallyRemoved: string[] = [];
     for (const dup of duplicates) {
-      const { error: deleteError } = await supabase.from("stories").delete().eq("id", dup.id);
-      if (deleteError) {
-        console.error(`Error deleting duplicate story "${dup.title}":`, deleteError.message);
+      const { error: archiveError } = await archiveStory(supabase, dup.id);
+      if (archiveError) {
+        console.error(`Error archiving duplicate story "${dup.title}":`, archiveError.message);
         continue;
       }
       removed.push({ title: dup.title });
       actuallyRemoved.push(dup.title);
-      console.log(`Merged duplicate story: removed "${dup.title}"`);
+      console.log(`Merged duplicate story: archived "${dup.title}"`);
     }
 
     if (actuallyRemoved.length > 0) {
@@ -434,7 +448,8 @@ async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
   const { data: rows, error } = await supabase
     .from("stories")
     .select("id, title, summary, category")
-    .is("image_url", null);
+    .is("image_url", null)
+    .is("archived_at", null);
 
   if (error) {
     console.error("Error fetching stories missing images:", error.message);
@@ -565,20 +580,22 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
         try {
           const { count, error: countError } = await supabase
             .from("stories")
-            .select("id", { count: "exact", head: true });
+            .select("id", { count: "exact", head: true })
+            .is("archived_at", null);
           if (countError) throw countError;
 
           if ((count ?? 0) >= MAX_STORIES) {
             const { data: oldest, error: oldestError } = await supabase
               .from("stories")
               .select("id, title")
+              .is("archived_at", null)
               .order("generated_at", { ascending: true, nullsFirst: true })
               .limit(1)
               .maybeSingle();
             if (oldestError) throw oldestError;
 
             if (oldest) {
-              await supabase.from("stories").delete().eq("id", oldest.id);
+              await archiveStory(supabase, oldest.id);
               removedStories.push({ title: oldest.title });
             }
           }

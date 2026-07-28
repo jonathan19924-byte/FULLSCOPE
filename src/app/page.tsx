@@ -4,13 +4,16 @@ import { CATEGORIES, type Category } from "@/types/domain";
 import {
   getFeaturedStory,
   getStoriesByCategory,
+  listArchivedStorySummaries,
   listStorySummaries,
 } from "@/lib/services/story-service";
 import { CategoryFilter } from "@/components/story/category-filter";
+import { FeedTabs } from "@/components/story/feed-tabs";
 import { StoryCard } from "@/components/story/story-card";
 import { MostDiscussed } from "@/components/story/most-discussed";
 import { EmptyState } from "@/components/shared/empty-state";
 import { t } from "@/lib/i18n";
+import { Archive } from "lucide-react";
 
 function parseCategory(raw: string | string[] | undefined): Category | "All" {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -29,15 +32,17 @@ const VALUE_PROPS = [
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; view?: string }>;
 }) {
   const params = await searchParams;
   const category = parseCategory(params.category);
+  const view = params.view === "history" ? "history" : "feed";
 
-  const stories = await getStoriesByCategory(category);
-  const featured = category === "All" ? await getFeaturedStory() : undefined;
-  const latest = featured ? stories.filter((s) => s.slug !== featured.slug) : stories;
   const allStories = await listStorySummaries();
+  const stories = view === "feed" ? await getStoriesByCategory(category) : [];
+  const featured = view === "feed" && category === "All" ? await getFeaturedStory() : undefined;
+  const latest = featured ? stories.filter((s) => s.slug !== featured.slug) : stories;
+  const archivedStories = view === "history" ? await listArchivedStorySummaries() : [];
 
   const counts = {
     All: allStories.length,
@@ -83,45 +88,67 @@ export default async function HomePage({
         {t.home.searchPlaceholder}
       </Link>
 
-      <CategoryFilter selected={category} counts={counts} />
+      <FeedTabs active={view} />
 
-      {stories.length === 0 ? (
-        <EmptyState
-          icon={Search}
-          title={t.home.emptyTitle}
-          description={t.home.emptyDescription}
-          action={
-            <Link
-              href="/"
-              className="text-sm font-medium text-foreground underline underline-offset-4"
-            >
-              {t.home.viewAllStories}
-            </Link>
-          }
-        />
-      ) : (
-        <div className="flex flex-col gap-6">
-          {featured && (
-            <section aria-label={t.home.featuredStoryAria}>
-              <StoryCard story={featured} variant="featured" />
-            </section>
+      {view === "feed" ? (
+        <>
+          <CategoryFilter selected={category} counts={counts} />
+
+          {stories.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title={t.home.emptyTitle}
+              description={t.home.emptyDescription}
+              action={
+                <Link
+                  href="/"
+                  className="text-sm font-medium text-foreground underline underline-offset-4"
+                >
+                  {t.home.viewAllStories}
+                </Link>
+              }
+            />
+          ) : (
+            <div className="flex flex-col gap-6">
+              {featured && (
+                <section aria-label={t.home.featuredStoryAria}>
+                  <StoryCard story={featured} variant="featured" />
+                </section>
+              )}
+
+              {category === "All" && <MostDiscussed stories={allStories} />}
+
+              <section aria-label={t.home.latestStoriesAria} className="flex flex-col gap-4">
+                {latest.length > 0 && (
+                  <h2 className="text-sm font-medium text-muted-foreground">
+                    {category === "All" ? t.home.latest : t.home.categoryStories(t.category[category])}
+                  </h2>
+                )}
+                <div className="flex flex-col gap-4">
+                  {latest.map((story) => (
+                    <StoryCard key={story.id} story={story} variant="standard" />
+                  ))}
+                </div>
+              </section>
+            </div>
           )}
-
-          {category === "All" && <MostDiscussed stories={allStories} />}
-
-          <section aria-label={t.home.latestStoriesAria} className="flex flex-col gap-4">
-            {latest.length > 0 && (
-              <h2 className="text-sm font-medium text-muted-foreground">
-                {category === "All" ? t.home.latest : t.home.categoryStories(t.category[category])}
-              </h2>
-            )}
+        </>
+      ) : (
+        <section aria-label={t.home.historyStoriesAria} className="flex flex-col gap-4">
+          {archivedStories.length === 0 ? (
+            <EmptyState
+              icon={Archive}
+              title={t.home.historyEmptyTitle}
+              description={t.home.historyEmptyDescription}
+            />
+          ) : (
             <div className="flex flex-col gap-4">
-              {latest.map((story) => (
+              {archivedStories.map((story) => (
                 <StoryCard key={story.id} story={story} variant="standard" />
               ))}
             </div>
-          </section>
-        </div>
+          )}
+        </section>
       )}
     </div>
   );

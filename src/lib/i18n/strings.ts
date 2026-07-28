@@ -57,6 +57,11 @@ export const strings = {
       latestStoriesAria: "Latest stories",
       latest: "Latest",
       categoryStories: (category: string) => `${category} stories`,
+      feedTab: "Feed",
+      historyTab: "History",
+      historyStoriesAria: "Previously removed stories",
+      historyEmptyTitle: "No removed stories yet",
+      historyEmptyDescription: "Stories that age out of the main feed or get merged with newer coverage will show up here.",
     },
     story: {
       notFound: "Story not found",
@@ -331,6 +336,11 @@ export const strings = {
       latestStoriesAria: "כתבות אחרונות",
       latest: "אחרונות",
       categoryStories: (category: string) => `כתבות ${category}`,
+      feedTab: "פיד",
+      historyTab: "היסטוריה",
+      historyStoriesAria: "כתבות שהוסרו בעבר",
+      historyEmptyTitle: "אין עדיין כתבות שהוסרו",
+      historyEmptyDescription: "כתבות שיוצאות מהפיד הראשי או מתמזגות עם סיקור חדש יופיעו כאן.",
     },
     story: {
       notFound: "הכתבה לא נמצאה",

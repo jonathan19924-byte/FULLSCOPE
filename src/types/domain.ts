@@ -69,6 +69,10 @@ export interface Story {
   publishedAt: string;
   readingTimeMinutes: number;
   imageUrl?: string;
+  /** Set when this story was removed from the main feed (cap eviction or
+   * dedup merge) instead of deleted — shown in the History tab. Undefined
+   * for a story that's currently live. */
+  archivedAt?: string;
 }
 
 export interface StoryWithPosts extends Story {
@@ -91,6 +95,7 @@ export interface StorySummary
     | "publishedAt"
     | "readingTimeMinutes"
     | "imageUrl"
+    | "archivedAt"
   > {
   postCount: number;
   /** Posts (generated + real reader posts) created in the last 24h — the

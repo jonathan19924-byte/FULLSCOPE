@@ -129,6 +129,7 @@ export async function checkStoryTrends(): Promise<TrendCheckResult> {
       .from("stories")
       .select("id, slug, key_differences_cause, key_differences_impact, perspective_a, perspective_b, last_trend_check_at")
       .eq("slug", slug)
+      .is("archived_at", null)
       .maybeSingle();
 
     if (storyError) {
@@ -136,7 +137,7 @@ export async function checkStoryTrends(): Promise<TrendCheckResult> {
       errors++;
       continue;
     }
-    if (!story) continue; // e.g. a seed-story slug from before the Hebrew pivot — not a real generated story
+    if (!story) continue; // e.g. a seed-story slug from before the Hebrew pivot, or since archived — not a live generated story
 
     const lastCheck = story.last_trend_check_at ? new Date(story.last_trend_check_at).getTime() : 0;
     const hasNewSinceLastCheck = candidatePosts.some((p) => new Date(p.created_at).getTime() > lastCheck);
