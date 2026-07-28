@@ -81,18 +81,26 @@ export async function sendPipelineSummaryEmail(params: PipelineSummaryEmailParam
 export async function sendMissedRunAlertEmail(params: {
   lastRunAt: string | null;
   hoursSinceLastRun: number | null;
+  retryTriggered: boolean;
+  retryError?: string;
 }): Promise<void> {
-  const { lastRunAt, hoursSinceLastRun } = params;
+  const { lastRunAt, hoursSinceLastRun, retryTriggered, retryError } = params;
+
+  const retryHtml = retryTriggered
+    ? `<p>✅ Automatically triggered <code>process-articles.yml</code> to run now via GitHub's API — no action needed unless it fails again.</p>`
+    : `<p>❌ Tried to automatically re-trigger <code>process-articles.yml</code>, but that failed too: <strong>${escapeHtml(
+        retryError ?? "unknown error",
+      )}</strong>. This needs manual attention.</p>`;
 
   const html = `
-    <h2>⚠️ FullScope — daily story pipeline appears to have missed its run</h2>
+    <h2>⚠️ FullScope — daily story pipeline missed its run</h2>
     <p>${
       lastRunAt
         ? `Last recorded run: <strong>${escapeHtml(lastRunAt)}</strong> (${hoursSinceLastRun?.toFixed(1)} hours ago).`
         : "No run has ever been recorded."
     }</p>
-    <p>Check the GitHub Actions run history for <code>process-articles.yml</code> — the daily schedule may have been delayed or dropped (this happened before, on 2026-07-27).</p>
+    ${retryHtml}
   `.trim();
 
-  await sendResendEmail("⚠️ FullScope: daily pipeline may have missed its run", html);
+  await sendResendEmail("⚠️ FullScope: daily pipeline missed its run", html);
 }

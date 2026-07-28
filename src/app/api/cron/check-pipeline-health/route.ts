@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { checkPipelineHealth } from "@/lib/articles/pipeline-health";
 import { sendMissedRunAlertEmail } from "@/lib/notifications/email";
+import { triggerProcessArticlesWorkflow } from "@/lib/github/trigger-workflow";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -9,9 +10,15 @@ export const maxDuration = 30;
  * Triggered daily by the Vercel cron in vercel.json, well after the
  * process-articles GitHub Action is expected to have run. Checks for a
  * recent heartbeat in pipeline_runs (written by every process-articles run,
- * success or failure) and emails an alert if one hasn't landed recently —
- * catching a silently-dropped cron (as happened on 2026-07-27) instead of
- * relying on someone noticing the story count looks stale.
+ * success or failure).
+ *
+ * process-articles.yml's own `schedule:` trigger has now failed to fire on
+ * its own twice (2026-07-27, 2026-07-28), so a missed run here doesn't just
+ * get emailed — it actively re-triggers the workflow via GitHub's API
+ * (this cron is the reliable one; that one currently isn't). The email
+ * always reports what actually happened, including if the retry attempt
+ * itself failed (e.g. an expired token), so a real failure is never
+ * silent.
  */
 export async function GET(request: NextRequest) {
   const expectedSecret = process.env.CRON_SECRET;
@@ -26,10 +33,14 @@ export async function GET(request: NextRequest) {
   const status = await checkPipelineHealth();
 
   if (!status.healthy) {
+    const retry = await triggerProcessArticlesWorkflow();
     await sendMissedRunAlertEmail({
       lastRunAt: status.lastRunAt,
       hoursSinceLastRun: status.hoursSinceLastRun,
+      retryTriggered: retry.triggered,
+      retryError: retry.error,
     });
+    return NextResponse.json({ ...status, retry });
   }
 
   return NextResponse.json(status);
