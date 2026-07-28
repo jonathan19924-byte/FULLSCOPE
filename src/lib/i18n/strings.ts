@@ -95,6 +95,9 @@ export const strings = {
       timelineDisclaimer:
         "Reported by named news sources. FullScope does not independently verify claims beyond what those sources state.",
       shapedThisStory: "Shaped this story",
+      howThisDeveloped: "How this story developed",
+      updateTrendPrefix: "Readers pointed out: ",
+      updateMergePrefix: "New coverage added: ",
     },
     posts: {
       repliesComingSoon: "Replies are coming in a future version",
@@ -364,6 +367,9 @@ export const strings = {
       timelineDisclaimer:
         "מדווח על ידי מקורות חדשות בשם. FullScope אינה מאמתת באופן עצמאי טענות מעבר למה שמקורות אלו מוסרים.",
       shapedThisStory: "השפיע על הכתבה הזו",
+      howThisDeveloped: "איך הכתבה התפתחה",
+      updateTrendPrefix: "קוראים ציינו: ",
+      updateMergePrefix: "נוסף סיקור חדש: ",
     },
     posts: {
       repliesComingSoon: "תגובות יגיעו בגרסה עתידית",

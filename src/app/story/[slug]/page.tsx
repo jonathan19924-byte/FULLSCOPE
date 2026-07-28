@@ -8,6 +8,8 @@ import { Timeline } from "@/components/story/timeline";
 import { Perspectives } from "@/components/story/perspectives";
 import { PerspectiveBar } from "@/components/story/perspective-bar";
 import { KeyDifferences } from "@/components/story/key-differences";
+import { StoryUpdates } from "@/components/story/story-updates";
+import { getStoryUpdates } from "@/lib/services/get-story-updates";
 import { ReactionsFeed } from "@/components/story/reactions-feed";
 import { CommunityPosts } from "@/components/story/community-posts";
 import { SourcesList } from "@/components/story/sources-list";
@@ -51,6 +53,7 @@ export default async function StoryPage({
   if (!story) notFound();
 
   const related = await getRelatedStories(story);
+  const updates = await getStoryUpdates(story.id);
   const summary = toSummary(story);
 
   return (
@@ -63,6 +66,7 @@ export default async function StoryPage({
       <PerspectiveBar perspectiveA={summary.perspectiveA} perspectiveB={summary.perspectiveB} />
       <Perspectives perspectiveA={story.perspectiveA} perspectiveB={story.perspectiveB} />
       <KeyDifferences cause={story.keyDifferencesCause} impact={story.keyDifferencesImpact} />
+      <StoryUpdates updates={updates} />
       <ReactionsFeed
         posts={story.posts}
         perspectiveAName={story.perspectiveA.name}

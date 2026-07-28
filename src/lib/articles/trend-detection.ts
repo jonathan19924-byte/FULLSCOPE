@@ -1,5 +1,6 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { callClaude, parseClaudeJson } from "./claude";
+import { logStoryUpdate } from "./story-updates";
 
 function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -208,4 +209,11 @@ async function applyTrend(
     .update({ credited_at: new Date().toISOString() })
     .in("id", postIds);
   if (creditError) throw new Error(`Error crediting posts: ${creditError.message}`);
+
+  await logStoryUpdate(supabase, {
+    storyId: story.id,
+    storySlug: story.slug,
+    updateType: "trend",
+    summary: result.theme,
+  });
 }

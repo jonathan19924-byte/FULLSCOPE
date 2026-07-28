@@ -137,6 +137,19 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["post_contributions"]["Row"]>;
         Relationships: [];
       };
+      story_updates: {
+        Row: {
+          id: string;
+          story_id: string;
+          story_slug: string;
+          update_type: string;
+          summary: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["story_updates"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["story_updates"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

@@ -3,6 +3,7 @@ import { callClaude, parseClaudeJson } from "./claude";
 import { findStoryImage } from "./pexels";
 import { sendPipelineSummaryEmail } from "../notifications/email";
 import { recordPipelineHeartbeat } from "./pipeline-health";
+import { logStoryUpdate } from "./story-updates";
 import { LOCALE } from "../locale";
 import { ACTIVE_FEEDS } from "../rss/fetch-rss";
 
@@ -327,7 +328,7 @@ async function dedupeStories(
 ): Promise<{ mergedCount: number; removed: { title: string }[] }> {
   const { data: allStories, error } = await supabase
     .from("stories")
-    .select("id, title, summary, category, generated_at")
+    .select("id, slug, title, summary, category, generated_at")
     .order("generated_at", { ascending: false });
 
   if (error) {
@@ -355,8 +356,9 @@ async function dedupeStories(
 
     // allStories is already newest-first, so keep the first (most recent —
     // usually the more complete/updated account of the event).
-    const [, ...duplicates] = rows.sort((a, b) => (a.generated_at < b.generated_at ? 1 : -1));
+    const [survivor, ...duplicates] = rows.sort((a, b) => (a.generated_at < b.generated_at ? 1 : -1));
 
+    const actuallyRemoved: string[] = [];
     for (const dup of duplicates) {
       const { error: deleteError } = await supabase.from("stories").delete().eq("id", dup.id);
       if (deleteError) {
@@ -364,7 +366,20 @@ async function dedupeStories(
         continue;
       }
       removed.push({ title: dup.title });
+      actuallyRemoved.push(dup.title);
       console.log(`Merged duplicate story: removed "${dup.title}"`);
+    }
+
+    if (actuallyRemoved.length > 0) {
+      await logStoryUpdate(supabase, {
+        storyId: survivor.id,
+        storySlug: survivor.slug,
+        updateType: "merge",
+        summary:
+          LOCALE === "he"
+            ? `דווח גם על ידי: ${actuallyRemoved.join(", ")}`
+            : `Merged with duplicate coverage: ${actuallyRemoved.join(", ")}`,
+      });
     }
   }
 
