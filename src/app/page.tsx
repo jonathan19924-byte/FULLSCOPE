@@ -11,6 +11,7 @@ import { CategoryFilter } from "@/components/story/category-filter";
 import { FeedTabs } from "@/components/story/feed-tabs";
 import { StoryCard } from "@/components/story/story-card";
 import { MostDiscussed } from "@/components/story/most-discussed";
+import { BookmarksPageClient } from "@/components/bookmarks/bookmarks-page-client";
 import { EmptyState } from "@/components/shared/empty-state";
 import { t } from "@/lib/i18n";
 import { Archive } from "lucide-react";
@@ -36,7 +37,8 @@ export default async function HomePage({
 }) {
   const params = await searchParams;
   const category = parseCategory(params.category);
-  const view = params.view === "history" ? "history" : "feed";
+  const view =
+    params.view === "history" ? "history" : params.view === "bookmarks" ? "bookmarks" : "feed";
 
   const allStories = await listStorySummaries();
   const stories = view === "feed" ? await getStoriesByCategory(category) : [];
@@ -133,7 +135,7 @@ export default async function HomePage({
             </div>
           )}
         </>
-      ) : (
+      ) : view === "history" ? (
         <section aria-label={t.home.historyStoriesAria} className="flex flex-col gap-4">
           {archivedStories.length === 0 ? (
             <EmptyState
@@ -149,6 +151,8 @@ export default async function HomePage({
             </div>
           )}
         </section>
+      ) : (
+        <BookmarksPageClient stories={allStories} hideHeading />
       )}
     </div>
   );

@@ -3,16 +3,18 @@ import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 
 interface FeedTabsProps {
-  active: "feed" | "history";
+  active: "feed" | "history" | "bookmarks";
 }
 
 /** Same Link+searchParams pattern as CategoryFilter — Server Component
  * friendly, no client state. Switching tabs intentionally drops the
- * category filter (history isn't categorized in this first version). */
+ * category filter (history/bookmarks aren't categorized in this first
+ * version). */
 export function FeedTabs({ active }: FeedTabsProps) {
   const tabs = [
     { key: "feed" as const, href: "/", label: t.home.feedTab },
     { key: "history" as const, href: "/?view=history", label: t.home.historyTab },
+    { key: "bookmarks" as const, href: "/?view=bookmarks", label: t.bookmarks.title },
   ];
 
   return (
