@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Source_Serif_4, Heebo, Frank_Ruhl_Libre } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -48,6 +48,14 @@ export const metadata: Metadata = {
     template: "%s — FullScope",
   },
   description: t.brand.metaDescription,
+  appleWebApp: {
+    title: "FullScope",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
 };
 
 export default async function RootLayout({
