@@ -466,6 +466,15 @@ async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
   return backfilled;
 }
 
+/** Standalone entry point for backfilling story photos only — no clustering,
+ * no story/post generation. Used to catch up existing stories after a gap
+ * in Pexels access (e.g. PEXELS_API_KEY missing from an environment for a
+ * while) without re-running the full daily pipeline. */
+export async function backfillImagesOnly(): Promise<number> {
+  const supabase = createProcessingClient();
+  return backfillMissingImages(supabase);
+}
+
 export async function processArticles(): Promise<ProcessArticlesResult> {
   try {
     const result = await runProcessArticles();
