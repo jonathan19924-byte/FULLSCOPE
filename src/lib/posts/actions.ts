@@ -19,6 +19,20 @@ export async function createCommunityPostAction(input: {
     return { error: "Not signed in" };
   }
 
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { count, error: countError } = await supabase
+    .from("community_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", tenMinutesAgo);
+
+  if (countError) {
+    return { error: countError.message };
+  }
+  if ((count ?? 0) >= 10) {
+    return { error: "You're posting too quickly — please wait a few minutes and try again." };
+  }
+
   const { error } = await supabase.from("community_posts").insert({
     user_id: user.id,
     content: input.content,

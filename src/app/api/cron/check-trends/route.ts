@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { checkStoryTrends } from "@/lib/articles/trend-detection";
+import { moderateNewPosts } from "@/lib/articles/moderation";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -20,7 +21,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const result = await checkStoryTrends();
+  const moderation = await moderateNewPosts();
+  const trends = await checkStoryTrends();
 
-  return NextResponse.json(result);
+  return NextResponse.json({ trends, moderation });
 }

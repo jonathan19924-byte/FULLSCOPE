@@ -104,6 +104,7 @@ export async function checkStoryTrends(): Promise<TrendCheckResult> {
     .from("community_posts")
     .select("id, related_story_slug, user_id, content, created_at")
     .is("credited_at", null)
+    .eq("is_hidden", false)
     .not("related_story_slug", "is", null);
 
   if (postsError) {

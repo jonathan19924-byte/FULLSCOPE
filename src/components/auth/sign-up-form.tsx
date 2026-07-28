@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 
 export function SignUpForm() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export function SignUpForm() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -22,7 +24,11 @@ export function SignUpForm() {
     setIsSubmitting(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: captchaToken ? { captchaToken } : undefined,
+    });
 
     setIsSubmitting(false);
 
@@ -62,6 +68,8 @@ export function SignUpForm() {
           className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[15px] text-foreground outline-none focus-visible:border-foreground/40"
         />
       </label>
+
+      <TurnstileWidget onVerify={setCaptchaToken} />
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

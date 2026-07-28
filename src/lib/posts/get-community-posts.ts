@@ -5,7 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 export async function getCommunityPosts(): Promise<CommunityPost[]> {
   const supabase = await createClient();
   const [{ data }, { data: contributions }] = await Promise.all([
-    supabase.from("community_posts").select("*").order("created_at", { ascending: false }),
+    supabase
+      .from("community_posts")
+      .select("*")
+      .eq("is_hidden", false)
+      .order("created_at", { ascending: false }),
     supabase.from("post_contributions").select("post_ids, theme"),
   ]);
 

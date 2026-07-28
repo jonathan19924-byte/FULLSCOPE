@@ -1,9 +1,10 @@
 name: Check Story Trends
 
-# Scans real reader posts every couple of hours for a point made by several
-# distinct users that isn't yet reflected in the story, and folds it in
-# when found. Runs on GitHub Actions rather than Vercel cron because the
-# Vercel Hobby plan only supports daily cron frequency — see
+# Every couple of hours: (1) moderates new reader posts, hiding genuine
+# policy violations; (2) scans the remaining posts for a point made by
+# several distinct users that isn't yet reflected in the story, and folds
+# it in when found. Runs on GitHub Actions rather than Vercel cron because
+# the Vercel Hobby plan only supports daily cron frequency — see
 # process-articles.yml for the same reasoning.
 on:
   schedule:
@@ -27,3 +28,5 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}

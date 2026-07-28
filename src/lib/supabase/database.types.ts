@@ -101,6 +101,9 @@ export interface Database {
           related_story_category: string | null;
           created_at: string;
           credited_at: string | null;
+          moderation_checked_at: string | null;
+          is_hidden: boolean;
+          flagged_reason: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["community_posts"]["Row"]> &
           Pick<Database["public"]["Tables"]["community_posts"]["Row"], "user_id" | "content">;
