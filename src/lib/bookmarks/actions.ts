@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { t } from "@/lib/i18n";
 
 export async function toggleBookmarkAction(
   storySlug: string,
@@ -12,7 +13,7 @@ export async function toggleBookmarkAction(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Not signed in" };
+    return { error: t.common.notSignedInError };
   }
 
   const { data: existing } = await supabase

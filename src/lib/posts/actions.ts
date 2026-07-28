@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Category } from "@/types/domain";
 import { createClient } from "@/lib/supabase/server";
+import { t } from "@/lib/i18n";
 
 export async function createCommunityPostAction(input: {
   content: string;
@@ -16,7 +17,7 @@ export async function createCommunityPostAction(input: {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Not signed in" };
+    return { error: t.common.notSignedInError };
   }
 
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
@@ -30,7 +31,7 @@ export async function createCommunityPostAction(input: {
     return { error: countError.message };
   }
   if ((count ?? 0) >= 10) {
-    return { error: "You're posting too quickly — please wait a few minutes and try again." };
+    return { error: t.posts.postingTooFast };
   }
 
   const { error } = await supabase.from("community_posts").insert({

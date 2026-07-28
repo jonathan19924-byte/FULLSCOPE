@@ -5,6 +5,7 @@ import { formatUpdatedAt, formatReadingTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { BookmarkButton } from "@/components/shared/bookmark-button";
 import { ShareButton } from "@/components/shared/share-button";
+import { t } from "@/lib/i18n";
 
 export function StoryHero({ story }: { story: Story }) {
   const meta = CATEGORY_META[story.category];
@@ -20,7 +21,7 @@ export function StoryHero({ story }: { story: Story }) {
             meta.gradient,
           )}
           role="img"
-          aria-label={`${story.category} story`}
+          aria-label={t.story.storyAria(meta.label)}
         >
           <Icon className={cn("size-14", meta.text)} strokeWidth={1.25} />
           <span
@@ -29,7 +30,7 @@ export function StoryHero({ story }: { story: Story }) {
               meta.text,
             )}
           >
-            {story.category}
+            {meta.label}
           </span>
         </div>
       </div>

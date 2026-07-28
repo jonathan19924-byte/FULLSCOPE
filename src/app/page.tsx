@@ -10,6 +10,7 @@ import { CategoryFilter } from "@/components/story/category-filter";
 import { StoryCard } from "@/components/story/story-card";
 import { MostDiscussed } from "@/components/story/most-discussed";
 import { EmptyState } from "@/components/shared/empty-state";
+import { t } from "@/lib/i18n";
 
 function parseCategory(raw: string | string[] | undefined): Category | "All" {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -17,10 +18,10 @@ function parseCategory(raw: string | string[] | undefined): Category | "All" {
 }
 
 const VALUE_PROPS = [
-  { icon: BadgeCheck, label: "Named sources" },
-  { icon: Clock, label: "Timelines" },
-  { icon: Scale, label: "Two perspectives" },
-  { icon: Newspaper, label: "Sources" },
+  { icon: BadgeCheck, label: t.home.valueProps.namedSources },
+  { icon: Clock, label: t.home.valueProps.timelines },
+  { icon: Scale, label: t.home.valueProps.twoPerspectives },
+  { icon: Newspaper, label: t.home.valueProps.sources },
 ] as const;
 
 export default async function HomePage({
@@ -51,14 +52,14 @@ export default async function HomePage({
           FullScope
         </h1>
         <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
-          One story, two sides, zero spin.
+          {t.brand.tagline}
         </p>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-xs font-medium text-muted-foreground">
-          <span>{allStories.length} stories</span>
+          <span>{t.home.storiesCount(allStories.length)}</span>
           <span aria-hidden>·</span>
-          <span>{CATEGORIES.length} categories</span>
+          <span>{t.home.categoriesCount(CATEGORIES.length)}</span>
           <span aria-hidden>·</span>
-          <span>every story, both sides</span>
+          <span>{t.home.everyStoryBothSides}</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground">
           {VALUE_PROPS.map(({ icon: Icon, label }) => (
@@ -75,7 +76,7 @@ export default async function HomePage({
         className="flex h-12 items-center gap-2.5 rounded-full border border-border bg-muted/50 px-4 text-sm text-muted-foreground transition-colors hover:border-foreground/30"
       >
         <Search className="size-4.5" strokeWidth={1.75} />
-        Search stories, people, places…
+        {t.home.searchPlaceholder}
       </Link>
 
       <CategoryFilter selected={category} counts={counts} />
@@ -83,31 +84,31 @@ export default async function HomePage({
       {stories.length === 0 ? (
         <EmptyState
           icon={Search}
-          title="No stories in this category yet"
-          description="Try a different category, or view all stories."
+          title={t.home.emptyTitle}
+          description={t.home.emptyDescription}
           action={
             <Link
               href="/"
               className="text-sm font-medium text-foreground underline underline-offset-4"
             >
-              View all stories
+              {t.home.viewAllStories}
             </Link>
           }
         />
       ) : (
         <div className="flex flex-col gap-6">
           {featured && (
-            <section aria-label="Featured story">
+            <section aria-label={t.home.featuredStoryAria}>
               <StoryCard story={featured} variant="featured" />
             </section>
           )}
 
           {category === "All" && <MostDiscussed stories={allStories} />}
 
-          <section aria-label="Latest stories" className="flex flex-col gap-4">
+          <section aria-label={t.home.latestStoriesAria} className="flex flex-col gap-4">
             {latest.length > 0 && (
               <h2 className="text-sm font-medium text-muted-foreground">
-                {category === "All" ? "Latest" : `${category} stories`}
+                {category === "All" ? t.home.latest : t.home.categoryStories(t.category[category])}
               </h2>
             )}
             <div className="flex flex-col gap-4">

@@ -1,38 +1,39 @@
 import Link from "next/link";
+import { t } from "@/lib/i18n";
 
 export function Footer() {
   return (
     <footer className="hidden md:block border-t border-border/60 mt-24">
       <div className="mx-auto max-w-6xl px-6 py-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">
         <p className="font-serif text-base text-foreground">FullScope</p>
-        <p>Understand the story, not just the headline.</p>
-        <nav aria-label="Footer" className="flex gap-6">
+        <p>{t.brand.tagline}</p>
+        <nav aria-label={t.nav.footerAria} className="flex gap-6">
           <Link href="/" className="hover:text-foreground transition-colors">
-            Home
+            {t.nav.home}
           </Link>
           <Link
             href="/search"
             className="hover:text-foreground transition-colors"
           >
-            Search
+            {t.nav.search}
           </Link>
           <Link
             href="/create"
             className="hover:text-foreground transition-colors"
           >
-            Create
+            {t.nav.create}
           </Link>
           <Link
             href="/posts"
             className="hover:text-foreground transition-colors"
           >
-            Posts
+            {t.nav.posts}
           </Link>
           <Link
             href="/feedback"
             className="hover:text-foreground transition-colors"
           >
-            Feedback
+            {t.nav.feedback}
           </Link>
         </nav>
       </div>

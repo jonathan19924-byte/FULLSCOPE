@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { Perspective } from "@/types/domain";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const TEASER_LENGTH = 140;
 
@@ -40,14 +41,14 @@ function PerspectiveCard({ label, perspective }: { label: string; perspective: P
         </p>
         {!expanded && (
           <span className="text-xs font-medium text-foreground underline underline-offset-2">
-            Read full perspective
+            {t.story.readFullPerspective}
           </span>
         )}
       </button>
 
       {expanded && perspective.claims.length > 0 && (
         <div className="flex flex-col gap-1.5 border-t border-border/60 p-4 pt-3">
-          <span className="text-xs font-medium text-muted-foreground">Key claims</span>
+          <span className="text-xs font-medium text-muted-foreground">{t.story.keyClaims}</span>
           <ul className="flex flex-col gap-1.5">
             {perspective.claims.map((claim, i) => (
               <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground/90">
@@ -61,7 +62,7 @@ function PerspectiveCard({ label, perspective }: { label: string; perspective: P
             onClick={() => setExpanded(false)}
             className="mt-2 self-start text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            Show less
+            {t.common.showLess}
           </button>
         </div>
       )}
@@ -79,11 +80,11 @@ export function Perspectives({
   return (
     <section aria-labelledby="perspectives-heading" className="flex flex-col gap-3">
       <h2 id="perspectives-heading" className="font-serif text-lg font-semibold text-foreground">
-        Two perspectives
+        {t.story.twoPerspectives}
       </h2>
       <div className="flex flex-col gap-4 lg:flex-row">
-        <PerspectiveCard label="Perspective A" perspective={perspectiveA} />
-        <PerspectiveCard label="Perspective B" perspective={perspectiveB} />
+        <PerspectiveCard label={t.story.perspectiveA} perspective={perspectiveA} />
+        <PerspectiveCard label={t.story.perspectiveB} perspective={perspectiveB} />
       </div>
     </section>
   );

@@ -4,6 +4,7 @@ import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 interface ShareButtonProps {
   title: string;
@@ -26,10 +27,10 @@ export async function shareStory({ title, text, path }: ShareButtonProps) {
 
   try {
     await navigator.clipboard.writeText(url);
-    toast("Link copied", { description: "Story link copied to your clipboard." });
+    toast(t.shared.linkCopied, { description: t.shared.linkCopiedDescription });
   } catch {
-    toast("Couldn't copy the link", {
-      description: "Copy it manually from your browser's address bar.",
+    toast(t.shared.copyFailed, {
+      description: t.shared.copyFailedDescription,
     });
   }
 }
@@ -40,7 +41,7 @@ export function ShareButton({ title, text, path, className }: ShareButtonProps) 
       type="button"
       variant="ghost"
       size="icon"
-      aria-label={`Share ${title}`}
+      aria-label={t.shared.shareAria(title)}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();

@@ -6,9 +6,10 @@ import {
   FlaskConical,
   type LucideIcon,
 } from "lucide-react";
+import { t } from "./i18n";
 
 interface CategoryMeta {
-  label: Category;
+  label: string;
   icon: LucideIcon;
   /** Tailwind utility classes — written out literally so Tailwind's scanner picks them up. */
   text: string;
@@ -21,7 +22,7 @@ interface CategoryMeta {
 
 export const CATEGORY_META: Record<Category, CategoryMeta> = {
   Politics: {
-    label: "Politics",
+    label: t.category.Politics,
     icon: Landmark,
     text: "text-politics",
     bg: "bg-politics-bg",
@@ -30,7 +31,7 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
     accent: "bg-politics",
   },
   World: {
-    label: "World",
+    label: t.category.World,
     icon: Globe2,
     text: "text-world",
     bg: "bg-world-bg",
@@ -39,7 +40,7 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
     accent: "bg-world",
   },
   Technology: {
-    label: "Technology",
+    label: t.category.Technology,
     icon: Cpu,
     text: "text-technology",
     bg: "bg-technology-bg",
@@ -48,7 +49,7 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
     accent: "bg-technology",
   },
   Science: {
-    label: "Science",
+    label: t.category.Science,
     icon: FlaskConical,
     text: "text-science",
     bg: "bg-science-bg",

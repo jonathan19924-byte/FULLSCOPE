@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { t } from "@/lib/i18n";
 
 export function ReadingProgress() {
   const [progress, setProgress] = useState(0);
@@ -25,7 +26,7 @@ export function ReadingProgress() {
     <div
       className="fixed inset-x-0 top-0 z-50 h-[2px] bg-transparent"
       role="progressbar"
-      aria-label="Reading progress"
+      aria-label={t.story.readingProgressAria}
       aria-valuenow={Math.round(progress)}
       aria-valuemin={0}
       aria-valuemax={100}

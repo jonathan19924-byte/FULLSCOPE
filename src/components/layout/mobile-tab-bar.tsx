@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
+import { t } from "@/lib/i18n";
 
 export function MobileTabBar() {
   const pathname = usePathname();
 
   return (
     <nav
-      aria-label="Primary"
+      aria-label={t.nav.primaryAria}
       className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >

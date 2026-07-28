@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Post } from "@/types/domain";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
+import { t } from "@/lib/i18n";
 
 function toFeedPost(post: Post): FeedPost {
   return {
@@ -37,11 +38,9 @@ export function ReactionsFeed({
   return (
     <section aria-labelledby="reactions-heading" className="flex flex-col gap-3">
       <h2 id="reactions-heading" className="font-serif text-lg font-semibold text-foreground">
-        Public reactions
+        {t.story.publicReactions}
       </h2>
-      <p className="text-xs text-muted-foreground">
-        A sample of reactions representing each perspective. Visual only in this preview.
-      </p>
+      <p className="text-xs text-muted-foreground">{t.story.publicReactionsDisclaimer}</p>
       <Tabs value={tab} onValueChange={(v) => setTab(v as "A" | "B")}>
         <TabsList className="w-full">
           <TabsTrigger value="A">{perspectiveAName} ({postsA.length})</TabsTrigger>
@@ -66,7 +65,7 @@ export function ReactionsFeed({
         href={`/posts?story=${storySlug}`}
         className="self-start text-xs font-medium text-foreground underline underline-offset-2"
       >
-        See more reactions
+        {t.story.seeMoreReactions}
       </Link>
     </section>
   );

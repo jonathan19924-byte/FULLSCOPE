@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { listStorySummaries } from "@/lib/services/story-service";
 import { BookmarksPageClient } from "@/components/bookmarks/bookmarks-page-client";
+import { t } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Bookmarks" };
+export const metadata: Metadata = { title: t.bookmarks.title };
 
 export default async function BookmarksPage() {
   const stories = await listStorySummaries();

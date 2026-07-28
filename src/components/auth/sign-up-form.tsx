@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
+import { t } from "@/lib/i18n";
 
 export function SignUpForm() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export function SignUpForm() {
       return;
     }
 
-    toast("Account created", { description: "You're signed in." });
+    toast(t.auth.accountCreatedToast, { description: t.auth.accountCreatedDescription });
     router.push(next);
     router.refresh();
   }
@@ -45,7 +46,7 @@ export function SignUpForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">Email</span>
+        <span className="text-sm font-medium text-foreground">{t.auth.email}</span>
         <input
           type="email"
           required
@@ -57,7 +58,7 @@ export function SignUpForm() {
       </label>
 
       <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">Password</span>
+        <span className="text-sm font-medium text-foreground">{t.auth.password}</span>
         <input
           type="password"
           required
@@ -74,16 +75,16 @@ export function SignUpForm() {
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <Button type="submit" size="lg" disabled={isSubmitting} className="h-12 w-full rounded-full">
-        {isSubmitting ? "Creating account…" : "Create account"}
+        {isSubmitting ? t.auth.creatingAccount : t.auth.createAccount}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t.auth.alreadyHaveAccount}{" "}
         <Link
           href={next !== "/" ? `/sign-in?next=${encodeURIComponent(next)}` : "/sign-in"}
           className="font-medium text-foreground underline underline-offset-2"
         >
-          Sign in
+          {t.auth.signIn}
         </Link>
       </p>
     </form>

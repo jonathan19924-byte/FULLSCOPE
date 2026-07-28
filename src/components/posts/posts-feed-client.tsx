@@ -8,6 +8,7 @@ import { usePosts } from "@/lib/posts/posts-context";
 import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { buttonVariants } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 export function PostsFeedClient({
   seedPosts,
@@ -74,46 +75,44 @@ export function PostsFeedClient({
     <div className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pt-6 pb-8">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-          Posts
+          {t.posts.pageTitle}
         </h1>
         <Link
           href="/create"
           className={buttonVariants({ variant: "default", size: "sm", className: "gap-1.5 rounded-full" })}
         >
           <CirclePlus className="size-4" strokeWidth={1.75} />
-          Post
+          {t.posts.writePost}
         </Link>
       </div>
 
       {storyFilterSlug ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-2.5 text-sm">
           <span className="min-w-0 truncate text-muted-foreground">
-            Showing reactions to{" "}
+            {t.posts.showingReactionsTo}
             <span className="font-medium text-foreground">
-              {filteredStoryTitle ?? "this story"}
+              {filteredStoryTitle ?? t.posts.thisStory}
             </span>
           </span>
           <Link
             href="/posts"
             className="shrink-0 text-xs font-medium text-foreground underline underline-offset-2"
           >
-            View all posts
+            {t.posts.viewAllPosts}
           </Link>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          Join the conversation — react to a story, or post your own take.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.posts.joinConversation}</p>
       )}
 
       {!isReady ? null : visibleFeed.length === 0 ? (
         <EmptyState
           icon={MessageSquare}
-          title="No posts yet"
-          description="Be the first to share what you think."
+          title={t.posts.emptyTitle}
+          description={t.posts.emptyDescription}
           action={
             <Link href="/create" className={buttonVariants({ variant: "default" })}>
-              Write a post
+              {t.posts.writePostCta}
             </Link>
           }
         />

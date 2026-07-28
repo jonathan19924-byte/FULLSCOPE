@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getBookmarkedSlugs } from "@/lib/bookmarks/get-bookmarks";
 import { getCommunityPosts } from "@/lib/posts/get-community-posts";
 import { DIR, LOCALE } from "@/lib/locale";
+import { t } from "@/lib/i18n";
 
 // English/LTR fonts — Latin only, no Hebrew glyph coverage.
 const geistSans = Geist({
@@ -43,11 +44,10 @@ const headingFont = LOCALE === "he" ? frankRuhlLibre : sourceSerif;
 
 export const metadata: Metadata = {
   title: {
-    default: "FullScope — Understand the story, not just the headline",
+    default: `FullScope — ${t.brand.tagline}`,
     template: "%s — FullScope",
   },
-  description:
-    "FullScope groups the news into Stories: verified facts, timelines, multiple perspectives, and public reaction in one place.",
+  description: t.brand.metaDescription,
 };
 
 export default async function RootLayout({
@@ -74,7 +74,7 @@ export default async function RootLayout({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-50 focus:rounded-md focus:bg-foreground focus:px-4 focus:py-2 focus:text-background"
         >
-          Skip to content
+          {t.common.skipToContent}
         </a>
         <Providers
           initialUser={user}

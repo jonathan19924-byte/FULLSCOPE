@@ -7,6 +7,7 @@ import { formatUpdatedAt, formatReadingTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { BookmarkButton } from "@/components/shared/bookmark-button";
 import { PerspectiveBar } from "@/components/story/perspective-bar";
+import { t } from "@/lib/i18n";
 
 interface StoryCardProps {
   story: StorySummary;
@@ -36,7 +37,7 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
           <Icon className={cn("size-5", meta.text)} strokeWidth={1.75} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className={cn("text-xs font-medium", meta.text)}>{story.category}</p>
+          <p className={cn("text-xs font-medium", meta.text)}>{meta.label}</p>
           <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
             {story.title}
           </p>
@@ -89,11 +90,11 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
               meta.text,
             )}
           >
-            {story.category}
+            {meta.label}
           </span>
           {isFeatured && (
             <span className="rounded-full bg-foreground/90 px-2.5 py-1 text-xs font-medium text-background backdrop-blur-sm">
-              Top Story
+              {t.story.topStory}
             </span>
           )}
         </div>

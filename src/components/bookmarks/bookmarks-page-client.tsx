@@ -5,6 +5,7 @@ import type { StorySummary } from "@/types/domain";
 import { useBookmarks } from "@/lib/bookmarks/bookmarks-context";
 import { StoryCard } from "@/components/story/story-card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { t } from "@/lib/i18n";
 
 export function BookmarksPageClient({ stories }: { stories: StorySummary[] }) {
   const { bookmarkedSlugs, isReady } = useBookmarks();
@@ -14,18 +15,16 @@ export function BookmarksPageClient({ stories }: { stories: StorySummary[] }) {
     <div className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pt-6 pb-8">
       <div className="flex flex-col gap-1">
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-          Bookmarks
+          {t.bookmarks.title}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Saved to your account — available wherever you sign in.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.bookmarks.description}</p>
       </div>
 
       {!isReady ? null : bookmarked.length === 0 ? (
         <EmptyState
           icon={Bookmark}
-          title="No bookmarks yet"
-          description="Tap the bookmark icon on any story to save it here for later."
+          title={t.bookmarks.emptyTitle}
+          description={t.bookmarks.emptyDescription}
         />
       ) : (
         <div className="flex flex-col gap-4">

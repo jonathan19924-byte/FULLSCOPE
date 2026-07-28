@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { getAllSeedPosts, getStandaloneSeedPosts } from "@/lib/services/story-service";
 import { PostsFeedClient } from "@/components/posts/posts-feed-client";
+import { t } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Posts" };
+export const metadata: Metadata = { title: t.posts.pageTitle };
 
 export default async function PostsPage({
   searchParams,

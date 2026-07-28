@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useBookmarks } from "@/lib/bookmarks/bookmarks-context";
 import { useUser } from "@/components/auth/user-provider";
+import { t } from "@/lib/i18n";
 
 interface BookmarkButtonProps {
   slug: string;
@@ -32,13 +33,13 @@ export function BookmarkButton({
     e.stopPropagation();
 
     if (!user) {
-      toast("Sign in to bookmark stories");
+      toast(t.shared.signInToBookmark);
       router.push(`/sign-in?next=${encodeURIComponent(pathname)}`);
       return;
     }
 
     toggleBookmark(slug);
-    toast(bookmarked ? "Removed from bookmarks" : "Saved to bookmarks", {
+    toast(bookmarked ? t.shared.removedFromBookmarks : t.shared.savedToBookmarks, {
       description: title,
     });
   }
@@ -50,14 +51,14 @@ export function BookmarkButton({
       size={variant === "icon" ? "icon" : "sm"}
       onClick={handleClick}
       aria-pressed={bookmarked}
-      aria-label={bookmarked ? `Remove ${title} from bookmarks` : `Bookmark ${title}`}
+      aria-label={bookmarked ? t.shared.removeFromBookmarksAria(title) : t.shared.bookmarkAria(title)}
       className={cn("rounded-full", className)}
     >
       <Bookmark
         className={cn(bookmarked && "fill-current")}
         strokeWidth={bookmarked ? 2.25 : 1.75}
       />
-      {variant === "labeled" && (bookmarked ? "Bookmarked" : "Bookmark")}
+      {variant === "labeled" && (bookmarked ? t.shared.bookmarked : t.shared.bookmark)}
     </Button>
   );
 }

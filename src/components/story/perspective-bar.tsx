@@ -1,6 +1,7 @@
 import { MessageSquare } from "lucide-react";
 import type { PerspectiveTally } from "@/types/domain";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 interface PerspectiveBarProps {
   perspectiveA: PerspectiveTally;
@@ -39,7 +40,7 @@ export function PerspectiveBar({ perspectiveA, perspectiveB, className }: Perspe
       </div>
       <span className="flex items-center gap-1 text-xs text-muted-foreground">
         <MessageSquare className="size-3.5" strokeWidth={1.75} />
-        {total} reader {total === 1 ? "post" : "posts"}
+        {t.story.readerPosts(total)}
       </span>
     </div>
   );

@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 const FEEDBACK_EMAIL = "jonathan19924@gmail.com";
-
-const IMPRESSIONS = ["Great", "Good", "Okay", "Poor"] as const;
-const DEVICES = ["Phone", "Tablet", "Desktop"] as const;
 
 function SegmentedField({
   label,
@@ -97,15 +95,15 @@ export function FeedbackForm() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const subject = "FullScope feedback";
+    const subject = t.feedback.mailSubject;
     const body = [
-      `Overall impression: ${impression || "(not answered)"}`,
-      `Device type: ${device || "(not answered)"}`,
-      `Story tested: ${storyTested || "(not answered)"}`,
-      `What was most useful: ${mostUseful || "(not answered)"}`,
-      `What was confusing: ${confusing || "(not answered)"}`,
-      `What felt unnecessary: ${unnecessary || "(not answered)"}`,
-      `Additional comments: ${comments || "(none)"}`,
+      `${t.feedback.mailOverallImpression}${impression || t.feedback.mailNotAnswered}`,
+      `${t.feedback.mailDeviceType}${device || t.feedback.mailNotAnswered}`,
+      `${t.feedback.mailStoryTested}${storyTested || t.feedback.mailNotAnswered}`,
+      `${t.feedback.mailMostUseful}${mostUseful || t.feedback.mailNotAnswered}`,
+      `${t.feedback.mailConfusing}${confusing || t.feedback.mailNotAnswered}`,
+      `${t.feedback.mailUnnecessary}${unnecessary || t.feedback.mailNotAnswered}`,
+      `${t.feedback.mailAdditionalComments}${comments || t.feedback.mailNone}`,
     ].join("\n");
 
     const mailto = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -116,50 +114,50 @@ export function FeedbackForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <SegmentedField
-        label="Overall impression"
-        options={IMPRESSIONS}
+        label={t.feedback.overallImpression}
+        options={t.feedback.impressions}
         value={impression}
         onChange={setImpression}
       />
-      <SegmentedField label="Device type" options={DEVICES} value={device} onChange={setDevice} />
+      <SegmentedField label={t.feedback.deviceType} options={t.feedback.devices} value={device} onChange={setDevice} />
       <TextField
-        label="Which story did you test?"
+        label={t.feedback.whichStory}
         value={storyTested}
         onChange={setStoryTested}
-        placeholder="e.g. Senate Rejects War Powers Resolution"
+        placeholder={t.feedback.whichStoryPlaceholder}
       />
       <TextField
-        label="What was most useful?"
+        label={t.feedback.mostUseful}
         value={mostUseful}
         onChange={setMostUseful}
         multiline
       />
       <TextField
-        label="What was confusing?"
+        label={t.feedback.confusing}
         value={confusing}
         onChange={setConfusing}
         multiline
       />
       <TextField
-        label="What felt unnecessary?"
+        label={t.feedback.unnecessary}
         value={unnecessary}
         onChange={setUnnecessary}
         multiline
       />
       <TextField
-        label="Anything else? (optional)"
+        label={t.feedback.anythingElse}
         value={comments}
         onChange={setComments}
         multiline
       />
 
       <Button type="submit" size="lg" className="h-12 w-full rounded-full">
-        Send feedback
+        {t.feedback.send}
       </Button>
 
       {sent && (
         <p className="text-center text-sm text-muted-foreground" role="status">
-          Your email app should have opened with your feedback pre-filled — just hit send.
+          {t.feedback.sentDescription}
         </p>
       )}
     </form>

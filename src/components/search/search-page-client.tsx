@@ -7,6 +7,7 @@ import { matchesQuery, toSummary } from "@/lib/services/story-summary";
 import { StoryCard } from "@/components/story/story-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 export function SearchPageClient({ stories }: { stories: StoryWithPosts[] }) {
   const [query, setQuery] = useState("");
@@ -20,7 +21,7 @@ export function SearchPageClient({ stories }: { stories: StoryWithPosts[] }) {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pt-6 pb-8">
       <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-        Search
+        {t.search.title}
       </h1>
 
       <div className="relative flex items-center">
@@ -35,8 +36,8 @@ export function SearchPageClient({ stories }: { stories: StoryWithPosts[] }) {
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by title, topic, person, place…"
-          aria-label="Search stories"
+          placeholder={t.search.placeholder}
+          aria-label={t.search.searchAria}
           className="h-12 w-full rounded-full border border-border bg-muted/50 ps-11 pe-11 text-[15px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
         />
         {query && (
@@ -44,7 +45,7 @@ export function SearchPageClient({ stories }: { stories: StoryWithPosts[] }) {
             type="button"
             variant="ghost"
             size="icon"
-            aria-label="Clear search"
+            aria-label={t.search.clearAria}
             onClick={() => setQuery("")}
             className="absolute end-1.5 rounded-full"
           >
@@ -56,24 +57,22 @@ export function SearchPageClient({ stories }: { stories: StoryWithPosts[] }) {
       {!trimmed && (
         <EmptyState
           icon={SearchIcon}
-          title="Search FullScope"
-          description="Try a topic, a person's name, a country, a company, or a category like “Technology.”"
+          title={t.search.searchFullScope}
+          description={t.search.hint}
         />
       )}
 
       {trimmed && results.length === 0 && (
         <EmptyState
           icon={SearchIcon}
-          title="No stories found"
-          description={`Nothing matched "${trimmed}". Try a different word or check your spelling.`}
+          title={t.search.noResultsTitle}
+          description={t.search.noResultsDescription(trimmed)}
         />
       )}
 
       {results.length > 0 && (
         <div className="flex flex-col gap-4" aria-live="polite">
-          <p className="text-sm text-muted-foreground">
-            {results.length} {results.length === 1 ? "result" : "results"}
-          </p>
+          <p className="text-sm text-muted-foreground">{t.posts.results(results.length)}</p>
           {results.map((story) => (
             <StoryCard key={story.id} story={story} variant="standard" />
           ))}

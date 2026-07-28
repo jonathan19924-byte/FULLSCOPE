@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BadgeCheck, CircleAlert, CircleHelp, Newspaper } from "lucide-react";
 import type { Confidence, Fact } from "@/types/domain";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const COLLAPSE_LENGTH = 120;
 
@@ -12,22 +13,22 @@ const CONFIDENCE_META: Record<
   { label: string; icon: typeof BadgeCheck; className: string }
 > = {
   confirmed: {
-    label: "Confirmed",
+    label: t.story.confidence.confirmed,
     icon: BadgeCheck,
     className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
   },
   reported: {
-    label: "Reported",
+    label: t.story.confidence.reported,
     icon: Newspaper,
     className: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400",
   },
   disputed: {
-    label: "Disputed",
+    label: t.story.confidence.disputed,
     icon: CircleAlert,
     className: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
   },
   unknown: {
-    label: "Unknown",
+    label: t.story.confidence.unknown,
     icon: CircleHelp,
     className: "bg-muted text-muted-foreground",
   },
@@ -66,7 +67,7 @@ function TimelineEntry({ fact, index }: { fact: Fact; index: number }) {
             onClick={() => setExpanded((v) => !v)}
             className="mt-1 text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            {expanded ? "Show less" : "Read more"}
+            {expanded ? t.common.showLess : t.common.readMore}
           </button>
         )}
       </div>
@@ -81,12 +82,9 @@ export function Timeline({ facts }: { facts: Fact[] }) {
     <section aria-labelledby="timeline-heading" className="flex flex-col gap-3">
       <div>
         <h2 id="timeline-heading" className="font-serif text-lg font-semibold text-foreground">
-          Timeline
+          {t.story.timeline}
         </h2>
-        <p className="text-xs text-muted-foreground">
-          Reported by named news sources. FullScope does not independently
-          verify claims beyond what those sources state.
-        </p>
+        <p className="text-xs text-muted-foreground">{t.story.timelineDisclaimer}</p>
       </div>
       <ol className="flex flex-col">
         {facts.map((fact, i) => (

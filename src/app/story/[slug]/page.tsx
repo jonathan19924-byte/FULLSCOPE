@@ -13,6 +13,7 @@ import { CommunityPosts } from "@/components/story/community-posts";
 import { SourcesList } from "@/components/story/sources-list";
 import { RelatedStories } from "@/components/story/related-stories";
 import { Separator } from "@/components/ui/separator";
+import { t } from "@/lib/i18n";
 
 /** This route always renders dynamically anyway (the root layout reads
  * cookies() for the auth check on every request). generateStaticParams was
@@ -32,7 +33,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const story = await getStoryBySlug(slug);
-  if (!story) return { title: "Story not found" };
+  if (!story) return { title: t.story.notFound };
   return {
     title: story.title,
     description: story.summary,

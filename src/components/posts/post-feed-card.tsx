@@ -17,6 +17,7 @@ import { CATEGORY_META } from "@/lib/category";
 import { formatUpdatedAt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types/domain";
+import { t } from "@/lib/i18n";
 
 function initials(name: string) {
   return name
@@ -29,7 +30,7 @@ function initials(name: string) {
 }
 
 function username(name: string) {
-  return `@${name.toLowerCase().replace(/[^a-z0-9]+/g, "")}`;
+  return `@${name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "")}`;
 }
 
 export interface FeedPost {
@@ -57,7 +58,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
 
   function handleReply(e: React.FormEvent) {
     e.preventDefault();
-    toast("Replies are coming in a future version");
+    toast(t.posts.repliesComingSoon);
     setReply("");
   }
 
@@ -83,14 +84,14 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
                 className="flex w-fit items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400"
               >
                 <Sparkles className="size-3" strokeWidth={1.75} />
-                Shaped this story
+                {t.story.shapedThisStory}
               </span>
             )}
           </DialogTrigger>
 
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Post</DialogTitle>
+              <DialogTitle>{t.posts.postDialogTitle}</DialogTitle>
             </DialogHeader>
             <div className="flex gap-3">
               <Avatar size="sm">
@@ -116,12 +117,12 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
               <textarea
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
-                placeholder="Post your reply"
+                placeholder={t.posts.replyPlaceholder}
                 rows={3}
                 className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
               />
               <Button type="submit" size="sm" className="self-end rounded-full">
-                Reply
+                {t.posts.reply}
               </Button>
             </form>
           </DialogContent>
@@ -132,7 +133,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
             type="button"
             onClick={toggleLike}
             aria-pressed={liked}
-            aria-label={liked ? "Unlike" : "Like"}
+            aria-label={liked ? t.posts.unlike : t.posts.like}
             className="-m-1.5 flex items-center gap-1 rounded-full p-1.5 transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <Heart

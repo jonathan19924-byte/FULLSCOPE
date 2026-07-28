@@ -1,4 +1,5 @@
 import { Scale } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 export function KeyDifferences({ cause, impact }: { cause: string; impact: string }) {
   return (
@@ -11,16 +12,16 @@ export function KeyDifferences({ cause, impact }: { cause: string; impact: strin
           <Scale className="size-3.5 text-foreground" strokeWidth={1.75} />
         </span>
         <h2 id="key-differences-heading" className="font-serif text-lg font-semibold text-foreground">
-          Why perspectives differ
+          {t.story.whyPerspectivesDiffer}
         </h2>
       </div>
       <div className="flex flex-col gap-3 text-sm leading-relaxed text-foreground/90">
         <div>
-          <p className="text-xs font-medium text-muted-foreground">Root disagreement</p>
+          <p className="text-xs font-medium text-muted-foreground">{t.story.rootDisagreement}</p>
           <p>{cause}</p>
         </div>
         <div>
-          <p className="text-xs font-medium text-muted-foreground">What it affects</p>
+          <p className="text-xs font-medium text-muted-foreground">{t.story.whatItAffects}</p>
           <p>{impact}</p>
         </div>
       </div>

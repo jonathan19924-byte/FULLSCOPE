@@ -10,6 +10,7 @@ import { useBookmarks } from "@/lib/bookmarks/bookmarks-context";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
 import { signOutAction } from "@/lib/auth/actions";
+import { t } from "@/lib/i18n";
 
 export function ProfilePageClient() {
   const { bookmarkedSlugs, isReady: bookmarksReady } = useBookmarks();
@@ -17,25 +18,25 @@ export function ProfilePageClient() {
   const { user } = useUser();
   const isReady = bookmarksReady && postsReady;
   const email = user?.email ?? "";
-  const displayName = email ? email.split("@")[0] : "Guest Reader";
+  const displayName = email ? email.split("@")[0] : t.profile.guestReader;
 
   const myPostCount = communityPosts.filter((p) => p.userId === user?.id).length;
   const myContributions = communityPosts.filter((p) => p.userId === user?.id && p.contributionTheme);
 
   const stats = [
-    { label: "Posts", value: isReady ? myPostCount : 0 },
-    { label: "Bookmarks", value: isReady ? bookmarkedSlugs.length : 0 },
+    { label: t.profile.statPosts, value: isReady ? myPostCount : 0 },
+    { label: t.profile.statBookmarks, value: isReady ? bookmarkedSlugs.length : 0 },
   ];
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 pt-6 pb-10">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-          Profile
+          {t.profile.title}
         </h1>
         <Link
           href="/settings"
-          aria-label="Settings"
+          aria-label={t.profile.settingsAria}
           className="flex size-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
         >
           <Settings className="size-5 text-muted-foreground" strokeWidth={1.75} />
@@ -54,11 +55,11 @@ export function ProfilePageClient() {
           <button
             type="button"
             onClick={() =>
-              toast("Profile editing is coming in a future version", {
-                description: "Name, handle, and avatar aren't editable yet.",
+              toast(t.profile.editComingSoon, {
+                description: t.profile.editComingSoonDescription,
               })
             }
-            aria-label="Edit profile"
+            aria-label={t.profile.editProfileAria}
             className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
             <Pencil className="size-3.5" strokeWidth={1.75} />
@@ -66,7 +67,7 @@ export function ProfilePageClient() {
           <button
             type="button"
             onClick={() => signOutAction()}
-            aria-label="Sign out"
+            aria-label={t.profile.signOutAria}
             className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
             <LogOut className="size-3.5" strokeWidth={1.75} />
@@ -91,7 +92,7 @@ export function ProfilePageClient() {
       <section className="flex flex-col gap-3">
         <h2 className="flex items-center gap-1.5 text-sm font-medium text-foreground">
           <TrendingUp className="size-4" strokeWidth={1.75} />
-          Your impact
+          {t.profile.yourImpact}
         </h2>
         {myContributions.length > 0 ? (
           <ul className="flex flex-col gap-2">
@@ -102,13 +103,13 @@ export function ProfilePageClient() {
               >
                 <p className="text-sm font-medium text-foreground">{post.contributionTheme}</p>
                 <p className="text-xs text-muted-foreground">
-                  Your post shaped{" "}
+                  {t.profile.yourPostShaped}
                   {post.relatedStorySlug ? (
                     <Link href={`/story/${post.relatedStorySlug}`} className="underline underline-offset-2">
-                      {post.relatedStoryTitle ?? "this story"}
+                      {post.relatedStoryTitle ?? t.profile.thisStory}
                     </Link>
                   ) : (
-                    (post.relatedStoryTitle ?? "a story")
+                    (post.relatedStoryTitle ?? t.profile.aStory)
                   )}
                 </p>
               </li>
@@ -119,21 +120,15 @@ export function ProfilePageClient() {
             <div className="flex size-10 items-center justify-center rounded-full bg-muted">
               <TrendingUp className="size-5 text-muted-foreground" strokeWidth={1.5} />
             </div>
-            <p className="font-medium text-foreground">
-              Your activity hasn&apos;t shaped any stories yet
-            </p>
-            <p className="max-w-xs text-sm text-muted-foreground">
-              When several readers make the same point, we fold it into the story — add posts to have a chance at shaping the narrative.
-            </p>
+            <p className="font-medium text-foreground">{t.profile.impactEmptyTitle}</p>
+            <p className="max-w-xs text-sm text-muted-foreground">{t.profile.impactEmptyDescription}</p>
           </div>
         )}
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Content preferences</h2>
-        <p className="text-sm text-muted-foreground">
-          Personalized recommendations are planned for a future version. For now, every category is shown to every reader.
-        </p>
+        <h2 className="text-sm font-medium text-muted-foreground">{t.profile.contentPreferences}</h2>
+        <p className="text-sm text-muted-foreground">{t.profile.contentPreferencesDescription}</p>
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((category) => {
             const meta = CATEGORY_META[category];
@@ -148,7 +143,7 @@ export function ProfilePageClient() {
                 )}
               >
                 <Icon className="size-3.5" strokeWidth={1.75} />
-                {category}
+                {meta.label}
               </span>
             );
           })}
@@ -165,8 +160,8 @@ export function ProfilePageClient() {
               <Bookmark className="size-5 text-muted-foreground" strokeWidth={1.75} />
             </div>
             <div>
-              <p className="font-medium text-foreground">Bookmarks</p>
-              <p className="text-sm text-muted-foreground">Stories you&apos;ve saved to your account</p>
+              <p className="font-medium text-foreground">{t.profile.bookmarksRowTitle}</p>
+              <p className="text-sm text-muted-foreground">{t.profile.bookmarksRowDescription}</p>
             </div>
           </div>
         </Link>
@@ -180,8 +175,8 @@ export function ProfilePageClient() {
               <MessageSquareText className="size-5 text-muted-foreground" strokeWidth={1.75} />
             </div>
             <div>
-              <p className="font-medium text-foreground">Send Feedback</p>
-              <p className="text-sm text-muted-foreground">Tell us what&apos;s working and what isn&apos;t</p>
+              <p className="font-medium text-foreground">{t.profile.sendFeedbackTitle}</p>
+              <p className="text-sm text-muted-foreground">{t.profile.sendFeedbackDescription}</p>
             </div>
           </div>
         </Link>

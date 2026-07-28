@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 export default function Error({
   error,
@@ -20,11 +21,11 @@ export default function Error({
     <div className="mx-auto flex max-w-2xl flex-col px-4 pt-16 pb-10">
       <EmptyState
         icon={TriangleAlert}
-        title="Something went wrong"
-        description="We couldn't load this page. Please try again."
+        title={t.errors.somethingWrong}
+        description={t.errors.couldntLoad}
         action={
           <Button onClick={() => reset()} className="rounded-full">
-            Try again
+            {t.errors.tryAgain}
           </Button>
         }
       />

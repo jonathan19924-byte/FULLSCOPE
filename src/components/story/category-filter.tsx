@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CATEGORIES, type Category } from "@/types/domain";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 interface CategoryFilterProps {
   selected: Category | "All";
@@ -12,7 +13,7 @@ export function CategoryFilter({ selected, counts }: CategoryFilterProps) {
 
   return (
     <nav
-      aria-label="Filter stories by category"
+      aria-label={t.story.filterByCategoryAria}
       className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0"
     >
       {options.map((option) => {
@@ -30,7 +31,7 @@ export function CategoryFilter({ selected, counts }: CategoryFilterProps) {
                 : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
             )}
           >
-            {option}
+            {option === "All" ? t.common.all : t.category[option]}
             <span className={cn(isActive ? "opacity-70" : "opacity-60")}> ({counts[option]})</span>
           </Link>
         );

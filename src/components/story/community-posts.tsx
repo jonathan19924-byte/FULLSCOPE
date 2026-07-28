@@ -2,6 +2,7 @@
 
 import { usePosts } from "@/lib/posts/posts-context";
 import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
+import { t } from "@/lib/i18n";
 
 export function CommunityPosts({ storySlug }: { storySlug: string }) {
   const { communityPosts, isReady } = usePosts();
@@ -24,7 +25,7 @@ export function CommunityPosts({ storySlug }: { storySlug: string }) {
   return (
     <section aria-labelledby="community-posts-heading" className="flex flex-col gap-3">
       <h2 id="community-posts-heading" className="font-serif text-lg font-semibold text-foreground">
-        From readers
+        {t.story.fromReaders}
       </h2>
       <ul className="flex flex-col divide-y divide-border/60 border-t border-border/60">
         {feed.map((post) => (

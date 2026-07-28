@@ -6,6 +6,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 export function SignInForm() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export function SignInForm() {
       return;
     }
 
-    toast("Signed in");
+    toast(t.auth.signedInToast);
     router.push(next);
     router.refresh();
   }
@@ -39,7 +40,7 @@ export function SignInForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">Email</span>
+        <span className="text-sm font-medium text-foreground">{t.auth.email}</span>
         <input
           type="email"
           required
@@ -51,7 +52,7 @@ export function SignInForm() {
       </label>
 
       <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">Password</span>
+        <span className="text-sm font-medium text-foreground">{t.auth.password}</span>
         <input
           type="password"
           required
@@ -65,16 +66,16 @@ export function SignInForm() {
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <Button type="submit" size="lg" disabled={isSubmitting} className="h-12 w-full rounded-full">
-        {isSubmitting ? "Signing in…" : "Sign in"}
+        {isSubmitting ? t.auth.signingIn : t.auth.signIn}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        {t.auth.noAccount}{" "}
         <Link
           href={next !== "/" ? `/sign-up?next=${encodeURIComponent(next)}` : "/sign-up"}
           className="font-medium text-foreground underline underline-offset-2"
         >
-          Sign up
+          {t.auth.signUp}
         </Link>
       </p>
     </form>

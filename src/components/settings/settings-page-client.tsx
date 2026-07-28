@@ -22,11 +22,12 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/components/auth/user-provider";
 import { signOutAction } from "@/lib/auth/actions";
 import { buttonVariants } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 const THEME_OPTIONS = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
+  { value: "light", label: t.settings.themeLight, icon: Sun },
+  { value: "dark", label: t.settings.themeDark, icon: Moon },
+  { value: "system", label: t.settings.themeSystem, icon: Monitor },
 ] as const;
 
 function ComingSoonRow({
@@ -42,8 +43,8 @@ function ComingSoonRow({
     <button
       type="button"
       onClick={() =>
-        toast(`${title} is coming in a future version`, {
-          description: "Full accounts aren't part of this preview yet.",
+        toast(t.settings.comingSoonToast(title), {
+          description: t.settings.comingSoonDescription,
         })
       }
       className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-muted/50"
@@ -80,7 +81,7 @@ function DisabledToggleRow({
       </div>
       <span
         aria-disabled="true"
-        aria-label={`${title} — planned for a future version`}
+        aria-label={t.settings.comingSoonAria(title)}
         className="relative inline-flex h-6 w-11 shrink-0 cursor-not-allowed items-center rounded-full bg-muted opacity-60"
       >
         <span className="inline-block size-4.5 translate-x-0.5 rounded-full bg-background shadow-sm" />
@@ -102,22 +103,22 @@ export function SettingsPageClient() {
         <button
           type="button"
           onClick={() => router.back()}
-          aria-label="Back"
+          aria-label={t.settings.backAria}
           className="flex size-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
         >
           <ArrowLeft className="size-5 rtl:rotate-180" strokeWidth={1.75} />
         </button>
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
-          Settings
+          {t.settings.title}
         </h1>
       </div>
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Account
+          {t.settings.account}
         </h2>
         <div className="divide-y divide-border/60 rounded-2xl border border-border/60 bg-card">
-          <ComingSoonRow icon={User} title="Profile info" description="Name, handle, bio, avatar" />
+          <ComingSoonRow icon={User} title={t.settings.profileInfo} description={t.settings.profileInfoDescription} />
           {user ? (
             <div className="flex w-full items-center gap-3 p-4">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
@@ -125,16 +126,16 @@ export function SettingsPageClient() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">{user.email}</p>
-                <p className="text-sm text-muted-foreground">Signed in</p>
+                <p className="text-sm text-muted-foreground">{t.settings.signedIn}</p>
               </div>
               <button
                 type="button"
                 onClick={() => signOutAction()}
-                aria-label="Sign out"
+                aria-label={t.settings.signOutAria}
                 className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 <LogOut className="size-3.5" strokeWidth={1.75} />
-                Sign out
+                {t.settings.signOut}
               </button>
             </div>
           ) : (
@@ -143,37 +144,35 @@ export function SettingsPageClient() {
                 <Mail className="size-4.5 text-muted-foreground" strokeWidth={1.75} />
               </div>
               <div className="flex-1">
-                <p className="font-medium text-foreground">Not signed in</p>
-                <p className="text-sm text-muted-foreground">Sign in to bookmark and post</p>
+                <p className="font-medium text-foreground">{t.settings.notSignedIn}</p>
+                <p className="text-sm text-muted-foreground">{t.settings.signInToBookmarkAndPost}</p>
               </div>
               <Link href="/sign-in" className={buttonVariants({ variant: "outline", size: "sm", className: "rounded-full" })}>
-                Sign in
+                {t.settings.signIn}
               </Link>
             </div>
           )}
         </div>
         <p className="px-1 text-xs text-muted-foreground">
-          {user
-            ? "Full profile editing is coming in a future version."
-            : "Sign in to bookmark stories and post your own reactions."}
+          {user ? t.settings.fullEditingComingSoon : t.settings.signInDescription}
         </p>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Notifications
+          {t.settings.notifications}
         </h2>
         <div className="divide-y divide-border/60 rounded-2xl border border-border/60 bg-card">
-          <DisabledToggleRow icon={Bell} title="Push notifications" description="Enable or disable push notifications" />
-          <DisabledToggleRow icon={Newspaper} title="Event updates" description="Get alerts when key stories change" />
-          <DisabledToggleRow icon={Heart} title="Post interactions" description="Likes, replies, mentions" />
+          <DisabledToggleRow icon={Bell} title={t.settings.pushNotifications} description={t.settings.pushNotificationsDescription} />
+          <DisabledToggleRow icon={Newspaper} title={t.settings.eventUpdates} description={t.settings.eventUpdatesDescription} />
+          <DisabledToggleRow icon={Heart} title={t.settings.postInteractions} description={t.settings.postInteractionsDescription} />
         </div>
-        <p className="px-1 text-xs text-muted-foreground">Planned for a future version.</p>
+        <p className="px-1 text-xs text-muted-foreground">{t.settings.plannedForFuture}</p>
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Appearance
+          {t.settings.appearance}
         </h2>
         <div className="flex gap-2">
           {THEME_OPTIONS.map((option) => {

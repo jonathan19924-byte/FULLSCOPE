@@ -1,5 +1,6 @@
 import { Newspaper } from "lucide-react";
 import type { Source } from "@/types/domain";
+import { t } from "@/lib/i18n";
 
 export function SourcesList({ sources }: { sources: Source[] }) {
   if (sources.length === 0) return null;
@@ -8,11 +9,9 @@ export function SourcesList({ sources }: { sources: Source[] }) {
     <section aria-labelledby="sources-heading" className="flex flex-col gap-3">
       <div>
         <h2 id="sources-heading" className="font-serif text-lg font-semibold text-foreground">
-          Sources
+          {t.story.sources}
         </h2>
-        <p className="text-xs text-muted-foreground">
-          Supporting references reported this story — not FullScope stories themselves.
-        </p>
+        <p className="text-xs text-muted-foreground">{t.story.sourcesDisclaimer}</p>
       </div>
       <ul className="flex flex-wrap gap-2">
         {sources.map((source, i) => (

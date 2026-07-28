@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
 import { ThemeToggle } from "./theme-toggle";
+import { t } from "@/lib/i18n";
 
 export function NavBar() {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export function NavBar() {
           FullScope
         </Link>
 
-        <nav aria-label="Primary" className="flex items-center gap-1">
+        <nav aria-label={t.nav.primaryAria} className="flex items-center gap-1">
           {NAV_ITEMS.map((item) => {
             const isActive =
               item.href === "/"
