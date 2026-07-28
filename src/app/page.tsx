@@ -17,11 +17,13 @@ function parseCategory(raw: string | string[] | undefined): Category | "All" {
   return (CATEGORIES as string[]).includes(value ?? "") ? (value as Category) : "All";
 }
 
+// Kept in English per explicit request — an exception to the rest of the
+// Hebrew UI translation, specific to this row.
 const VALUE_PROPS = [
-  { icon: BadgeCheck, label: t.home.valueProps.namedSources },
-  { icon: Clock, label: t.home.valueProps.timelines },
-  { icon: Scale, label: t.home.valueProps.twoPerspectives },
-  { icon: Newspaper, label: t.home.valueProps.sources },
+  { icon: BadgeCheck, label: "Named sources" },
+  { icon: Clock, label: "Timelines" },
+  { icon: Scale, label: "Two perspectives" },
+  { icon: Newspaper, label: "Sources" },
 ] as const;
 
 export default async function HomePage({
@@ -47,21 +49,23 @@ export default async function HomePage({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 pt-6 pb-8 sm:pt-10">
-      <div className="flex flex-col gap-2 border-b border-border/60 pb-6">
+      <div className="flex flex-col items-center gap-2 border-b border-border/60 pb-6 text-center">
         <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground">
           FullScope
         </h1>
         <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
           {t.brand.tagline}
         </p>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1 text-xs font-medium text-muted-foreground">
-          <span>{t.home.storiesCount(allStories.length)}</span>
+        {/* Kept in English per explicit request — an exception to the rest
+         * of the Hebrew UI translation, specific to this row. */}
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 pt-1 text-xs font-medium text-muted-foreground">
+          <span>{allStories.length} stories</span>
           <span aria-hidden>·</span>
-          <span>{t.home.categoriesCount(CATEGORIES.length)}</span>
+          <span>{CATEGORIES.length} categories</span>
           <span aria-hidden>·</span>
-          <span>{t.home.everyStoryBothSides}</span>
+          <span>every story, both sides</span>
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground">
           {VALUE_PROPS.map(({ icon: Icon, label }) => (
             <span key={label} className="flex items-center gap-1.5">
               <Icon className="size-3.5" strokeWidth={1.75} />
