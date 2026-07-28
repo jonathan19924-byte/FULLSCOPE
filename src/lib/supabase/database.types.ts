@@ -110,6 +110,18 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["community_posts"]["Row"]>;
         Relationships: [];
       };
+      community_post_likes: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["community_post_likes"]["Row"]> &
+          Pick<Database["public"]["Tables"]["community_post_likes"]["Row"], "post_id" | "user_id">;
+        Update: Partial<Database["public"]["Tables"]["community_post_likes"]["Row"]>;
+        Relationships: [];
+      };
       post_contributions: {
         Row: {
           id: string;

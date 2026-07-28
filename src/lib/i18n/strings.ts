@@ -249,6 +249,7 @@ export const strings = {
     },
     shared: {
       signInToBookmark: "Sign in to bookmark stories",
+      signInToLike: "Sign in to like posts",
       removedFromBookmarks: "Removed from bookmarks",
       savedToBookmarks: "Saved to bookmarks",
       removeFromBookmarksAria: (title: string) => `Remove ${title} from bookmarks`,
@@ -516,6 +517,7 @@ export const strings = {
     },
     shared: {
       signInToBookmark: "התחברו כדי לשמור כתבות",
+      signInToLike: "התחברו כדי לתת לייק לפוסטים",
       removedFromBookmarks: "הוסר מהשמורים",
       savedToBookmarks: "נשמר בשמורים",
       removeFromBookmarksAria: (title: string) => `הסרת ${title} מהשמורים`,

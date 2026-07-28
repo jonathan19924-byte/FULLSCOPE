@@ -9,6 +9,7 @@ import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
+import { sortByRank } from "@/lib/posts/rank";
 
 export function PostsFeedClient({
   seedPosts,
@@ -27,7 +28,7 @@ export function PostsFeedClient({
       displayName: p.displayName,
       content: p.content,
       createdAt: p.createdAt,
-      likeCount: 0,
+      likeCount: p.likeCount,
       replyCount: 0,
       story:
         p.relatedStorySlug && p.relatedStoryTitle && p.relatedStoryCategory
@@ -38,6 +39,8 @@ export function PostsFeedClient({
             }
           : undefined,
       contributionTheme: p.contributionTheme,
+      communityPostId: p.id,
+      likedByMe: p.likedByMe,
     }));
 
     const fromSeed: FeedPost[] = seedPosts.map((p) => ({
@@ -59,9 +62,7 @@ export function PostsFeedClient({
       replyCount: p.replyCount,
     }));
 
-    return [...fromCommunity, ...fromSeed, ...fromStandalone].sort((a, b) =>
-      a.createdAt < b.createdAt ? 1 : -1,
-    );
+    return sortByRank([...fromCommunity, ...fromSeed, ...fromStandalone]);
   }, [communityPosts, seedPosts, standalonePosts]);
 
   const visibleFeed = storyFilterSlug

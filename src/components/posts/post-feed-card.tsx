@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { Heart, MessageCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,6 +19,8 @@ import { formatUpdatedAt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types/domain";
 import { t } from "@/lib/i18n";
+import { usePosts } from "@/lib/posts/posts-context";
+import { useUser } from "@/components/auth/user-provider";
 
 function initials(name: string) {
   return name
@@ -44,16 +47,40 @@ export interface FeedPost {
   /** Set when this post was one of several distinct readers making the same
    * point that got folded into the story's own content. */
   contributionTheme?: string;
+  /** Present only for real community posts — enables real, persisted
+   * liking via toggleCommunityPostLikeAction. Seed/generated posts have no
+   * backing row to like against, so they keep the old local-only toggle. */
+  communityPostId?: string;
+  likedByMe?: boolean;
 }
 
 export function PostFeedCard({ post }: { post: FeedPost }) {
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(post.likeCount);
+  const { toggleLike: toggleCommunityLike } = usePosts();
+  const { user } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isCommunityPost = post.communityPostId !== undefined;
+  const [localLiked, setLocalLiked] = useState(false);
+  const [localLikeCount, setLocalLikeCount] = useState(post.likeCount);
   const [reply, setReply] = useState("");
 
+  const liked = isCommunityPost ? (post.likedByMe ?? false) : localLiked;
+  const likeCount = isCommunityPost ? post.likeCount : localLikeCount;
+
   function toggleLike() {
-    setLiked((v) => !v);
-    setLikeCount((c) => (liked ? c - 1 : c + 1));
+    if (isCommunityPost) {
+      if (!user) {
+        toast(t.shared.signInToLike);
+        router.push(`/sign-in?next=${encodeURIComponent(pathname)}`);
+        return;
+      }
+      toggleCommunityLike(post.communityPostId!);
+      return;
+    }
+
+    setLocalLiked((v) => !v);
+    setLocalLikeCount((c) => (localLiked ? c - 1 : c + 1));
   }
 
   function handleReply(e: React.FormEvent) {

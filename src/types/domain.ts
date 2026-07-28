@@ -138,4 +138,8 @@ export interface CommunityPost {
    * making the same point) that got folded into the story — see
    * src/lib/articles/trend-detection.ts. The theme text, for display. */
   contributionTheme?: string;
+  likeCount: number;
+  /** Whether the CURRENTLY SIGNED-IN reader has liked this post — undefined
+   * when viewing signed out (there's no "my like" to speak of). */
+  likedByMe?: boolean;
 }

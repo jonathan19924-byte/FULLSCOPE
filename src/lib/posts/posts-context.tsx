@@ -2,8 +2,9 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { Category, CommunityPost } from "@/types/domain";
-import { createCommunityPostAction } from "./actions";
+import { createCommunityPostAction, toggleCommunityPostLikeAction } from "./actions";
 import { useUser } from "@/components/auth/user-provider";
+import { t } from "@/lib/i18n";
 
 interface PostsContextValue {
   communityPosts: CommunityPost[];
@@ -13,6 +14,7 @@ interface PostsContextValue {
     relatedStoryTitle?: string;
     relatedStoryCategory?: Category;
   }) => Promise<{ success: true } | { error: string }>;
+  toggleLike: (postId: string) => Promise<{ success: true } | { error: string }>;
   isReady: boolean;
 }
 
@@ -33,12 +35,14 @@ export function PostsProvider({
       const optimisticPost: CommunityPost = {
         id: `optimistic-${Date.now()}`,
         userId: user?.id ?? "",
-        displayName: "Guest Reader",
+        displayName: t.profile.guestReader,
         content: input.content,
         createdAt: new Date().toISOString(),
         relatedStorySlug: input.relatedStorySlug,
         relatedStoryTitle: input.relatedStoryTitle,
         relatedStoryCategory: input.relatedStoryCategory,
+        likeCount: 0,
+        likedByMe: false,
       };
 
       setCommunityPosts((current) => [optimisticPost, ...current]);
@@ -54,9 +58,38 @@ export function PostsProvider({
     [user?.id],
   );
 
+  const toggleLike = useCallback<PostsContextValue["toggleLike"]>(async (postId) => {
+    // Optimistic flip — rolled back below if the server call fails.
+    setCommunityPosts((current) =>
+      current.map((p) =>
+        p.id === postId
+          ? { ...p, likedByMe: !p.likedByMe, likeCount: p.likeCount + (p.likedByMe ? -1 : 1) }
+          : p,
+      ),
+    );
+
+    const result = await toggleCommunityPostLikeAction(postId);
+
+    if ("error" in result) {
+      setCommunityPosts((current) =>
+        current.map((p) =>
+          p.id === postId
+            ? { ...p, likedByMe: !p.likedByMe, likeCount: p.likeCount + (p.likedByMe ? -1 : 1) }
+            : p,
+        ),
+      );
+      return result;
+    }
+
+    setCommunityPosts((current) =>
+      current.map((p) => (p.id === postId ? { ...p, likedByMe: result.liked, likeCount: result.likeCount } : p)),
+    );
+    return { success: true };
+  }, []);
+
   const value = useMemo(
-    () => ({ communityPosts, addPost, isReady: true }),
-    [communityPosts, addPost],
+    () => ({ communityPosts, addPost, toggleLike, isReady: true }),
+    [communityPosts, addPost, toggleLike],
   );
 
   return <PostsContext.Provider value={value}>{children}</PostsContext.Provider>;

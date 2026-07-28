@@ -3,13 +3,14 @@
 import { usePosts } from "@/lib/posts/posts-context";
 import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
 import { t } from "@/lib/i18n";
+import { sortByRank } from "@/lib/posts/rank";
 
 export function CommunityPosts({ storySlug }: { storySlug: string }) {
   const { communityPosts, isReady } = usePosts();
 
   if (!isReady) return null;
 
-  const matches = communityPosts.filter((p) => p.relatedStorySlug === storySlug);
+  const matches = sortByRank(communityPosts.filter((p) => p.relatedStorySlug === storySlug));
   if (matches.length === 0) return null;
 
   const feed: FeedPost[] = matches.map((p) => ({
@@ -17,9 +18,11 @@ export function CommunityPosts({ storySlug }: { storySlug: string }) {
     displayName: p.displayName,
     content: p.content,
     createdAt: p.createdAt,
-    likeCount: 0,
+    likeCount: p.likeCount,
     replyCount: 0,
     contributionTheme: p.contributionTheme,
+    communityPostId: p.id,
+    likedByMe: p.likedByMe,
   }));
 
   return (

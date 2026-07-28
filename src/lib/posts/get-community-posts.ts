@@ -1,16 +1,22 @@
 import "server-only";
 import type { CommunityPost } from "@/types/domain";
 import { createClient } from "@/lib/supabase/server";
+import { t } from "@/lib/i18n";
 
 export async function getCommunityPosts(): Promise<CommunityPost[]> {
   const supabase = await createClient();
-  const [{ data }, { data: contributions }] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [{ data }, { data: contributions }, { data: likes }] = await Promise.all([
     supabase
       .from("community_posts")
       .select("*")
       .eq("is_hidden", false)
       .order("created_at", { ascending: false }),
     supabase.from("post_contributions").select("post_ids, theme"),
+    supabase.from("community_post_likes").select("post_id, user_id"),
   ]);
 
   // A post's id can appear in at most one contribution in practice (it's
@@ -23,15 +29,24 @@ export async function getCommunityPosts(): Promise<CommunityPost[]> {
     }
   }
 
+  const likeCountByPostId = new Map<string, number>();
+  const likedByMePostIds = new Set<string>();
+  for (const like of likes ?? []) {
+    likeCountByPostId.set(like.post_id, (likeCountByPostId.get(like.post_id) ?? 0) + 1);
+    if (user && like.user_id === user.id) likedByMePostIds.add(like.post_id);
+  }
+
   return (data ?? []).map((row) => ({
     id: row.id,
     userId: row.user_id,
-    displayName: "Guest Reader",
+    displayName: t.profile.guestReader,
     content: row.content,
     createdAt: row.created_at,
     relatedStorySlug: row.related_story_slug ?? undefined,
     relatedStoryTitle: row.related_story_title ?? undefined,
     relatedStoryCategory: (row.related_story_category ?? undefined) as CommunityPost["relatedStoryCategory"],
     contributionTheme: themeByPostId.get(row.id),
+    likeCount: likeCountByPostId.get(row.id) ?? 0,
+    likedByMe: user ? likedByMePostIds.has(row.id) : undefined,
   }));
 }
