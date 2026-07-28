@@ -410,9 +410,14 @@ Summary: ${summary}`;
 
 /** Backfills a photo for any story that doesn't have one yet — covers
  * stories generated before Pexels was wired in, and any story where the
- * lookup came up empty at generation time. Cheap (Pexels is free) and the
- * story count is capped low enough that this is never more than a handful
- * of requests per run. */
+ * lookup came up empty at generation time. Unlike the main generation loop,
+ * these stories have no ordering dependency on each other (no shared cap
+ * check), so they run concurrently — previously this was a sequential loop,
+ * which meant every story that persistently fails to find a photo (retried
+ * from scratch on every single run, forever) added its full round-trip time
+ * on top of every other run, every day. That sequential cost was a real
+ * contributor to process-articles.yml exceeding its GitHub Actions
+ * timeout. */
 async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
   const { data: rows, error } = await supabase
     .from("stories")
@@ -425,24 +430,26 @@ async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
   }
   if (!rows || rows.length === 0) return 0;
 
-  let backfilled = 0;
-  for (const row of rows) {
-    const keywords = await deriveImageKeywords(row.title, row.summary);
-    const imageUrl = await findStoryImage(keywords ?? row.title, row.category);
-    if (!imageUrl) continue;
+  const results = await Promise.all(
+    rows.map(async (row) => {
+      const keywords = await deriveImageKeywords(row.title, row.summary);
+      const imageUrl = await findStoryImage(keywords ?? row.title, row.category);
+      if (!imageUrl) return false;
 
-    const { error: updateError } = await supabase
-      .from("stories")
-      .update({ image_url: imageUrl })
-      .eq("id", row.id);
+      const { error: updateError } = await supabase
+        .from("stories")
+        .update({ image_url: imageUrl })
+        .eq("id", row.id);
 
-    if (updateError) {
-      console.error(`Error saving backfilled image for "${row.title}":`, updateError.message);
-      continue;
-    }
-    backfilled += 1;
-  }
+      if (updateError) {
+        console.error(`Error saving backfilled image for "${row.title}":`, updateError.message);
+        return false;
+      }
+      return true;
+    }),
+  );
 
+  const backfilled = results.filter(Boolean).length;
   if (backfilled > 0) console.log(`Backfilled images for ${backfilled} existing stories`);
   return backfilled;
 }
