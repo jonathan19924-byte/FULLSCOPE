@@ -16,6 +16,7 @@ import type {
   StandaloneSeedPost,
   StoryWithPosts,
 } from "@/types/domain";
+import { cache } from "react";
 import seedStories from "@/lib/data/seed-stories.json";
 import seedStandalonePosts from "@/lib/data/seed-standalone-posts.json";
 import { createClient } from "@/lib/supabase/server";
@@ -207,24 +208,15 @@ export async function getRecentStoryUpdateTypes(): Promise<Map<string, "trend" |
   }
 }
 
-export async function getStoryBySlug(
-  rawSlug: string,
-): Promise<StoryWithPosts | undefined> {
-  // The dynamic route's `params.slug` sometimes arrives still
-  // percent-encoded (observed to differ between generateMetadata and the
-  // page component for the same request, for non-ASCII slugs — a Next.js
-  // 16 quirk). decodeURIComponent is a safe no-op on an already-decoded
-  // string, so normalizing here covers both cases.
-  let slug = rawSlug;
-  try {
-    slug = decodeURIComponent(rawSlug);
-  } catch {
-    // Malformed percent-encoding — fall back to the raw value.
-  }
-
-  const seedMatch = stories.find((story) => story.slug === slug);
-  if (seedMatch) return seedMatch;
-
+/** The actual Supabase fetch, keyed by an already-normalized slug —
+ * wrapped in React's cache() so generateMetadata and the page component
+ * (two independent Next.js entry points for the same request, with no way
+ * to pass a value between them directly) share one real query instead of
+ * each running their own. Must be called with the normalized slug, not the
+ * raw route param — cache() keys on the literal argument, and the two
+ * callers have been observed to pass differently-encoded forms of the same
+ * slug (see getStoryBySlug below), which would otherwise defeat the cache. */
+const fetchGeneratedStoryBySlug = cache(async (slug: string): Promise<StoryWithPosts | undefined> => {
   try {
     const supabase = await createClient();
     const { data: storyRow, error: storyError } = await supabase
@@ -252,6 +244,27 @@ export async function getStoryBySlug(
     logStoryFetchError("Error loading generated story from Supabase", err);
     return undefined;
   }
+});
+
+export async function getStoryBySlug(
+  rawSlug: string,
+): Promise<StoryWithPosts | undefined> {
+  // The dynamic route's `params.slug` sometimes arrives still
+  // percent-encoded (observed to differ between generateMetadata and the
+  // page component for the same request, for non-ASCII slugs — a Next.js
+  // 16 quirk). decodeURIComponent is a safe no-op on an already-decoded
+  // string, so normalizing here covers both cases.
+  let slug = rawSlug;
+  try {
+    slug = decodeURIComponent(rawSlug);
+  } catch {
+    // Malformed percent-encoding — fall back to the raw value.
+  }
+
+  const seedMatch = stories.find((story) => story.slug === slug);
+  if (seedMatch) return seedMatch;
+
+  return fetchGeneratedStoryBySlug(slug);
 }
 
 /** Seeded posts with no related story — only shown on the general Posts feed. */
