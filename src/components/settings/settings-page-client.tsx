@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
   Bell,
   ChevronRight,
   LogOut,
@@ -22,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/components/auth/user-provider";
 import { signOutAction } from "@/lib/auth/actions";
 import { buttonVariants } from "@/components/ui/button";
+import { BackButton } from "@/components/shared/back-button";
 import { t } from "@/lib/i18n";
 
 const THEME_OPTIONS = [
@@ -91,7 +90,6 @@ function DisabledToggleRow({
 }
 
 export function SettingsPageClient() {
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
   const [mounted, setMounted] = useState(false);
@@ -100,14 +98,7 @@ export function SettingsPageClient() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 pt-6 pb-10">
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label={t.settings.backAria}
-          className="flex size-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
-        >
-          <ArrowLeft className="size-5 rtl:rotate-180" strokeWidth={1.75} />
-        </button>
+        <BackButton ariaLabel={t.settings.backAria} />
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           {t.settings.title}
         </h1>

@@ -66,6 +66,7 @@ export const strings = {
     story: {
       notFound: "Story not found",
       topStory: "Top Story",
+      backAria: "Back",
       storyAria: (category: string) => `${category} story`,
       filterByCategoryAria: "Filter stories by category",
       trendingAria: "Trending stories",
@@ -348,6 +349,7 @@ export const strings = {
     story: {
       notFound: "הכתבה לא נמצאה",
       topStory: "כתבה מובילה",
+      backAria: "חזרה",
       storyAria: (category: string) => `כתבת ${category}`,
       filterByCategoryAria: "סינון כתבות לפי קטגוריה",
       trendingAria: "כתבות חמות עכשיו",

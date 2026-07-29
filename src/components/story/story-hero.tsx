@@ -1,8 +1,10 @@
+import Image from "next/image";
 import { Clock } from "lucide-react";
 import type { Story } from "@/types/domain";
 import { CATEGORY_META } from "@/lib/category";
 import { formatUpdatedAt, formatReadingTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { BackButton } from "@/components/shared/back-button";
 import { BookmarkButton } from "@/components/shared/bookmark-button";
 import { ShareButton } from "@/components/shared/share-button";
 import { t } from "@/lib/i18n";
@@ -23,7 +25,18 @@ export function StoryHero({ story }: { story: Story }) {
           role="img"
           aria-label={t.story.storyAria(meta.label)}
         >
-          <Icon className={cn("size-14", meta.text)} strokeWidth={1.25} />
+          {story.imageUrl ? (
+            <Image
+              src={story.imageUrl}
+              alt=""
+              fill
+              sizes="(min-width: 640px) 640px, 100vw"
+              className="object-cover"
+              priority
+            />
+          ) : (
+            <Icon className={cn("size-14", meta.text)} strokeWidth={1.25} />
+          )}
           <span
             className={cn(
               "absolute start-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
@@ -32,6 +45,10 @@ export function StoryHero({ story }: { story: Story }) {
           >
             {meta.label}
           </span>
+          <BackButton
+            ariaLabel={t.story.backAria}
+            className="absolute end-2.5 top-2.5 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+          />
         </div>
       </div>
 
