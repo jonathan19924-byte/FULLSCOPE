@@ -8,7 +8,15 @@ import { t } from "@/lib/i18n";
 
 const TEASER_LENGTH = 140;
 
-function PerspectiveCard({ label, perspective }: { label: string; perspective: Perspective }) {
+function PerspectiveCard({
+  label,
+  perspective,
+  side,
+}: {
+  label: string;
+  perspective: Perspective;
+  side: "a" | "b";
+}) {
   const [expanded, setExpanded] = useState(false);
   const teaser =
     perspective.summary.length > TEASER_LENGTH
@@ -16,7 +24,12 @@ function PerspectiveCard({ label, perspective }: { label: string; perspective: P
       : perspective.summary;
 
   return (
-    <article className="flex flex-1 flex-col rounded-2xl border border-border/60 bg-card">
+    <article
+      className={cn(
+        "flex flex-1 flex-col rounded-2xl border border-border/60 bg-card border-s-[3px]",
+        side === "a" ? "border-s-perspective-a" : "border-s-perspective-b",
+      )}
+    >
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -24,7 +37,14 @@ function PerspectiveCard({ label, perspective }: { label: string; perspective: P
         className="flex w-full flex-col gap-2 p-4 text-start"
       >
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-serif text-lg font-semibold text-foreground">
+          <h3 className="flex items-center gap-2 font-serif text-lg font-semibold text-foreground">
+            <span
+              className={cn(
+                "size-2 shrink-0 rounded-full",
+                side === "a" ? "bg-perspective-a" : "bg-perspective-b",
+              )}
+              aria-hidden
+            />
             <span className="sr-only">{label}: </span>
             {perspective.name}
           </h3>
@@ -83,8 +103,8 @@ export function Perspectives({
         {t.story.twoPerspectives}
       </h2>
       <div className="flex flex-col gap-4 lg:flex-row">
-        <PerspectiveCard label={t.story.perspectiveA} perspective={perspectiveA} />
-        <PerspectiveCard label={t.story.perspectiveB} perspective={perspectiveB} />
+        <PerspectiveCard label={t.story.perspectiveA} perspective={perspectiveA} side="a" />
+        <PerspectiveCard label={t.story.perspectiveB} perspective={perspectiveB} side="b" />
       </div>
     </section>
   );
