@@ -2,6 +2,20 @@ import type { StorySummary, StoryWithPosts } from "@/types/domain";
 
 const TRENDING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+/** Israel time, not UTC — the pipeline's cron schedule is UTC, but "today"
+ * should mean today for the app's actual (Israeli) readers, not whatever
+ * day it happens to be at the server's clock. */
+const DAY_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Jerusalem",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function isSameCalendarDay(isoDate: string, compareToMs: number): boolean {
+  return DAY_FORMATTER.format(new Date(isoDate)) === DAY_FORMATTER.format(new Date(compareToMs));
+}
+
 /**
  * Pure, repository-free functions — kept separate from story-service.ts
  * because that file imports the repository (now server-only, since it reads
@@ -32,6 +46,7 @@ export function toSummary(story: StoryWithPosts): StorySummary {
       name: story.perspectiveB.name,
       postCount: story.posts.filter((p) => p.perspective === "B").length,
     },
+    addedToday: story.generatedAt ? isSameCalendarDay(story.generatedAt, Date.now()) : false,
   };
 }
 

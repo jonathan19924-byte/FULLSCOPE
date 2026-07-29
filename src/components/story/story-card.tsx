@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, TrendingUp, Newspaper } from "lucide-react";
+import { Clock, TrendingUp, Newspaper, Sparkles } from "lucide-react";
 import type { StorySummary } from "@/types/domain";
 import { CATEGORY_META } from "@/lib/category";
 import { formatUpdatedAt, formatReadingTime } from "@/lib/format";
@@ -105,6 +105,12 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
                 <Newspaper className="size-3" strokeWidth={2} />
               )}
               {t.story.updatedBadge}
+            </span>
+          )}
+          {story.addedToday && (
+            <span className="flex items-center gap-1 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+              <Sparkles className="size-3" strokeWidth={2} />
+              {t.story.addedTodayBadge}
             </span>
           )}
         </div>

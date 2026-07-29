@@ -47,6 +47,7 @@ interface GeneratedStoryRow {
   reading_time_minutes: number;
   image_url: string | null;
   archived_at: string | null;
+  generated_at: string | null;
 }
 
 interface GeneratedPostRow {
@@ -108,6 +109,7 @@ function mapStoryRow(row: GeneratedStoryRow, postRows: GeneratedPostRow[]): Stor
     readingTimeMinutes: row.reading_time_minutes,
     imageUrl: row.image_url ?? undefined,
     archivedAt: row.archived_at ?? undefined,
+    generatedAt: row.generated_at ?? undefined,
     posts: postRows.map(mapPostRow),
   };
 }

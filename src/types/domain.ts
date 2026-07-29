@@ -73,6 +73,11 @@ export interface Story {
    * dedup merge) instead of deleted — shown in the History tab. Undefined
    * for a story that's currently live. */
   archivedAt?: string;
+  /** When the pipeline actually created this row — distinct from
+   * publishedAt, which is derived from the source articles' own dates and
+   * can predate generation. Drives the "Added today" marker. Undefined for
+   * the static seed set, which was never "generated" in this sense. */
+  generatedAt?: string;
 }
 
 export interface StoryWithPosts extends Story {
@@ -109,6 +114,10 @@ export interface StorySummary
    * last 48h — drives the "Updated" marker on story cards. Undefined for a
    * story with no recent qualifying update. */
   recentUpdateType?: "trend" | "coverage";
+  /** True when the story was generated on the same calendar day (Israel
+   * time) as now — drives the "Added today" marker. Always false for the
+   * static seed set. */
+  addedToday: boolean;
 }
 
 /** A seeded story reaction, flattened with the story it belongs to — used on the Posts feed. */

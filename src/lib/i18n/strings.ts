@@ -105,6 +105,7 @@ export const strings = {
       updateMergePrefix: "New coverage added: ",
       updateCoveragePrefix: "New development: ",
       updatedBadge: "Updated",
+      addedTodayBadge: "Added today",
     },
     posts: {
       repliesComingSoon: "Replies are coming in a future version",
@@ -384,6 +385,7 @@ export const strings = {
       updateMergePrefix: "נוסף סיקור חדש: ",
       updateCoveragePrefix: "התפתחות חדשה: ",
       updatedBadge: "עודכן",
+      addedTodayBadge: "נוסף היום",
     },
     posts: {
       repliesComingSoon: "תגובות יגיעו בגרסה עתידית",
