@@ -39,9 +39,6 @@ export function StoryHero({ story }: { story: Story }) {
         <h1 className="font-serif text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl">
           {story.title}
         </h1>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          {story.summary}
-        </p>
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
