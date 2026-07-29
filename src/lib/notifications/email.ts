@@ -45,15 +45,19 @@ async function sendResendEmail(subject: string, html: string): Promise<void> {
 
 export interface PipelineSummaryEmailParams {
   added: { title: string; category: string }[];
+  updated: { title: string; note: string }[];
   removed: { title: string }[];
   totalStories: number;
 }
 
 export async function sendPipelineSummaryEmail(params: PipelineSummaryEmailParams): Promise<void> {
-  const { added, removed, totalStories } = params;
+  const { added, updated, removed, totalStories } = params;
 
   const addedHtml = added.length
     ? `<ul>${added.map((s) => `<li><strong>${escapeHtml(s.title)}</strong> — ${escapeHtml(s.category)}</li>`).join("")}</ul>`
+    : "<p>None</p>";
+  const updatedHtml = updated.length
+    ? `<ul>${updated.map((s) => `<li><strong>${escapeHtml(s.title)}</strong> — ${escapeHtml(s.note)}</li>`).join("")}</ul>`
     : "<p>None</p>";
   const removedHtml = removed.length
     ? `<ul>${removed.map((s) => `<li>${escapeHtml(s.title)}</li>`).join("")}</ul>`
@@ -64,11 +68,16 @@ export async function sendPipelineSummaryEmail(params: PipelineSummaryEmailParam
     <p>Total stories now live: <strong>${totalStories}</strong></p>
     <h3>Added (${added.length})</h3>
     ${addedHtml}
+    <h3>Updated with new coverage (${updated.length})</h3>
+    ${updatedHtml}
     <h3>Removed (${removed.length})</h3>
     ${removedHtml}
   `.trim();
 
-  await sendResendEmail(`FullScope: ${added.length} story added, ${removed.length} removed`, html);
+  await sendResendEmail(
+    `FullScope: ${added.length} added, ${updated.length} updated, ${removed.length} removed`,
+    html,
+  );
 }
 
 /**

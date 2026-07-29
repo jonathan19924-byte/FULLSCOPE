@@ -1,4 +1,4 @@
-import { TrendingUp, GitMerge } from "lucide-react";
+import { TrendingUp, GitMerge, Newspaper } from "lucide-react";
 import type { StoryUpdate } from "@/lib/services/get-story-updates";
 import { formatUpdatedAt } from "@/lib/format";
 import { t } from "@/lib/i18n";
@@ -13,8 +13,14 @@ export function StoryUpdates({ updates }: { updates: StoryUpdate[] }) {
       </h2>
       <ol className="flex flex-col gap-3">
         {updates.map((update) => {
-          const Icon = update.updateType === "trend" ? TrendingUp : GitMerge;
-          const prefix = update.updateType === "trend" ? t.story.updateTrendPrefix : t.story.updateMergePrefix;
+          const Icon =
+            update.updateType === "trend" ? TrendingUp : update.updateType === "merge" ? GitMerge : Newspaper;
+          const prefix =
+            update.updateType === "trend"
+              ? t.story.updateTrendPrefix
+              : update.updateType === "merge"
+                ? t.story.updateMergePrefix
+                : t.story.updateCoveragePrefix;
           return (
             <li key={update.id} className="flex gap-3">
               <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">

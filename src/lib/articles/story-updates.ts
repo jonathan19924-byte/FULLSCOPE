@@ -1,10 +1,12 @@
-type UpdateType = "trend" | "merge";
+type UpdateType = "trend" | "merge" | "coverage";
 
 /** Appends a "this story has developed" entry — called from trend-detection
- * (a reader trend changed the story's content) and process-articles' dedup
- * pass (a duplicate got merged into this one). Best-effort: a logging
- * failure should never break the actual pipeline operation that triggered
- * it, so this only logs its own errors rather than throwing.
+ * (a reader trend changed the story's content), process-articles' dedup pass
+ * (a duplicate got merged into this one), and process-articles' coverage-
+ * update check (new reporting turned out to be a development of this story
+ * rather than a new one). Best-effort: a logging failure should never break
+ * the actual pipeline operation that triggered it, so this only logs its
+ * own errors rather than throwing.
  *
  * Untyped `supabase` param on purpose — this is called from two call sites
  * whose own Supabase clients are each constructed with slightly different

@@ -106,9 +106,30 @@ interface DedupResponse {
   duplicate_groups: DuplicateGroupResult[];
 }
 
+/** A live or archived story fetched as a candidate match for new coverage —
+ * enough fields to both prompt Claude with and, if it's a match, apply the
+ * update directly without a second fetch. */
+interface RelatedStoryCandidate {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  archived_at: string | null;
+  timeline: unknown;
+  sources: unknown;
+  published_at: string;
+}
+
+interface RelatedCheckResponse {
+  action: "new" | "update";
+  story_index?: number;
+  new_development?: string;
+}
+
 export interface ProcessArticlesResult {
   processedCount: number;
   newStoryCount: number;
+  updatedStoryCount: number;
   mergedDuplicateCount: number;
   totalStories: number;
 }
@@ -263,6 +284,44 @@ Stories:
 ${list}`;
 }
 
+/** Distinct from buildDedupPrompt: dedup compares stories generated on the
+ * SAME run against each other (identical event, generated twice). This
+ * compares TODAY's new coverage against the existing body of stories,
+ * asking whether it's a continuation of an ongoing situation rather than a
+ * fresh, separate incident — deliberately biased toward "new" on any doubt,
+ * since an incorrect "update" corrupts an unrelated story's content, while
+ * an incorrect "new" just creates an extra story the next dedup pass can
+ * still catch. */
+function buildRelatedStoryPrompt(
+  candidates: RelatedStoryCandidate[],
+  clusterTopic: string,
+  articles: RawArticleRow[],
+): string {
+  const candidateList = candidates
+    .map((c, i) => `${i}. [${c.archived_at ? "archived" : "live"}] ${c.title} — ${c.summary}`)
+    .join("\n");
+  const articleList = articles
+    .map((a) => `${a.source_name}: ${a.title} — ${a.description ?? ""}`)
+    .join("\n");
+
+  return `You are a news editor. New coverage was just found about "${clusterTopic}":
+${articleList}
+
+Below are existing stories already on FullScope in the same category (some may be archived — no longer on the main feed, but still real stories):
+${candidateList}
+
+Decide: is this new coverage a DEVELOPMENT of one of these SAME ongoing real-world stories or situations (continuing over time), or is it a genuinely NEW, distinct story or incident?
+
+Only choose "update" if you're confident it's the same ongoing story — not just a similar topic, a separate-but-related incident, or a recurring type of event (e.g. two different terror attacks, two different court rulings, are NOT the same story even if similar). When in doubt, choose "new".
+
+Return ONLY valid JSON, no other text:
+{"action": "new"}
+or
+{"action": "update", "story_index": 0, "new_development": "one clear sentence describing what's new"${
+    LOCALE === "he" ? ", written in Hebrew" : ""
+  }}`;
+}
+
 /** Live (non-archived) story count — the number the MAX_STORIES cap is
  * measured against. Archived stories don't count toward it; they're already
  * out of the feed. */
@@ -280,6 +339,116 @@ async function getStoryCount(supabase: SupabaseAdmin): Promise<number> {
 async function archiveStory(supabase: SupabaseAdmin, id: string): Promise<{ error: { message: string } | null }> {
   const { error } = await supabase.from("stories").update({ archived_at: new Date().toISOString() }).eq("id", id);
   return { error };
+}
+
+/** Checks whether a new cluster is really a development of an existing story
+ * (live or archived) rather than a distinct new one. Candidates are scoped
+ * to the same category and capped at 15 (10 live + 5 archived, live
+ * prioritized as more likely relevant) to keep the prompt small. Returns
+ * null — meaning "treat as new" — whenever there's nothing to compare
+ * against or the check itself fails; this is a best-effort optimization,
+ * never something that should block story generation. */
+async function findRelatedStory(
+  supabase: SupabaseAdmin,
+  category: string,
+  clusterTopic: string,
+  clusterArticles: RawArticleRow[],
+): Promise<{ candidate: RelatedStoryCandidate; newDevelopment: string } | null> {
+  const candidateFields = "id, slug, title, summary, archived_at, timeline, sources, published_at";
+
+  const { data: live } = await supabase
+    .from("stories")
+    .select(candidateFields)
+    .eq("category", category)
+    .is("archived_at", null)
+    .order("generated_at", { ascending: false })
+    .limit(10);
+
+  const { data: archived } = await supabase
+    .from("stories")
+    .select(candidateFields)
+    .eq("category", category)
+    .not("archived_at", "is", null)
+    .order("archived_at", { ascending: false })
+    .limit(5);
+
+  const candidates = [...(live ?? []), ...(archived ?? [])] as unknown as RelatedStoryCandidate[];
+  if (candidates.length === 0) return null;
+
+  try {
+    const raw = await callClaude(buildRelatedStoryPrompt(candidates, clusterTopic, clusterArticles), 500);
+    const parsed = parseClaudeJson<RelatedCheckResponse>(raw);
+    if (parsed.action !== "update" || parsed.story_index === undefined || !parsed.new_development) return null;
+
+    const candidate = candidates[parsed.story_index];
+    if (!candidate) return null;
+
+    return { candidate, newDevelopment: parsed.new_development };
+  } catch (err) {
+    console.error(`Error checking related stories for "${clusterTopic}":`, describeError(err));
+    return null;
+  }
+}
+
+/** Folds new coverage into an existing story instead of generating a
+ * duplicate: appends a timeline entry, merges in any newly-seen source
+ * names, extends published_at if the new articles are more recent, and
+ * revives the story (clears archived_at) if it had aged out or been merged
+ * away — this is how an archived story can come back with new context. */
+async function applyCoverageUpdate(
+  supabase: SupabaseAdmin,
+  candidate: RelatedStoryCandidate,
+  clusterArticles: RawArticleRow[],
+  newDevelopment: string,
+): Promise<void> {
+  const existingTimeline = Array.isArray(candidate.timeline)
+    ? (candidate.timeline as { text: string; confidence: string }[])
+    : [];
+  const updatedTimeline = [...existingTimeline, { text: newDevelopment, confidence: "reported" }];
+
+  const existingSources = Array.isArray(candidate.sources)
+    ? (candidate.sources as { publisher: string }[])
+    : [];
+  const existingPublishers = new Set(existingSources.map((s) => s.publisher));
+  const newPublishers = [...new Set(clusterArticles.map((a) => a.source_name))].filter(
+    (name) => !existingPublishers.has(name),
+  );
+  const updatedSources = [...existingSources, ...newPublishers.map((publisher) => ({ publisher }))];
+
+  const mostRecentPublishedAt = clusterArticles
+    .map((a) => a.published_at)
+    .filter((d): d is string => Boolean(d))
+    .sort()
+    .at(-1);
+  const updatedPublishedAt =
+    mostRecentPublishedAt && mostRecentPublishedAt > candidate.published_at
+      ? mostRecentPublishedAt
+      : candidate.published_at;
+
+  const { error } = await supabase
+    .from("stories")
+    .update({
+      timeline: updatedTimeline,
+      sources: updatedSources,
+      published_at: updatedPublishedAt,
+      archived_at: null,
+    })
+    .eq("id", candidate.id);
+
+  if (error) {
+    console.error(`Error applying coverage update to "${candidate.title}":`, error.message);
+    return;
+  }
+
+  await logStoryUpdate(supabase, {
+    storyId: candidate.id,
+    storySlug: candidate.slug,
+    updateType: "coverage",
+    summary: newDevelopment,
+  });
+
+  const revivedNote = candidate.archived_at ? " (revived from archive)" : "";
+  console.log(`Folded new coverage into existing story "${candidate.title}"${revivedNote}`);
 }
 
 /** The per-cluster cap check in the main loop below only swaps one-for-one
@@ -495,7 +664,7 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
     const result = await runProcessArticles();
     await recordPipelineHeartbeat(
       "success",
-      `Processed ${result.processedCount} articles, created ${result.newStoryCount} stories, merged ${result.mergedDuplicateCount} duplicates, total ${result.totalStories}.`,
+      `Processed ${result.processedCount} articles, created ${result.newStoryCount} stories, updated ${result.updatedStoryCount} existing stories, merged ${result.mergedDuplicateCount} duplicates, total ${result.totalStories}.`,
     );
     return result;
   } catch (err) {
@@ -510,6 +679,7 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
   let processedCount = 0;
   let newStoryCount = 0;
   const addedStories: { title: string; category: string }[] = [];
+  const updatedStories: { title: string; note: string }[] = [];
   const removedStories: { title: string }[] = [];
 
   const { data: articles, error: fetchError } = await supabase
@@ -573,6 +743,14 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
         const distinctSources = new Set(clusterArticles.map((a) => a.source_name));
         if (distinctSources.size < 2) {
           console.log(`Skipping cluster "${cluster.topic_name}" — fewer than 2 distinct sources`);
+          await markClusterProcessed(supabase, clusterArticles);
+          continue;
+        }
+
+        const related = await findRelatedStory(supabase, cluster.category, cluster.topic_name, clusterArticles);
+        if (related) {
+          await applyCoverageUpdate(supabase, related.candidate, clusterArticles, related.newDevelopment);
+          updatedStories.push({ title: related.candidate.title, note: related.newDevelopment });
           await markClusterProcessed(supabase, clusterArticles);
           continue;
         }
@@ -706,12 +884,23 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
 
   const totalStories = await getStoryCount(supabase);
   console.log(
-    `Processed ${processedCount} articles, created ${newStoryCount} new stories, merged ${dedupResult.mergedCount} duplicates, total stories now: ${totalStories}`,
+    `Processed ${processedCount} articles, created ${newStoryCount} new stories, updated ${updatedStories.length} existing stories, merged ${dedupResult.mergedCount} duplicates, total stories now: ${totalStories}`,
   );
 
-  if (addedStories.length > 0 || removedStories.length > 0) {
-    await sendPipelineSummaryEmail({ added: addedStories, removed: removedStories, totalStories });
+  if (addedStories.length > 0 || updatedStories.length > 0 || removedStories.length > 0) {
+    await sendPipelineSummaryEmail({
+      added: addedStories,
+      updated: updatedStories,
+      removed: removedStories,
+      totalStories,
+    });
   }
 
-  return { processedCount, newStoryCount, mergedDuplicateCount: dedupResult.mergedCount, totalStories };
+  return {
+    processedCount,
+    newStoryCount,
+    updatedStoryCount: updatedStories.length,
+    mergedDuplicateCount: dedupResult.mergedCount,
+    totalStories,
+  };
 }

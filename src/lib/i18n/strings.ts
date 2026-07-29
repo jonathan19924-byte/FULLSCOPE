@@ -103,6 +103,7 @@ export const strings = {
       howThisDeveloped: "How this story developed",
       updateTrendPrefix: "Readers pointed out: ",
       updateMergePrefix: "New coverage added: ",
+      updateCoveragePrefix: "New development: ",
     },
     posts: {
       repliesComingSoon: "Replies are coming in a future version",
@@ -380,6 +381,7 @@ export const strings = {
       howThisDeveloped: "איך הכתבה התפתחה",
       updateTrendPrefix: "קוראים ציינו: ",
       updateMergePrefix: "נוסף סיקור חדש: ",
+      updateCoveragePrefix: "התפתחות חדשה: ",
     },
     posts: {
       repliesComingSoon: "תגובות יגיעו בגרסה עתידית",
