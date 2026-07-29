@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, scrollToTop } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
 import { t } from "@/lib/i18n";
 
@@ -27,6 +27,12 @@ export function MobileTabBar() {
               <Link
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
+                onClick={(e) => {
+                  if (isActive) {
+                    e.preventDefault();
+                    scrollToTop();
+                  }
+                }}
                 className={cn(
                   "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
                   isActive ? "text-foreground" : "text-muted-foreground",

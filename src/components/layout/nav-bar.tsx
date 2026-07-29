@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, scrollToTop } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
 import { ThemeToggle } from "./theme-toggle";
 import { t } from "@/lib/i18n";
@@ -31,6 +31,12 @@ export function NavBar() {
                 key={item.href}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
+                onClick={(e) => {
+                  if (isActive) {
+                    e.preventDefault();
+                    scrollToTop();
+                  }
+                }}
                 className={cn(
                   "rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-foreground",
                   isActive ? "text-foreground" : "text-muted-foreground",
