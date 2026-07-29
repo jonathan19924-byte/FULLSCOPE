@@ -69,6 +69,7 @@ interface RawArticleRow {
 interface ClusterResult {
   topic_name: string;
   category: string;
+  has_genuine_dispute: boolean;
   article_indices: number[];
 }
 
@@ -168,6 +169,7 @@ Rules:
 - Only create a cluster if at least 2 articles from DIFFERENT sources cover the same topic
 - Ignore articles that don't have at least one other article covering the same topic
 - Give each cluster a short descriptive name (e.g. 'Iran War Escalation', 'Spain World Cup Win', 'Tate Brothers Arrest')
+- For each cluster, set "has_genuine_dispute" to true only if it's a story where real people or groups substantively disagree — about what happened, who's responsible, or what should happen next (e.g. a policy debate, a contested political decision, a controversial use of force, a disputed ruling). Set it to false for a routine incident report with a clear, undisputed outcome and no real controversy (e.g. an arrest, a traffic accident, someone hospitalized, a missing-person case, a routine indictment) — these don't have two honest sides to represent, and forcing one produces a fake, manufactured disagreement.
 - Return ONLY valid JSON, no other text
 
 Return this exact JSON structure:
@@ -176,13 +178,14 @@ Return this exact JSON structure:
     {
       "topic_name": "string",
       "category": "Politics|World|Technology|Science",
+      "has_genuine_dispute": true,
       "article_indices": [0, 3, 7]
     }
   ]
 }
 
 Articles:
-${list}${LOCALE === "he" ? "\n\nWrite each \"topic_name\" in Hebrew. Keep JSON keys and the \"category\" value in English exactly as specified." : ""}`;
+${list}${LOCALE === "he" ? "\n\nWrite each \"topic_name\" in Hebrew. Keep JSON keys, the \"category\" value, and the \"has_genuine_dispute\" value in English exactly as specified." : ""}`;
 }
 
 export function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): string {
@@ -703,8 +706,31 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
       try {
         const raw = await callClaude(buildClusteringPrompt(unprocessed), 4000);
         const clusteringResponse = parseClaudeJson<ClusteringResponse>(raw);
-        clusters = (clusteringResponse.clusters ?? [])
-          .filter((c) => Array.isArray(c.article_indices) && c.article_indices.length >= 2)
+        const candidateClusters = (clusteringResponse.clusters ?? []).filter(
+          (c) => Array.isArray(c.article_indices) && c.article_indices.length >= 2,
+        );
+
+        // Routine incident reports (an arrest, a traffic accident, someone
+        // hospitalized) have no real dispute to represent — forcing two
+        // perspectives onto them produces a fake, manufactured disagreement.
+        // Reject them here, before generation, rather than letting the story
+        // prompt invent sides that don't genuinely exist. Their source
+        // articles are marked processed immediately so they're not
+        // reconsidered (and rejected again) on every future run.
+        const disputeClusters: ClusterResult[] = [];
+        for (const cluster of candidateClusters) {
+          if (cluster.has_genuine_dispute) {
+            disputeClusters.push(cluster);
+            continue;
+          }
+          const rejectedArticles = cluster.article_indices
+            .map((i) => unprocessed[i])
+            .filter((a): a is RawArticleRow => Boolean(a));
+          console.log(`Skipping cluster "${cluster.topic_name}" — routine incident report, no genuine dispute`);
+          await markClusterProcessed(supabase, rejectedArticles);
+        }
+
+        clusters = disputeClusters
           // Best-corroborated (most sources) clusters generated first when a
           // run can't fit them all — an event 5 sources are covering is a
           // better bet to actually matter than one just barely past the
