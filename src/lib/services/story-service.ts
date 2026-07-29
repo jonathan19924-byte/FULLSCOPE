@@ -31,26 +31,19 @@ export async function listArchivedStorySummaries(): Promise<StorySummary[]> {
   return stories.map(toSummary);
 }
 
-/** The single most recent story, used for the Home page's featured slot. */
-export async function getFeaturedStory(): Promise<StorySummary | undefined> {
-  const summaries = await listStorySummaries();
+/** The single most recent story, used for the Home page's featured slot.
+ * Takes an already-fetched summary list (rather than fetching its own) so
+ * callers that need multiple derived views of the same request — like the
+ * Home page, which also needs the full list and a category-filtered list —
+ * only pay for one round-trip to Supabase instead of one per view. */
+export function getFeaturedStory(summaries: StorySummary[]): StorySummary | undefined {
   return summaries[0];
 }
 
-/** All stories except the featured one, newest first. */
-export async function getLatestStories(
-  excludeSlug?: string,
-): Promise<StorySummary[]> {
-  const summaries = await listStorySummaries();
-  return excludeSlug
-    ? summaries.filter((s) => s.slug !== excludeSlug)
-    : summaries;
-}
-
-export async function getStoriesByCategory(
+export function getStoriesByCategory(
+  summaries: StorySummary[],
   category: Category | "All",
-): Promise<StorySummary[]> {
-  const summaries = await listStorySummaries();
+): StorySummary[] {
   if (category === "All") return summaries;
   return summaries.filter((s) => s.category === category);
 }
@@ -79,11 +72,11 @@ export async function getAllSeedPosts(): Promise<SeedPostWithStory[]> {
 }
 
 /** Up to 3 other stories in the same category, for the Story Page footer. */
-export async function getRelatedStories(
+export function getRelatedStories(
+  summaries: StorySummary[],
   story: StoryWithPosts,
   limit = 3,
-): Promise<StorySummary[]> {
-  const summaries = await listStorySummaries();
+): StorySummary[] {
   return summaries
     .filter((s) => s.category === story.category && s.slug !== story.slug)
     .slice(0, limit);

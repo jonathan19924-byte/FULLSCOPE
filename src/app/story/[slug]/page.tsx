@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getStoryBySlug, getRelatedStories, toSummary } from "@/lib/services/story-service";
+import {
+  getStoryBySlug,
+  getRelatedStories,
+  listStorySummaries,
+  toSummary,
+} from "@/lib/services/story-service";
 import { StoryHero } from "@/components/story/story-hero";
 import { ReadingProgress } from "@/components/story/reading-progress";
 import { WhatHappened } from "@/components/story/what-happened";
@@ -52,7 +57,8 @@ export default async function StoryPage({
 
   if (!story) notFound();
 
-  const related = await getRelatedStories(story);
+  const allStories = await listStorySummaries();
+  const related = getRelatedStories(allStories, story);
   const updates = await getStoryUpdates(story.id);
   const summary = toSummary(story);
 

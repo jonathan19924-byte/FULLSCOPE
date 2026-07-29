@@ -41,8 +41,8 @@ export default async function HomePage({
     params.view === "history" ? "history" : params.view === "bookmarks" ? "bookmarks" : "feed";
 
   const allStories = await listStorySummaries();
-  const stories = view === "feed" ? await getStoriesByCategory(category) : [];
-  const featured = view === "feed" && category === "All" ? await getFeaturedStory() : undefined;
+  const stories = view === "feed" ? getStoriesByCategory(allStories, category) : [];
+  const featured = view === "feed" && category === "All" ? getFeaturedStory(allStories) : undefined;
   const latest = featured ? stories.filter((s) => s.slug !== featured.slug) : stories;
   const archivedStories = view === "history" ? await listArchivedStorySummaries() : [];
 
