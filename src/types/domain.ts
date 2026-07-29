@@ -105,6 +105,10 @@ export interface StorySummary
   recentPostCount: number;
   perspectiveA: PerspectiveTally;
   perspectiveB: PerspectiveTally;
+  /** Set when the story got a reader-trend or new-coverage update within the
+   * last 48h — drives the "Updated" marker on story cards. Undefined for a
+   * story with no recent qualifying update. */
+  recentUpdateType?: "trend" | "coverage";
 }
 
 /** A seeded story reaction, flattened with the story it belongs to — used on the Posts feed. */

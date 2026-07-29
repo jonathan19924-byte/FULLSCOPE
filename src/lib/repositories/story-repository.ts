@@ -168,6 +168,43 @@ export async function getArchivedStories(): Promise<StoryWithPosts[]> {
   return getGeneratedStories({ archivedOnly: true });
 }
 
+/** How long a story keeps showing the "Updated" marker after a reader-trend
+ * or new-coverage update — long enough to be seen across a normal browsing
+ * session, short enough that the marker doesn't just become permanent
+ * background noise. */
+const RECENT_UPDATE_WINDOW_HOURS = 48;
+
+/** Maps storyId -> the most recent qualifying update type, for stories
+ * updated within the window above. Deliberately excludes "merge" (dedup
+ * consolidating a duplicate) — that's bookkeeping, not new context added to
+ * the story the way a reader trend or fresh coverage is. */
+export async function getRecentStoryUpdateTypes(): Promise<Map<string, "trend" | "coverage">> {
+  try {
+    const supabase = await createClient();
+    const since = new Date(Date.now() - RECENT_UPDATE_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
+    const { data, error } = await supabase
+      .from("story_updates")
+      .select("story_id, update_type, created_at")
+      .in("update_type", ["trend", "coverage"])
+      .gte("created_at", since)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      logStoryFetchError("Error fetching recent story updates", error.message);
+      return new Map();
+    }
+
+    const map = new Map<string, "trend" | "coverage">();
+    for (const row of (data ?? []) as { story_id: string; update_type: "trend" | "coverage" }[]) {
+      if (!map.has(row.story_id)) map.set(row.story_id, row.update_type);
+    }
+    return map;
+  } catch (err) {
+    logStoryFetchError("Error loading recent story updates from Supabase", err);
+    return new Map();
+  }
+}
+
 export async function getStoryBySlug(
   rawSlug: string,
 ): Promise<StoryWithPosts | undefined> {

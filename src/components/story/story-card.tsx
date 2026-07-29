@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Clock } from "lucide-react";
+import { Clock, TrendingUp, Newspaper } from "lucide-react";
 import type { StorySummary } from "@/types/domain";
 import { CATEGORY_META } from "@/lib/category";
 import { formatUpdatedAt, formatReadingTime } from "@/lib/format";
@@ -95,6 +95,16 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
           {isFeatured && (
             <span className="rounded-full bg-foreground/90 px-2.5 py-1 text-xs font-medium text-background backdrop-blur-sm">
               {t.story.topStory}
+            </span>
+          )}
+          {story.recentUpdateType && (
+            <span className="flex items-center gap-1 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+              {story.recentUpdateType === "trend" ? (
+                <TrendingUp className="size-3" strokeWidth={2} />
+              ) : (
+                <Newspaper className="size-3" strokeWidth={2} />
+              )}
+              {t.story.updatedBadge}
             </span>
           )}
         </div>

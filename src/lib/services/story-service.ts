@@ -7,6 +7,7 @@ import type {
 import {
   getAllStories,
   getArchivedStories,
+  getRecentStoryUpdateTypes,
   getStandaloneSeedPosts,
   getStoryBySlug,
 } from "@/lib/repositories/story-repository";
@@ -16,9 +17,10 @@ export { getStoryBySlug, getStandaloneSeedPosts, matchesQuery, toSummary };
 
 /** Newest-first list of every story, as lightweight summaries for cards. */
 export async function listStorySummaries(): Promise<StorySummary[]> {
-  const stories = await getAllStories();
+  const [stories, recentUpdates] = await Promise.all([getAllStories(), getRecentStoryUpdateTypes()]);
   return stories
     .map(toSummary)
+    .map((summary) => ({ ...summary, recentUpdateType: recentUpdates.get(summary.id) }))
     .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
 }
 

@@ -104,6 +104,7 @@ export const strings = {
       updateTrendPrefix: "Readers pointed out: ",
       updateMergePrefix: "New coverage added: ",
       updateCoveragePrefix: "New development: ",
+      updatedBadge: "Updated",
     },
     posts: {
       repliesComingSoon: "Replies are coming in a future version",
@@ -382,6 +383,7 @@ export const strings = {
       updateTrendPrefix: "קוראים ציינו: ",
       updateMergePrefix: "נוסף סיקור חדש: ",
       updateCoveragePrefix: "התפתחות חדשה: ",
+      updatedBadge: "עודכן",
     },
     posts: {
       repliesComingSoon: "תגובות יגיעו בגרסה עתידית",
