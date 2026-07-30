@@ -84,6 +84,10 @@ interface ClusterResult {
   topic_name: string;
   category: string;
   has_genuine_dispute: boolean;
+  /** 1-5, how significant/substantive the disagreement is — only
+   * meaningful when has_genuine_dispute is true. Used as a ranking
+   * tiebreaker (see the cluster sort below), not a filter on its own. */
+  dispute_intensity: number;
   article_indices: number[];
 }
 
@@ -172,7 +176,7 @@ function slugify(title: string): string {
   return `${base}-${suffix}`;
 }
 
-function buildClusteringPrompt(articles: RawArticleRow[]): string {
+function buildClusteringPrompt(articles: RawArticleRow[], maxClusters: number): string {
   const list = articles
     .map((a, i) => `${i}. ${a.source_name} (${a.source_lean}): ${a.title} — ${a.description ?? ""}`)
     .join("\n");
@@ -182,8 +186,10 @@ function buildClusteringPrompt(articles: RawArticleRow[]): string {
 Rules:
 - Only create a cluster if at least 2 articles from DIFFERENT sources cover the same topic
 - Ignore articles that don't have at least one other article covering the same topic
+- Return AT MOST ${maxClusters} clusters — the ${maxClusters} most significant ones, ranked by how many distinct sources are covering them (the most-corroborated, most "trending" stories). Do not enumerate every possible cluster you can find; only return your top ${maxClusters}.
 - Give each cluster a short descriptive name (e.g. 'Iran War Escalation', 'Spain World Cup Win', 'Tate Brothers Arrest')
 - For each cluster, set "has_genuine_dispute" to true only if it's a story where real people or groups substantively disagree — about what happened, who's responsible, or what should happen next (e.g. a policy debate, a contested political decision, a controversial use of force, a disputed ruling). Set it to false for a routine incident report with a clear, undisputed outcome and no real controversy (e.g. an arrest, a traffic accident, someone hospitalized, a missing-person case, a routine indictment) — these don't have two honest sides to represent, and forcing one produces a fake, manufactured disagreement.
+- For each cluster where "has_genuine_dispute" is true, set "dispute_intensity" to a number 1-5 rating how significant and substantive the disagreement actually is: 1 is a minor procedural or technical disagreement few people care about, 5 is a major clash of values or policy with broad public significance. For clusters where "has_genuine_dispute" is false, set "dispute_intensity" to 0.
 - Return ONLY valid JSON, no other text
 
 Return this exact JSON structure:
@@ -193,6 +199,7 @@ Return this exact JSON structure:
       "topic_name": "string",
       "category": "Politics|World|Technology|Science",
       "has_genuine_dispute": true,
+      "dispute_intensity": 4,
       "article_indices": [0, 3, 7]
     }
   ]
@@ -200,6 +207,26 @@ Return this exact JSON structure:
 
 Articles:
 ${list}${LOCALE === "he" ? "\n\nWrite each \"topic_name\" in Hebrew. Keep JSON keys, the \"category\" value, and the \"has_genuine_dispute\" value in English exactly as specified." : ""}`;
+}
+
+/** Ranking key for picking which clusters to actually generate, priority
+ * order: (1) distinct source count — how independently corroborated the
+ * story is; (2) dispute intensity — how significant the disagreement is,
+ * from Claude's own rating; (3) total article text volume — how much has
+ * actually been reported, a cheap local proxy for substance that doesn't
+ * need another model call. Source count and dispute intensity come from
+ * the clustering response; text volume is computed directly from the
+ * already-fetched article rows rather than asked of the model. */
+function clusterRankKey(cluster: ClusterResult, unprocessed: RawArticleRow[]): [number, number, number] {
+  const clusterArticles = cluster.article_indices
+    .map((i) => unprocessed[i])
+    .filter((a): a is RawArticleRow => Boolean(a));
+  const distinctSourceCount = new Set(clusterArticles.map((a) => a.source_name)).size;
+  const totalTextLength = clusterArticles.reduce(
+    (sum, a) => sum + a.title.length + (a.description?.length ?? 0),
+    0,
+  );
+  return [distinctSourceCount, cluster.dispute_intensity ?? 0, totalTextLength];
 }
 
 export function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): string {
@@ -718,16 +745,22 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
       // Phase A — topic clustering
       let clusters: ClusterResult[] = [];
       try {
-        // 4000 was enough before has_genuine_dispute was added to each
-        // cluster's JSON, but on a large backlog (2000+ unprocessed
-        // articles → dozens of clusters), the extra field per cluster was
-        // enough to push the response past the ceiling and truncate it
-        // mid-string, silently discarding the whole clustering pass for that
-        // run — observed directly in production on 2026-07-30. Raised with
-        // real headroom rather than a minimal bump, since the number of
-        // clusters (and therefore response size) scales with how large the
-        // backlog happens to be on any given run.
-        const raw = await callClaude(buildClusteringPrompt(unprocessed), 8000);
+        // The prompt itself now asks Claude to return at most
+        // MAX_CLUSTERS_PER_RUN clusters (the most-corroborated/"trending"
+        // ones) rather than enumerating every cluster it can find — this is
+        // the real fix for a 2026-07-30 production incident where a large
+        // backlog (2000+ unprocessed articles) made Claude enumerate enough
+        // clusters that the JSON response exceeded any reasonable
+        // max_tokens ceiling and got truncated mid-string, silently
+        // discarding the whole clustering pass. Raising max_tokens alone
+        // only moved the truncation point further out (confirmed by
+        // observation, not just reasoning) — response size scales with how
+        // many clusters exist in the backlog, not a fixed constant, so a
+        // fixed token ceiling can never fully solve it. Bounding the
+        // request's own output is what actually bounds it. max_tokens is
+        // still raised as a second line of defense in case the model
+        // doesn't perfectly respect the "at most N" instruction.
+        const raw = await callClaude(buildClusteringPrompt(unprocessed, MAX_CLUSTERS_PER_RUN), 8000);
         const clusteringResponse = parseClaudeJson<ClusteringResponse>(raw);
         const candidateClusters = (clusteringResponse.clusters ?? []).filter(
           (c) => Array.isArray(c.article_indices) && c.article_indices.length >= 2,
@@ -754,11 +787,21 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
         }
 
         clusters = disputeClusters
-          // Best-corroborated (most sources) clusters generated first when a
-          // run can't fit them all — an event 5 sources are covering is a
-          // better bet to actually matter than one just barely past the
-          // 2-source minimum.
-          .sort((a, b) => b.article_indices.length - a.article_indices.length)
+          // Belt-and-suspenders: the prompt already asks for at most
+          // MAX_CLUSTERS_PER_RUN, ranked by source count, but this is
+          // enforced server-side too rather than trusted outright — same
+          // "verify, don't just trust the prompt" pattern as trend
+          // detection's distinct-user check. See clusterRankKey for the
+          // full priority order (sources, then dispute intensity, then
+          // article text volume).
+          .sort((a, b) => {
+            const keyA = clusterRankKey(a, unprocessed);
+            const keyB = clusterRankKey(b, unprocessed);
+            for (let i = 0; i < keyA.length; i++) {
+              if (keyB[i] !== keyA[i]) return keyB[i] - keyA[i];
+            }
+            return 0;
+          })
           .slice(0, MAX_CLUSTERS_PER_RUN);
       } catch (err) {
         console.error("Error clustering articles:", describeError(err));
