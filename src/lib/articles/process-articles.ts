@@ -57,6 +57,20 @@ const MAX_STORIES = 60;
  * the same day instead of waiting 24h). */
 const MAX_CLUSTERS_PER_RUN = 10;
 
+/** How many unprocessed articles get sent to a single clustering call.
+ * Previously uncapped (fetched up to 1000) — with a large backlog (2000+
+ * unprocessed articles, observed in production 2026-07-30), Claude enumerates
+ * enough clusters that the JSON response exceeds any reasonable max_tokens
+ * ceiling and gets truncated mid-string, silently discarding the entire
+ * clustering pass for that run (doubling max_tokens from 4000 to 8000 only
+ * moved the truncation point further out, not fixed it — the response size
+ * scales with backlog size, not a fixed constant). Capping the *input* bounds
+ * the output size predictably regardless of backlog. Most-recent articles are
+ * fetched first, so this doesn't starve anything — whatever doesn't fit
+ * simply stays unprocessed and is picked up by the next run, same rollover
+ * behavior as MAX_CLUSTERS_PER_RUN. */
+const MAX_ARTICLES_PER_CLUSTERING_PASS = 150;
+
 interface RawArticleRow {
   id: string;
   source_name: string;
@@ -691,7 +705,7 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
     .eq("processed", false)
     .in("source_name", ACTIVE_SOURCE_NAMES)
     .order("published_at", { ascending: false })
-    .limit(1000);
+    .limit(MAX_ARTICLES_PER_CLUSTERING_PASS);
 
   if (fetchError) {
     console.error("Error fetching unprocessed articles:", fetchError.message);
