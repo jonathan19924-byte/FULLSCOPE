@@ -704,7 +704,16 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
       // Phase A — topic clustering
       let clusters: ClusterResult[] = [];
       try {
-        const raw = await callClaude(buildClusteringPrompt(unprocessed), 4000);
+        // 4000 was enough before has_genuine_dispute was added to each
+        // cluster's JSON, but on a large backlog (2000+ unprocessed
+        // articles → dozens of clusters), the extra field per cluster was
+        // enough to push the response past the ceiling and truncate it
+        // mid-string, silently discarding the whole clustering pass for that
+        // run — observed directly in production on 2026-07-30. Raised with
+        // real headroom rather than a minimal bump, since the number of
+        // clusters (and therefore response size) scales with how large the
+        // backlog happens to be on any given run.
+        const raw = await callClaude(buildClusteringPrompt(unprocessed), 8000);
         const clusteringResponse = parseClaudeJson<ClusteringResponse>(raw);
         const candidateClusters = (clusteringResponse.clusters ?? []).filter(
           (c) => Array.isArray(c.article_indices) && c.article_indices.length >= 2,
