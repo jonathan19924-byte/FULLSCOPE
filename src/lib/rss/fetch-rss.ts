@@ -90,10 +90,22 @@ export const FEEDS: FeedConfig[] = [
  * left/right axis) — kept only for source metadata, not for how
  * process-articles.ts frames each story's two perspectives.
  */
+/**
+ * Curated down from a larger list on 2026-07-31 — see CONTENT_PIPELINE.md
+ * for the full reasoning. Two changes worth noting explicitly: Cursorinfo
+ * was dropped for publishing in Russian (not Hebrew), which actively hurt
+ * clustering quality, not just added volume noise. And the left/right split
+ * is deliberately kept at 4-and-4 (Davar/Local Call/Kol Ha'ir/Shakuf vs.
+ * Israel National News/Srugim/Kipa/Israel Defense) rather than trimming
+ * left-leaning sources down to one — Srugim and Kipa alone are the two
+ * highest-volume sources in the whole list, so cutting left-leaning
+ * coverage down further while keeping those would have skewed the input
+ * pool itself before any generation happens, which matters for an app
+ * whose whole premise is genuine two-sided coverage.
+ */
 export const HEBREW_FEEDS: FeedConfig[] = [
   // centre / mainstream
   { name: "Ynet", url: "https://www.ynet.co.il/Integration/StoryRss2.xml", lean: "centre" },
-  { name: "Ynetnews", url: "https://www.ynetnews.com/Integration/StoryRss3082.xml", lean: "centre" },
   { name: "Walla News", url: "https://rss.walla.co.il/feed/1?type=main", lean: "centre" },
   { name: "Mako / N12", url: "https://rcs.mako.co.il/rss/news-military.xml", lean: "centre" },
   { name: "Maariv", url: "https://www.maariv.co.il/rss/rssfeeds.aspx", lean: "centre" },
@@ -101,38 +113,21 @@ export const HEBREW_FEEDS: FeedConfig[] = [
   { name: "The Times of Israel", url: "https://www.timesofisrael.com/feed/", lean: "centre" },
   { name: "The Jerusalem Post", url: "https://www.jpost.com/rss/rssallnews", lean: "centre" },
   { name: "Now 14", url: "https://www.c14.co.il/feed/", lean: "centre" },
-  { name: "MivzakLive", url: "https://www.mivzaklive.co.il/feed/", lean: "centre" },
-  { name: "Zman Yisrael", url: "https://www.zman.co.il/feed/", lean: "centre" },
-  { name: "Haipo", url: "https://haipo.co.il/feed/", lean: "centre" },
-  { name: "Cursorinfo", url: "https://cursorinfo.co.il/feed/", lean: "centre" },
   // left / progressive
   { name: "Davar", url: "https://www.davar1.co.il/feed/", lean: "left" },
-  { name: "+972 Magazine", url: "https://www.972mag.com/feed/", lean: "left" },
   { name: "Local Call", url: "https://www.mekomit.co.il/feed/", lean: "left" },
-  { name: "HaMakom", url: "https://www.ha-makom.co.il/feed/", lean: "left" },
-  { name: "Shakuf", url: "https://shakuf.co.il/feed/", lean: "left" },
   { name: "Kol Ha'ir", url: "https://www.kolhair.co.il/feed/", lean: "left" },
+  { name: "Shakuf", url: "https://shakuf.co.il/feed/", lean: "left" },
   // right / religious-nationalist
   { name: "Israel National News", url: "https://www.inn.co.il/Rss.aspx", lean: "right" },
   { name: "Srugim", url: "https://www.srugim.co.il/feed", lean: "right" },
   { name: "Kipa", url: "https://www.kipa.co.il/feed/", lean: "right" },
-  { name: "JDN", url: "https://www.jdn.co.il/feed/", lean: "right" },
-  { name: "Kore", url: "https://www.kore.co.il/rss", lean: "right" },
-  { name: "The Jewish Press", url: "https://jewishpress.com/feed/", lean: "right" },
   { name: "Israel Defense", url: "https://www.israeldefense.co.il/rss.xml", lean: "right" },
+  { name: "Kore", url: "https://www.kore.co.il/rss", lean: "right" },
   // business
   { name: "Globes", url: "https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=2", lean: "centre" },
-  {
-    name: "Globes English",
-    url: "https://en.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=942",
-    lean: "centre",
-  },
   // technology
   { name: "Geektime", url: "https://www.geektime.co.il/feed/", lean: "technology" },
-  { name: "People and Computers", url: "https://www.pc.co.il/feed/", lean: "technology" },
-  { name: "TGspot", url: "https://www.tgspot.co.il/feed/", lean: "technology" },
-  { name: "Poenta", url: "https://www.poenta.co.il/feed/", lean: "technology" },
-  { name: "NoCamels", url: "https://nocamels.com/feed/", lean: "technology" },
 ];
 
 export const ACTIVE_FEEDS: FeedConfig[] = LOCALE === "he" ? HEBREW_FEEDS : FEEDS;

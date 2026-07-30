@@ -1,18 +1,34 @@
 name: Process Articles
 
-# Runs Stage 2 of the pipeline (topic clustering + story/post generation via
-# Claude). Lives here instead of a Vercel cron because generation work can
-# take several minutes, well past Vercel Hobby's ~10s function limit
-# (confirmed by a real timeout in testing). GitHub Actions has no such limit.
+# Runs Stage 1 (RSS fetch) and Stage 2 (topic clustering + story/post
+# generation via Claude) back to back in one job. Lives here instead of a
+# Vercel cron because generation work can take several minutes, well past
+# Vercel Hobby's ~10s function limit (confirmed by a real timeout in
+# testing) — and Vercel Hobby's cron only supports daily frequency anyway,
+# too infrequent for fetch to matter (see below). GitHub Actions has neither
+# limit.
 #
-# Runs every 3 hours rather than once a day: process-articles.ts now caps
-# how many stories it generates per invocation (MAX_CLUSTERS_PER_RUN, to keep
+# Fetch moved here from its old daily Vercel cron on 2026-07-31, paired with
+# processing rather than scheduled separately, for two concrete reasons: (1)
+# a once-daily fetch meant process-articles' 3-hourly cadence was mostly
+# wasted for freshness — new raw content only ever entered the system once a
+# day regardless of how often processing ran, so a story breaking hours
+# after that day's fetch wouldn't even be visible until the next day's
+# fetch. (2) most publisher RSS feeds only expose their most recent N items
+# (commonly 20-50) — a high-volume source can cycle through that window in
+# a few hours, so checking only once a day risks silently missing articles
+# that scrolled off the feed entirely, not just processing them late.
+# Running fetch immediately before processing, every 3 hours, fixes both.
+#
+# Runs every 3 hours rather than once a day: process-articles.ts caps how
+# many stories it generates per invocation (MAX_CLUSTERS_PER_RUN, to keep
 # each run's duration predictable), so a backlog bigger than one run can
 # handle needs multiple passes to fully clear — running every few hours lets
 # that happen within the same day instead of readers waiting a full 24h for
 # a big day's stories to show up. A quiet run (nothing new to cluster) exits
 # in seconds, so the extra frequency costs almost nothing when there's
-# nothing to do.
+# nothing to do. fetch-rss itself makes no Claude API calls at all, so
+# running it 8x/day instead of 1x/day adds negligible cost either way.
 on:
   schedule:
     # Off the top of the hour on purpose — GitHub's own docs warn that
@@ -32,6 +48,11 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
+      - run: npm run fetch-rss
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_LOCALE: he
       - run: npm run process-articles
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

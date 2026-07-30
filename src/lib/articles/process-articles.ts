@@ -57,19 +57,20 @@ const MAX_STORIES = 60;
  * the same day instead of waiting 24h). */
 const MAX_CLUSTERS_PER_RUN = 10;
 
-/** How many unprocessed articles get sent to a single clustering call.
- * Previously uncapped (fetched up to 1000) — with a large backlog (2000+
- * unprocessed articles, observed in production 2026-07-30), Claude enumerates
- * enough clusters that the JSON response exceeds any reasonable max_tokens
- * ceiling and gets truncated mid-string, silently discarding the entire
- * clustering pass for that run (doubling max_tokens from 4000 to 8000 only
- * moved the truncation point further out, not fixed it — the response size
- * scales with backlog size, not a fixed constant). Capping the *input* bounds
- * the output size predictably regardless of backlog. Most-recent articles are
- * fetched first, so this doesn't starve anything — whatever doesn't fit
- * simply stays unprocessed and is picked up by the next run, same rollover
- * behavior as MAX_CLUSTERS_PER_RUN. */
-const MAX_ARTICLES_PER_CLUSTERING_PASS = 150;
+/** How many unprocessed articles per SOURCE get sent to a single clustering
+ * call (not a global total). Originally a single global limit (1000, then
+ * 150 after a 2026-07-30 incident where a 2000+ article backlog made
+ * Claude's clustering response exceed any reasonable max_tokens ceiling and
+ * truncate mid-string, silently discarding the whole pass) — but a global
+ * limit ordered by recency lets a handful of high-volume sources crowd out
+ * everything else. Observed directly in production: with the old 150 global
+ * cap, one source (Kore) alone filled 45% of the slots and 17 of 33 active
+ * sources had zero representation at all. Capping per-source instead
+ * guarantees every active source gets a fair shot each run, while the total
+ * (source count × this number) still bounds the clustering response size the
+ * same way the old global cap did. Whatever doesn't fit stays unprocessed
+ * and rolls into the next run, same as before. */
+const MAX_ARTICLES_PER_SOURCE_PER_PASS = 10;
 
 interface RawArticleRow {
   id: string;
@@ -717,6 +718,34 @@ export async function processArticles(): Promise<ProcessArticlesResult> {
   }
 }
 
+/** Fetches unprocessed articles per source (capped at
+ * MAX_ARTICLES_PER_SOURCE_PER_PASS each) rather than one global query, so a
+ * handful of high-volume sources can't crowd out the rest of the active
+ * list — see the constant's own comment for the production evidence that
+ * motivated this. Runs one small query per source in parallel; a single
+ * source's query failing is logged and treated as "no articles from that
+ * source this run" rather than failing the whole fetch. */
+async function fetchUnprocessedArticles(supabase: SupabaseAdmin): Promise<RawArticleRow[]> {
+  const bySource = await Promise.all(
+    ACTIVE_SOURCE_NAMES.map(async (sourceName) => {
+      const { data, error } = await supabase
+        .from("raw_articles")
+        .select("id, source_name, source_lean, title, description, published_at")
+        .eq("processed", false)
+        .eq("source_name", sourceName)
+        .order("published_at", { ascending: false })
+        .limit(MAX_ARTICLES_PER_SOURCE_PER_PASS);
+
+      if (error) {
+        console.error(`Error fetching unprocessed articles for "${sourceName}":`, error.message);
+        return [];
+      }
+      return (data ?? []) as RawArticleRow[];
+    }),
+  );
+  return bySource.flat();
+}
+
 async function runProcessArticles(): Promise<ProcessArticlesResult> {
   const supabase = createProcessingClient();
 
@@ -726,19 +755,9 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
   const updatedStories: { title: string; note: string }[] = [];
   const removedStories: { title: string }[] = [];
 
-  const { data: articles, error: fetchError } = await supabase
-    .from("raw_articles")
-    .select("id, source_name, source_lean, title, description, published_at")
-    .eq("processed", false)
-    .in("source_name", ACTIVE_SOURCE_NAMES)
-    .order("published_at", { ascending: false })
-    .limit(MAX_ARTICLES_PER_CLUSTERING_PASS);
+  const unprocessed = await fetchUnprocessedArticles(supabase);
 
-  if (fetchError) {
-    console.error("Error fetching unprocessed articles:", fetchError.message);
-  } else {
-    const unprocessed = (articles ?? []) as RawArticleRow[];
-
+  {
     if (unprocessed.length < 5) {
       console.log("Not enough new articles to process");
     } else {
