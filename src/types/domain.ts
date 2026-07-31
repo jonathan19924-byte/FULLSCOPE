@@ -147,6 +147,10 @@ export interface CommunityPost {
   id: string;
   userId: string;
   displayName: string;
+  /** The author's @handle (profiles.username), for linking to their public
+   * profile — undefined if they haven't claimed a username yet, in which
+   * case the post shows a name but isn't a clickable profile link. */
+  username?: string;
   content: string;
   createdAt: string;
   relatedStorySlug?: string;
@@ -160,4 +164,16 @@ export interface CommunityPost {
   /** Whether the CURRENTLY SIGNED-IN reader has liked this post — undefined
    * when viewing signed out (there's no "my like" to speak of). */
   likedByMe?: boolean;
+}
+
+/** A user's public identity — the subset of `profiles` anyone can see,
+ * distinct from their private settings. Added alongside the follow feature,
+ * since following someone requires being able to see who they are. */
+export interface PublicProfile {
+  userId: string;
+  username: string;
+  displayName: string | null;
+  bio: string | null;
+  followerCount: number;
+  followingCount: number;
 }

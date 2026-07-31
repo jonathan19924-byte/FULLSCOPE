@@ -21,6 +21,7 @@ import { useUser } from "@/components/auth/user-provider";
 import { signOutAction } from "@/lib/auth/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { BackButton } from "@/components/shared/back-button";
+import { ProfileEditDialog } from "@/components/settings/profile-edit-dialog";
 import { t } from "@/lib/i18n";
 
 const THEME_OPTIONS = [
@@ -89,7 +90,11 @@ function DisabledToggleRow({
   );
 }
 
-export function SettingsPageClient() {
+export function SettingsPageClient({
+  myProfile,
+}: {
+  myProfile: { username: string | null; displayName: string | null; bio: string | null } | null;
+}) {
   const { theme, setTheme } = useTheme();
   const { user } = useUser();
   const [mounted, setMounted] = useState(false);
@@ -109,7 +114,31 @@ export function SettingsPageClient() {
           {t.settings.account}
         </h2>
         <div className="divide-y divide-border/60 rounded-2xl border border-border/60 bg-card">
-          <ComingSoonRow icon={User} title={t.settings.profileInfo} description={t.settings.profileInfoDescription} />
+          {user ? (
+            <ProfileEditDialog myProfile={myProfile}>
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-muted/50"
+              >
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                  <User className="size-4.5 text-muted-foreground" strokeWidth={1.75} />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-foreground">{t.settings.profileInfo}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {myProfile?.username ? (
+                      <span dir="ltr" className="inline-block">@{myProfile.username}</span>
+                    ) : (
+                      t.settings.profileInfoDescription
+                    )}
+                  </p>
+                </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" strokeWidth={1.75} />
+              </button>
+            </ProfileEditDialog>
+          ) : (
+            <ComingSoonRow icon={User} title={t.settings.profileInfo} description={t.settings.profileInfoDescription} />
+          )}
           {user ? (
             <div className="flex w-full items-center gap-3 p-4">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">

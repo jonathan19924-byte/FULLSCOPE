@@ -6,6 +6,8 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { createClient } from "@/lib/supabase/server";
 import { getBookmarkedSlugs } from "@/lib/bookmarks/get-bookmarks";
 import { getCommunityPosts } from "@/lib/posts/get-community-posts";
+import { getFollowingIds } from "@/lib/follows/get-following";
+import { getMyProfile } from "@/lib/profile/profile-repository";
 import { DIR, LOCALE } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 
@@ -69,6 +71,8 @@ export default async function RootLayout({
   } = await supabase.auth.getUser();
   const initialBookmarkedSlugs = user ? await getBookmarkedSlugs() : [];
   const initialCommunityPosts = await getCommunityPosts();
+  const initialFollowingIds = user ? await getFollowingIds() : [];
+  const myProfile = user ? await getMyProfile() : null;
 
   return (
     <html
@@ -88,6 +92,8 @@ export default async function RootLayout({
           initialUser={user}
           initialBookmarkedSlugs={initialBookmarkedSlugs}
           initialCommunityPosts={initialCommunityPosts}
+          initialFollowingIds={initialFollowingIds}
+          myProfile={myProfile}
         >
           <SiteShell>{children}</SiteShell>
         </Providers>

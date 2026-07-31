@@ -1,6 +1,7 @@
 import "server-only";
 import type { CommunityPost } from "@/types/domain";
 import { createClient } from "@/lib/supabase/server";
+import { getProfilesByUserIds } from "@/lib/profile/profile-repository";
 import { t } from "@/lib/i18n";
 
 export async function getCommunityPosts(): Promise<CommunityPost[]> {
@@ -19,6 +20,11 @@ export async function getCommunityPosts(): Promise<CommunityPost[]> {
     supabase.from("community_post_likes").select("post_id, user_id"),
   ]);
 
+  // Real per-author identity (added alongside the follow feature) — before
+  // this, every post displayed the same hardcoded "Guest reader" string
+  // regardless of who actually posted it.
+  const profilesByUserId = await getProfilesByUserIds((data ?? []).map((row) => row.user_id));
+
   // A post's id can appear in at most one contribution in practice (it's
   // credited and excluded from future trend checks once it's used), so a
   // flat post-id -> theme map is enough — no need to track multiples.
@@ -36,17 +42,21 @@ export async function getCommunityPosts(): Promise<CommunityPost[]> {
     if (user && like.user_id === user.id) likedByMePostIds.add(like.post_id);
   }
 
-  return (data ?? []).map((row) => ({
-    id: row.id,
-    userId: row.user_id,
-    displayName: t.profile.guestReader,
-    content: row.content,
-    createdAt: row.created_at,
-    relatedStorySlug: row.related_story_slug ?? undefined,
-    relatedStoryTitle: row.related_story_title ?? undefined,
-    relatedStoryCategory: (row.related_story_category ?? undefined) as CommunityPost["relatedStoryCategory"],
-    contributionTheme: themeByPostId.get(row.id),
-    likeCount: likeCountByPostId.get(row.id) ?? 0,
-    likedByMe: user ? likedByMePostIds.has(row.id) : undefined,
-  }));
+  return (data ?? []).map((row) => {
+    const profile = profilesByUserId.get(row.user_id);
+    return {
+      id: row.id,
+      userId: row.user_id,
+      displayName: profile?.displayName || profile?.username || t.profile.guestReader,
+      username: profile?.username ?? undefined,
+      content: row.content,
+      createdAt: row.created_at,
+      relatedStorySlug: row.related_story_slug ?? undefined,
+      relatedStoryTitle: row.related_story_title ?? undefined,
+      relatedStoryCategory: (row.related_story_category ?? undefined) as CommunityPost["relatedStoryCategory"],
+      contributionTheme: themeByPostId.get(row.id),
+      likeCount: likeCountByPostId.get(row.id) ?? 0,
+      likedByMe: user ? likedByMePostIds.has(row.id) : undefined,
+    };
+  });
 }

@@ -39,6 +39,14 @@ function username(name: string) {
 export interface FeedPost {
   id: string;
   displayName: string;
+  /** The author's @handle — present only for real community posts whose
+   * author has claimed a username. Makes the author name/avatar a link to
+   * their public profile; absent for seed/generated posts, which have no
+   * real profile to link to. */
+  authorUsername?: string;
+  /** The author's user id — present only for real community posts, used to
+   * check "is this someone I follow" for the Following feed toggle. */
+  authorUserId?: string;
   content: string;
   createdAt: string;
   likeCount: number;
@@ -89,19 +97,45 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
     setReply("");
   }
 
+  const avatarEl = (
+    <Avatar size="sm">
+      <AvatarFallback>{initials(post.displayName)}</AvatarFallback>
+    </Avatar>
+  );
+
   return (
     <li className="flex gap-3 px-1 py-3.5">
-      <Avatar size="sm">
-        <AvatarFallback>{initials(post.displayName)}</AvatarFallback>
-      </Avatar>
+      {post.authorUsername ? (
+        <Link href={`/profile/${post.authorUsername}`} className="shrink-0">
+          {avatarEl}
+        </Link>
+      ) : (
+        avatarEl
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <Dialog>
           <DialogTrigger
             render={<div className="cursor-pointer text-start" />}
           >
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-              <span className="text-sm font-medium text-foreground">{post.displayName}</span>
-              <span className="text-xs text-muted-foreground">{username(post.displayName)}</span>
+              {post.authorUsername ? (
+                <Link
+                  href={`/profile/${post.authorUsername}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-sm font-medium text-foreground hover:underline"
+                >
+                  {post.displayName}
+                </Link>
+              ) : (
+                <span className="text-sm font-medium text-foreground">{post.displayName}</span>
+              )}
+              {post.authorUsername ? (
+                <span dir="ltr" className="inline-block text-xs text-muted-foreground">
+                  @{post.authorUsername}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">{username(post.displayName)}</span>
+              )}
               <span className="text-xs text-muted-foreground">· {formatUpdatedAt(post.createdAt)}</span>
             </div>
             <p className="text-sm leading-relaxed text-foreground/90">{post.content}</p>
@@ -127,7 +161,13 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                   <span className="text-sm font-medium text-foreground">{post.displayName}</span>
-                  <span className="text-xs text-muted-foreground">{username(post.displayName)}</span>
+                  {post.authorUsername ? (
+                    <span dir="ltr" className="inline-block text-xs text-muted-foreground">
+                      @{post.authorUsername}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{username(post.displayName)}</span>
+                  )}
                 </div>
                 <p className="text-sm leading-relaxed text-foreground/90">{post.content}</p>
                 {post.story && (

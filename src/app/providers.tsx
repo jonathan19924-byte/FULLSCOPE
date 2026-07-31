@@ -7,17 +7,22 @@ import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "@/components/auth/user-provider";
 import { BookmarksProvider } from "@/lib/bookmarks/bookmarks-context";
 import { PostsProvider } from "@/lib/posts/posts-context";
+import { FollowsProvider } from "@/lib/follows/follows-context";
 import type { CommunityPost } from "@/types/domain";
 
 export function Providers({
   initialUser,
   initialBookmarkedSlugs,
   initialCommunityPosts,
+  initialFollowingIds,
+  myProfile,
   children,
 }: {
   initialUser: User | null;
   initialBookmarkedSlugs: string[];
   initialCommunityPosts: CommunityPost[];
+  initialFollowingIds: string[];
+  myProfile: { username: string | null; displayName: string | null } | null;
   children: React.ReactNode;
 }) {
   return (
@@ -25,10 +30,12 @@ export function Providers({
       <TooltipProvider delay={200}>
         <UserProvider initialUser={initialUser}>
           <BookmarksProvider initialSlugs={initialBookmarkedSlugs}>
-            <PostsProvider initialPosts={initialCommunityPosts}>
-              {children}
-              <Toaster position="bottom-center" />
-            </PostsProvider>
+            <FollowsProvider initialFollowingIds={initialFollowingIds}>
+              <PostsProvider initialPosts={initialCommunityPosts} myProfile={myProfile}>
+                {children}
+                <Toaster position="bottom-center" />
+              </PostsProvider>
+            </FollowsProvider>
           </BookmarksProvider>
         </UserProvider>
       </TooltipProvider>

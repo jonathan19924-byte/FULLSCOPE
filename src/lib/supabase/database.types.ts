@@ -68,12 +68,26 @@ export interface Database {
         Row: {
           user_id: string;
           display_name: string | null;
+          username: string | null;
+          bio: string | null;
           preferences: unknown;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> &
           Pick<Database["public"]["Tables"]["profiles"]["Row"], "user_id">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Relationships: [];
+      };
+      follows: {
+        Row: {
+          id: string;
+          follower_id: string;
+          followee_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["follows"]["Row"]> &
+          Pick<Database["public"]["Tables"]["follows"]["Row"], "follower_id" | "followee_id">;
+        Update: Partial<Database["public"]["Tables"]["follows"]["Row"]>;
         Relationships: [];
       };
       bookmarks: {

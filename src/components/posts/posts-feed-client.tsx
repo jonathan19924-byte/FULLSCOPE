@@ -1,13 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CirclePlus, MessageSquare } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { toast } from "sonner";
+import { CirclePlus, MessageSquare, UserRound } from "lucide-react";
 import type { SeedPostWithStory, StandaloneSeedPost } from "@/types/domain";
 import { usePosts } from "@/lib/posts/posts-context";
+import { useFollows } from "@/lib/follows/follows-context";
+import { useUser } from "@/components/auth/user-provider";
 import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 import { sortByRank } from "@/lib/posts/rank";
 
@@ -21,11 +26,27 @@ export function PostsFeedClient({
   storyFilterSlug?: string;
 }) {
   const { communityPosts, isReady } = usePosts();
+  const { followingIds } = useFollows();
+  const { user } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [tab, setTab] = useState<"all" | "following">("all");
+
+  function handleTabClick(option: "all" | "following") {
+    if (option === "following" && !user) {
+      toast(t.profile.signInToFollow);
+      router.push(`/sign-in?next=${encodeURIComponent(pathname)}`);
+      return;
+    }
+    setTab(option);
+  }
 
   const feed = useMemo<FeedPost[]>(() => {
     const fromCommunity: FeedPost[] = communityPosts.map((p) => ({
       id: p.id,
       displayName: p.displayName,
+      authorUsername: p.username,
+      authorUserId: p.userId,
       content: p.content,
       createdAt: p.createdAt,
       likeCount: p.likeCount,
@@ -65,11 +86,15 @@ export function PostsFeedClient({
     return sortByRank([...fromCommunity, ...fromSeed, ...fromStandalone]);
   }, [communityPosts, seedPosts, standalonePosts]);
 
-  const visibleFeed = storyFilterSlug
+  const storyFiltered = storyFilterSlug
     ? feed.filter((post) => post.story?.slug === storyFilterSlug)
     : feed;
+  const visibleFeed =
+    tab === "following"
+      ? storyFiltered.filter((post) => post.authorUserId && followingIds.includes(post.authorUserId))
+      : storyFiltered;
   const filteredStoryTitle = storyFilterSlug
-    ? visibleFeed[0]?.story?.title
+    ? storyFiltered[0]?.story?.title
     : undefined;
 
   return (
@@ -86,6 +111,27 @@ export function PostsFeedClient({
           {t.posts.writePost}
         </Link>
       </div>
+
+      {!storyFilterSlug ? (
+        <div className="flex gap-2">
+          {(["all", "following"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={tab === option}
+              onClick={() => handleTabClick(option)}
+              className={cn(
+                "flex-1 rounded-full border py-2 text-sm font-medium transition-colors",
+                tab === option
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+              )}
+            >
+              {option === "all" ? t.posts.allTab : t.posts.followingTab}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {storyFilterSlug ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-2.5 text-sm">
@@ -107,16 +153,29 @@ export function PostsFeedClient({
       )}
 
       {!isReady ? null : visibleFeed.length === 0 ? (
-        <EmptyState
-          icon={MessageSquare}
-          title={t.posts.emptyTitle}
-          description={t.posts.emptyDescription}
-          action={
-            <Link href="/create" className={buttonVariants({ variant: "default" })}>
-              {t.posts.writePostCta}
-            </Link>
-          }
-        />
+        tab === "following" ? (
+          <EmptyState
+            icon={UserRound}
+            title={t.posts.followingEmptyTitle}
+            description={t.posts.followingEmptyDescription}
+            action={
+              <Link href="/search" className={buttonVariants({ variant: "default" })}>
+                {t.posts.findPeopleCta}
+              </Link>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={MessageSquare}
+            title={t.posts.emptyTitle}
+            description={t.posts.emptyDescription}
+            action={
+              <Link href="/create" className={buttonVariants({ variant: "default" })}>
+                {t.posts.writePostCta}
+              </Link>
+            }
+          />
+        )
       ) : (
         <ul className="flex flex-col divide-y divide-border/60 border-t border-border/60">
           {visibleFeed.map((post) => (

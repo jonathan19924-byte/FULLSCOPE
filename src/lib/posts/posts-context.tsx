@@ -22,9 +22,11 @@ const PostsContext = createContext<PostsContextValue | null>(null);
 
 export function PostsProvider({
   initialPosts,
+  myProfile,
   children,
 }: {
   initialPosts: CommunityPost[];
+  myProfile: { username: string | null; displayName: string | null } | null;
   children: React.ReactNode;
 }) {
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(initialPosts);
@@ -35,7 +37,8 @@ export function PostsProvider({
       const optimisticPost: CommunityPost = {
         id: `optimistic-${Date.now()}`,
         userId: user?.id ?? "",
-        displayName: t.profile.guestReader,
+        displayName: myProfile?.displayName || myProfile?.username || t.profile.guestReader,
+        username: myProfile?.username ?? undefined,
         content: input.content,
         createdAt: new Date().toISOString(),
         relatedStorySlug: input.relatedStorySlug,
@@ -55,7 +58,7 @@ export function PostsProvider({
 
       return result;
     },
-    [user?.id],
+    [user?.id, myProfile?.displayName, myProfile?.username],
   );
 
   const toggleLike = useCallback<PostsContextValue["toggleLike"]>(async (postId) => {

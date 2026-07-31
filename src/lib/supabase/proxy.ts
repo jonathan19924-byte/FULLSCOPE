@@ -2,7 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
 
-const PROTECTED_PREFIXES = ["/bookmarks", "/profile"];
+// Exact-match paths, not prefixes — added 2026-07-31 alongside the public
+// profile feature: a naive startsWith("/profile") check would also match
+// /profile/[username], which must stay open to signed-out visitors (that's
+// the entire point of a public, followable profile page).
+const PROTECTED_PATHS = ["/bookmarks", "/profile"];
 
 /**
  * Refreshes the Supabase auth session cookie on every request, and does an
@@ -39,9 +43,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    request.nextUrl.pathname.startsWith(prefix),
-  );
+  const isProtected = PROTECTED_PATHS.includes(request.nextUrl.pathname);
 
   if (isProtected && !user) {
     const redirectUrl = new URL("/sign-in", request.url);
