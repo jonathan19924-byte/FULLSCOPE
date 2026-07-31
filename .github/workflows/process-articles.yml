@@ -53,6 +53,17 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           NEXT_PUBLIC_LOCALE: he
+      # Telegram channels added 2026-07-31 as a second raw content source
+      # alongside RSS (see CONTENT_PIPELINE.md) — same reasoning as fetch-rss
+      # above for running this every 3h paired with processing: no Claude
+      # calls here, so frequency is essentially free, and it fetches each
+      # channel's public preview page in parallel the same way fetch-rss
+      # fetches feeds, so this adds seconds, not minutes, to the job.
+      - run: npm run fetch-telegram
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_LOCALE: he
       - run: npm run process-articles
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}

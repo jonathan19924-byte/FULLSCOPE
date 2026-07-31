@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "fetch-rss": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/fetch-rss.ts",
+    "fetch-telegram": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/fetch-telegram.ts",
     "process-articles": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/process-articles.ts",
     "check-trends": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/check-trends.ts",
     "backfill-images": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/backfill-images.ts"
@@ -16,6 +17,7 @@
     "@base-ui/react": "^1.6.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
+    "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

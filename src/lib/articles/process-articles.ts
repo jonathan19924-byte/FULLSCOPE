@@ -6,11 +6,22 @@ import { recordPipelineHeartbeat } from "./pipeline-health";
 import { logStoryUpdate } from "./story-updates";
 import { LOCALE } from "../locale";
 import { ACTIVE_FEEDS } from "../rss/fetch-rss";
+import { TELEGRAM_CHANNELS } from "../rss/fetch-telegram";
 
 /** raw_articles is a shared table across locales — without this, leftover
  * English-sourced rows from before a locale switch (or vice versa) would
- * mix into the clustering batch alongside the active locale's sources. */
-const ACTIVE_SOURCE_NAMES = ACTIVE_FEEDS.map((feed) => feed.name);
+ * mix into the clustering batch alongside the active locale's sources.
+ * Telegram channels are Hebrew-only (added 2026-07-31), so they're only
+ * included in the Hebrew-mode source list — same reasoning as HEBREW_FEEDS
+ * itself only applying when LOCALE === "he". Every Telegram channel name is
+ * added here so fetchUnprocessedArticles' per-source cap applies to them
+ * too — otherwise a high-volume channel (e.g. Abu Ali Express at 588K
+ * subscribers) could dominate a clustering pass the same way Kore almost
+ * did before the per-source cap existed. */
+const ACTIVE_SOURCE_NAMES = [
+  ...ACTIVE_FEEDS.map((feed) => feed.name),
+  ...(LOCALE === "he" ? TELEGRAM_CHANNELS.map((channel) => channel.name) : []),
+];
 
 /** Appended to every Claude prompt in Hebrew mode — keeps JSON keys in
  * English (the app's schema expects them) while all text values come back
@@ -177,9 +188,27 @@ function slugify(title: string): string {
   return `${base}-${suffix}`;
 }
 
+/** RSS descriptions are always short (1-3 sentences), but Telegram posts
+ * (added 2026-07-31) can run to hundreds of words — a full statement rather
+ * than a blurb. Uncapped, a handful of long posts in one cluster can bloat
+ * a generation prompt enough to push Claude's response past its max_tokens
+ * ceiling, silently truncating whichever output field is listed last (see
+ * the Decision Log entry on the missing-"sources" bug this caused). Capping
+ * input length here is the actual fix — raising max_tokens alone only moves
+ * the truncation point further out, same lesson as the 2026-07-30
+ * clustering truncation incident. */
+const MAX_DESCRIPTION_CHARS_IN_PROMPT = 500;
+
+function truncateDescription(description: string | null): string {
+  if (!description) return "";
+  return description.length > MAX_DESCRIPTION_CHARS_IN_PROMPT
+    ? `${description.slice(0, MAX_DESCRIPTION_CHARS_IN_PROMPT)}…`
+    : description;
+}
+
 function buildClusteringPrompt(articles: RawArticleRow[], maxClusters: number): string {
   const list = articles
-    .map((a, i) => `${i}. ${a.source_name} (${a.source_lean}): ${a.title} — ${a.description ?? ""}`)
+    .map((a, i) => `${i}. ${a.source_name} (${a.source_lean}): ${a.title} — ${truncateDescription(a.description)}`)
     .join("\n");
 
   return `You are a news editor. Below are news article headlines and summaries fetched from multiple sources today. Group them into topic clusters — stories that are about the same real-world event or issue.
@@ -232,7 +261,7 @@ function clusterRankKey(cluster: ClusterResult, unprocessed: RawArticleRow[]): [
 
 export function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): string {
   const list = articles
-    .map((a) => `${a.source_name} (${a.source_lean}): ${a.title} — ${a.description ?? ""}`)
+    .map((a) => `${a.source_name} (${a.source_lean}): ${a.title} — ${truncateDescription(a.description)}`)
     .join("\n");
 
   // US news maps reasonably well onto a left/progressive vs. right/conservative
@@ -973,7 +1002,15 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
             }
           }
 
-          const storyRaw = await callClaude(buildStoryPrompt(cluster.topic_name, clusterArticles), 3000);
+          // 4000 (raised from 3000 on 2026-07-31): a second line of defense
+          // against response truncation, not the primary fix — the primary
+          // fix is capping input description length above
+          // (MAX_DESCRIPTION_CHARS_IN_PROMPT), same "bound input AND output,
+          // don't just raise the ceiling" lesson as the clustering
+          // truncation incident. The two defensive fallbacks below exist so
+          // that IF truncation ever happens anyway, it degrades instead of
+          // crashing and losing the whole cluster.
+          const storyRaw = await callClaude(buildStoryPrompt(cluster.topic_name, clusterArticles), 4000);
           const story = randomizePerspectiveSlots(parseClaudeJson<StoryGenerationResponse>(storyRaw));
 
           const mostRecentPublishedAt = clusterArticles
@@ -982,7 +1019,15 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
             .sort()
             .at(-1);
 
-          const imageUrl = await findStoryImage(story.image_keywords, story.category, usedImageUrls);
+          // Fallback computed directly from the cluster's own known articles
+          // rather than only trusting Claude to echo sources back — this is
+          // exactly the field a 2026-07-31 truncation incident dropped
+          // (it's last in the JSON schema, so a cut-off response loses it
+          // first).
+          const fallbackSources = [...new Set(clusterArticles.map((a) => a.source_name))].join(", ");
+          const storySources = story.sources || fallbackSources;
+
+          const imageUrl = await findStoryImage(story.image_keywords || story.title, story.category, usedImageUrls);
           if (imageUrl) usedImageUrls.add(imageUrl);
 
           const storyRow = {
@@ -1004,7 +1049,7 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
             },
             key_differences_cause: story.key_differences_cause,
             key_differences_impact: story.key_differences_impact,
-            sources: story.sources
+            sources: storySources
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean)
