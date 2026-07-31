@@ -43,6 +43,63 @@ export async function callClaude(prompt: string, maxTokens: number): Promise<str
   return text;
 }
 
+/**
+ * Vision variant of callClaude — sends an actual image (base64) alongside a
+ * text question instead of a plain text prompt. Used to inspect candidate
+ * stock photos directly rather than relying on a search API's own text
+ * description of them (see findStoryImage in pexels.ts for why: a photo can
+ * carry a legible sign/banner making a one-sided claim regardless of how the
+ * stock library describes it in words).
+ */
+export async function callClaudeVision(
+  imageBase64: string,
+  mediaType: string,
+  question: string,
+  maxTokens: number,
+): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing ANTHROPIC_API_KEY — set it in .env.local (see .env.local.example).");
+  }
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: maxTokens,
+      thinking: { type: "disabled" },
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
+            { type: "text", text: question },
+          ],
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Claude API error ${res.status}: ${text.slice(0, 500)}`);
+  }
+
+  const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+  const text = data.content?.find((block) => block.type === "text")?.text;
+
+  if (typeof text !== "string") {
+    throw new Error("Unexpected Claude response shape (no text block found)");
+  }
+
+  return text;
+}
+
 const HEBREW_LETTER = /[֐-׿]/;
 
 /** A `"` immediately followed by `,` is ambiguous on its own — Hebrew (and

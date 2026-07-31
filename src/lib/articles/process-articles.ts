@@ -258,12 +258,30 @@ export function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): 
 - "perspective_b_name": short name (2-4 words) for the right/conservative stance on this specific story
 - ${nameNeutrality}`;
 
+  // Every field below renders on the same story page, so an LLM asked for
+  // the same underlying facts nine different ways will default to
+  // rephrasing the same 2-3 core facts repeatedly (observed directly: users
+  // reported summary/what_happened/timeline/perspective-claims all reading
+  // as restatements of each other — see Decision Log). The fix is giving
+  // each field an explicit, distinct job and saying outright that
+  // duplicating another field's content is a defect, not just describing
+  // each field's length/tone in isolation the way this prompt used to.
+  const noRepeatInstruction = `IMPORTANT — these fields all appear together on the same story page. Each one must add NEW information not already stated in another field. Do not rephrase one field as another field in different words. Specifically:
+- "summary" is the headline-level takeaway (what happened + why it matters) — the only place for a broad-strokes framing.
+- "what_happened" covers the mechanical facts (who did what, when, where) that "summary" didn't already cover — do not just reword "summary" at greater length.
+- "what_happened_timeline" entries must be sequential, concrete events (each with what distinguishes it in time/order) — do not restate "what_happened" as a bulleted list; if an entry doesn't add a fact beyond what's already said elsewhere, cut it.
+- "perspective_a"/"perspective_b" are each side's narrative reasoning — why they see it that way.
+- "perspective_a_claims"/"perspective_b_claims" are specific, concrete assertions that side makes — distinct from and more granular than the perspective's own summary sentence, not that summary split into 3 pieces.
+- "key_differences_cause"/"key_differences_impact" describe WHY the two sides diverge (the mechanism of disagreement), not a restatement of either side's position.`;
+
   return `You are a news editor for FullScope, a news platform that shows every story from multiple perspectives. Based on the following articles about ${topicName}, generate a complete story entry.
 
 Articles provided:
 ${list}
 
 ${perspectiveInstructions}
+
+${noRepeatInstruction}
 
 Return ONLY valid JSON with this exact structure:
 {
@@ -671,11 +689,19 @@ async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
   }
   if (!rows || rows.length === 0) return 0;
 
+  // Shared across the concurrent map below — since these run concurrently,
+  // two backfills in the same batch could both pass the duplicate check
+  // before either adds its pick, so this only reliably avoids collisions
+  // with already-live stories, not with each other. Acceptable for a
+  // best-effort backfill path.
+  const usedImageUrls = await fetchUsedImageUrls(supabase);
+
   const results = await Promise.all(
     rows.map(async (row) => {
       const keywords = await deriveImageKeywords(row.title, row.summary);
-      const imageUrl = await findStoryImage(keywords ?? row.title, row.category);
+      const imageUrl = await findStoryImage(keywords ?? row.title, row.category, usedImageUrls);
       if (!imageUrl) return false;
+      usedImageUrls.add(imageUrl);
 
       const { error: updateError } = await supabase
         .from("stories")
@@ -746,6 +772,23 @@ async function fetchUnprocessedArticles(supabase: SupabaseAdmin): Promise<RawArt
   return bySource.flat();
 }
 
+/** Image URLs already assigned to other live stories, so a new pick can
+ * avoid handing two different stories the same photo. */
+async function fetchUsedImageUrls(supabase: SupabaseAdmin): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from("stories")
+    .select("image_url")
+    .is("archived_at", null)
+    .not("image_url", "is", null);
+
+  if (error) {
+    console.error("Error fetching used image URLs:", error.message);
+    return new Set();
+  }
+
+  return new Set((data ?? []).map((row) => row.image_url).filter((url): url is string => Boolean(url)));
+}
+
 async function runProcessArticles(): Promise<ProcessArticlesResult> {
   const supabase = createProcessingClient();
 
@@ -755,6 +798,7 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
   const updatedStories: { title: string; note: string }[] = [];
   const removedStories: { title: string }[] = [];
 
+  const usedImageUrls = await fetchUsedImageUrls(supabase);
   const unprocessed = await fetchUnprocessedArticles(supabase);
 
   {
@@ -898,7 +942,8 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
             .sort()
             .at(-1);
 
-          const imageUrl = await findStoryImage(story.image_keywords, story.category);
+          const imageUrl = await findStoryImage(story.image_keywords, story.category, usedImageUrls);
+          if (imageUrl) usedImageUrls.add(imageUrl);
 
           const storyRow = {
             slug: slugify(story.title),
