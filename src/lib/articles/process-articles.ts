@@ -274,6 +274,16 @@ export function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): 
 - "perspective_a_claims"/"perspective_b_claims" are specific, concrete assertions that side makes — distinct from and more granular than the perspective's own summary sentence, not that summary split into 3 pieces.
 - "key_differences_cause"/"key_differences_impact" describe WHY the two sides diverge (the mechanism of disagreement), not a restatement of either side's position.`;
 
+  // A bias audit (2026-07-31) found that even when both perspectives got
+  // equal length/claim counts, one side's claims were routinely stated as
+  // settled fact while the other's were hedged/attributed to unnamed
+  // "critics" — a blinded neutrality judge flagged this in 7 of 8 sampled
+  // stories. This is a wording-confidence asymmetry, not a length one, so it
+  // needs its own instruction rather than being covered by nameNeutrality
+  // (which only governs how each side is NAMED) or noRepeatInstruction
+  // (which only governs cross-field duplication).
+  const epistemicParity = `Both perspectives' claims must be written with the SAME level of confidence/hedging — do not state one side's claims as settled fact while attributing the other side's to "critics say" or "opponents argue". Bad (asymmetric): perspective_a_claims: ["The strike hit only military targets"], perspective_b_claims: ["Critics argue the strike may have caused harm"]. Good (symmetric): perspective_a_claims: ["The strike hit only military targets"], perspective_b_claims: ["The strike caused civilian harm"] — state each side's claims directly as that side's position, with matching directness, not one as fact and the other as a hedged accusation. This applies to perspective_a/perspective_b (the narrative text) too, not just the claims arrays.`;
+
   return `You are a news editor for FullScope, a news platform that shows every story from multiple perspectives. Based on the following articles about ${topicName}, generate a complete story entry.
 
 Articles provided:
@@ -282,6 +292,8 @@ ${list}
 ${perspectiveInstructions}
 
 ${noRepeatInstruction}
+
+${epistemicParity}
 
 Return ONLY valid JSON with this exact structure:
 {
@@ -301,6 +313,34 @@ Return ONLY valid JSON with this exact structure:
   "sources": "comma separated list of source names used",
   "image_keywords": "2-5 word phrase in ENGLISH (regardless of what language the rest of this response is in) describing a concrete, photographable visual scene for this story — e.g. 'soldier military funeral', 'wildfire forest smoke', 'stock market trading floor'. This is used to search a stock photo library, which only understands English, so it must always be English even when everything else is Hebrew."
 }${LOCALE === "he" ? HEBREW_OUTPUT_INSTRUCTION : ""}`;
+}
+
+/** A bias audit (2026-07-31) found perspective_a was the establishment/
+ * government/security-aligned side in 28 of 38 sampled Hebrew-mode stories
+ * (74%, vs. an unbiased ~50%) — Claude has its own tendency to list
+ * whichever stance it treats as the "primary" one first, and asking it to
+ * consciously randomize its own output isn't reliable. The UI also renders
+ * perspective_a first/more prominently (see Perspectives component), so
+ * this isn't just a data-label quirk. Fixing it mechanically after
+ * generation — a coin flip that swaps the two perspectives' fields — is
+ * robust regardless of whatever pattern Claude's underlying generation
+ * follows, and needs no prompt engineering. English mode is untouched: its
+ * prompt fixes perspective_a to left/progressive and perspective_b to
+ * right/conservative on purpose, so swapping there would break that
+ * intentional convention. */
+function randomizePerspectiveSlots(story: StoryGenerationResponse): StoryGenerationResponse {
+  if (LOCALE !== "he") return story;
+  if (Math.random() >= 0.5) return story;
+
+  return {
+    ...story,
+    perspective_a_name: story.perspective_b_name,
+    perspective_a: story.perspective_b,
+    perspective_a_claims: story.perspective_b_claims,
+    perspective_b_name: story.perspective_a_name,
+    perspective_b: story.perspective_a,
+    perspective_b_claims: story.perspective_a_claims,
+  };
 }
 
 function buildPostsPrompt(story: StoryGenerationResponse): string {
@@ -934,7 +974,7 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
           }
 
           const storyRaw = await callClaude(buildStoryPrompt(cluster.topic_name, clusterArticles), 3000);
-          const story = parseClaudeJson<StoryGenerationResponse>(storyRaw);
+          const story = randomizePerspectiveSlots(parseClaudeJson<StoryGenerationResponse>(storyRaw));
 
           const mostRecentPublishedAt = clusterArticles
             .map((a) => a.published_at)
