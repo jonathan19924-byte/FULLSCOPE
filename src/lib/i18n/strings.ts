@@ -239,6 +239,7 @@ export const strings = {
       creatingAccount: "Creating account…",
       createAccount: "Create account",
       alreadyHaveAccount: "Already have an account?",
+      verifyingHuman: "Verifying…",
     },
     search: {
       title: "Search",
@@ -550,6 +551,7 @@ export const strings = {
       creatingAccount: "יוצר חשבון...",
       createAccount: "יצירת חשבון",
       alreadyHaveAccount: "כבר יש לכם חשבון?",
+      verifyingHuman: "מאמת...",
     },
     search: {
       title: "חיפוש",

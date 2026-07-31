@@ -18,6 +18,11 @@ export function SignInForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  // Only require the token when Turnstile is actually configured — mirrors
+  // TurnstileWidget's own check, so local dev (no site key set) isn't
+  // permanently blocked waiting for a widget that will never render.
+  const captchaRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const captchaPending = captchaRequired && !captchaToken;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,8 +78,13 @@ export function SignInForm() {
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <Button type="submit" size="lg" disabled={isSubmitting} className="h-12 w-full rounded-full">
-        {isSubmitting ? t.auth.signingIn : t.auth.signIn}
+      <Button
+        type="submit"
+        size="lg"
+        disabled={isSubmitting || captchaPending}
+        className="h-12 w-full rounded-full"
+      >
+        {isSubmitting ? t.auth.signingIn : captchaPending ? t.auth.verifyingHuman : t.auth.signIn}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
