@@ -307,11 +307,19 @@ export function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): 
   // equal length/claim counts, one side's claims were routinely stated as
   // settled fact while the other's were hedged/attributed to unnamed
   // "critics" — a blinded neutrality judge flagged this in 7 of 8 sampled
-  // stories. This is a wording-confidence asymmetry, not a length one, so it
-  // needs its own instruction rather than being covered by nameNeutrality
-  // (which only governs how each side is NAMED) or noRepeatInstruction
-  // (which only governs cross-field duplication).
-  const epistemicParity = `Both perspectives' claims must be written with the SAME level of confidence/hedging — do not state one side's claims as settled fact while attributing the other side's to "critics say" or "opponents argue". Bad (asymmetric): perspective_a_claims: ["The strike hit only military targets"], perspective_b_claims: ["Critics argue the strike may have caused harm"]. Good (symmetric): perspective_a_claims: ["The strike hit only military targets"], perspective_b_claims: ["The strike caused civilian harm"] — state each side's claims directly as that side's position, with matching directness, not one as fact and the other as a hedged accusation. This applies to perspective_a/perspective_b (the narrative text) too, not just the claims arrays.`;
+  // stories. An earlier, abstract version of this instruction ("state both
+  // sides with equal confidence") was tested and made no measurable
+  // difference — re-tested at 7/7 flagged afterward. This version is
+  // deliberately mechanical instead of abstract: a fixed attribution frame
+  // applied identically to both sides removes the room for the model to
+  // drift back into confident-fact-vs-hedged-opinion phrasing, rather than
+  // just asking it not to. Needs its own instruction rather than being
+  // covered by nameNeutrality (governs how each side is NAMED) or
+  // noRepeatInstruction (governs cross-field duplication).
+  const epistemicParity =
+    LOCALE === "he"
+      ? `Every claim in "perspective_a_claims" and "perspective_b_claims" — and every sentence in "perspective_a"/"perspective_b" — must open with an explicit attribution naming that perspective, using the SAME grammatical frame for both sides (e.g. "[שם הפרספקטיבה] טוען/טוענת ש..." or "לפי [שם הפרספקטיבה], ..." — pick the verb form that correctly agrees in gender/number with that perspective's own name, but apply the identical attribution pattern to both sides equally). This is a mechanical rule, not a matter of tone: never phrase one side's claim as a bare unattributed fact ("X קרה") while phrasing the other's as a hedged, attributed opinion ("מבקרים טוענים ש-X אולי קרה") — both sides get the same attribution frame, stated with the same directness, so neither reads as objective truth and the other as contested speculation.`
+      : `Every claim in "perspective_a_claims" and "perspective_b_claims" — and every sentence in "perspective_a"/"perspective_b" — must open with an explicit attribution naming that perspective, using the SAME grammatical frame for both sides (e.g. "[Perspective name] argues/holds/states that..."). This is a mechanical rule, not a matter of tone: never phrase one side's claim as a bare unattributed fact ("The strike hit only military targets") while phrasing the other's as a hedged, attributed opinion ("Critics argue the strike may have caused harm") — both sides get the same attribution frame, stated with the same directness, so neither reads as objective truth and the other as contested speculation.`;
 
   return `You are a news editor for FullScope, a news platform that shows every story from multiple perspectives. Based on the following articles about ${topicName}, generate a complete story entry.
 
