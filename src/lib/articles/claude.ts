@@ -206,6 +206,53 @@ function repairStrayQuotes(raw: string): string {
   return result;
 }
 
+/** Escapes literal control characters (raw newline, tab, carriage return,
+ * etc. — any byte below U+0020) found INSIDE a JSON string value. JSON's
+ * spec requires these be written as escape sequences (`\n`, `\t`, ...); a
+ * raw control byte in a string is invalid JSON and JSON.parse rejects it
+ * with "Bad control character in string literal in JSON" — observed twice
+ * in production when Claude's response embedded a literal line break in a
+ * string field instead of escaping it. `repairStrayQuotes` doesn't help
+ * here — it only tracks quote characters, not raw control bytes.
+ *
+ * Only touches control characters WHILE inside a string literal, using the
+ * same open/closed string-tracking as repairStrayQuotes below — control
+ * characters BETWEEN tokens (ordinary pretty-printed JSON whitespace) are
+ * completely valid and must be left alone. Runs before repairStrayQuotes;
+ * the backslash this inserts is handled for free by that pass's generic
+ * "next character after a backslash is escaped" logic, which doesn't care
+ * which letter follows. */
+function escapeRawControlChars(raw: string): string {
+  let result = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < raw.length; i++) {
+    const char = raw[i];
+    const code = char.charCodeAt(0);
+
+    if (inString && !escaped && code < 0x20) {
+      if (char === "\n") result += "\\n";
+      else if (char === "\t") result += "\\t";
+      else if (char === "\r") result += "\\r";
+      else result += `\\u${code.toString(16).padStart(4, "0")}`;
+      continue;
+    }
+
+    result += char;
+
+    if (escaped) {
+      escaped = false;
+    } else if (char === "\\" && inString) {
+      escaped = true;
+    } else if (char === '"') {
+      inString = !inString;
+    }
+  }
+
+  return result;
+}
+
 /** Claude is asked to "return ONLY valid JSON" but sometimes wraps it in a
  * ```json fence anyway — this strips that before parsing. */
 export function parseClaudeJson<T>(raw: string): T {
@@ -214,5 +261,5 @@ export function parseClaudeJson<T>(raw: string): T {
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
-  return JSON.parse(repairStrayQuotes(stripped)) as T;
+  return JSON.parse(repairStrayQuotes(escapeRawControlChars(stripped))) as T;
 }
