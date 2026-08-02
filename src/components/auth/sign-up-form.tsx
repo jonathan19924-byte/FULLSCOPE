@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -10,7 +10,6 @@ import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { t } from "@/lib/i18n";
 
 export function SignUpForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/";
   const [email, setEmail] = useState("");
@@ -44,8 +43,8 @@ export function SignUpForm() {
     }
 
     toast(t.auth.accountCreatedToast, { description: t.auth.accountCreatedDescription });
-    router.push(next);
-    router.refresh();
+    // Full navigation, not router.push — see sign-in-form.tsx for why.
+    window.location.href = next;
   }
 
   return (

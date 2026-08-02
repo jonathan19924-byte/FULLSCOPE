@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -10,7 +10,6 @@ import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { t } from "@/lib/i18n";
 
 export function SignInForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   // Defaults to the profile page rather than home — landing on a
   // recognizably different page makes a successful sign-in obvious, instead
@@ -49,8 +48,11 @@ export function SignInForm() {
     }
 
     toast(t.auth.signedInToast);
-    router.push(next);
-    router.refresh();
+    // A full navigation, not router.push — the App Router's client-side
+    // cache can serve a stale (pre-sign-in) render of the destination page,
+    // which looked like sign-in silently doing nothing since you'd land
+    // back on a page that still treats you as signed out.
+    window.location.href = next;
   }
 
   return (
