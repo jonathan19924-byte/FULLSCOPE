@@ -206,6 +206,29 @@ function truncateDescription(description: string | null): string {
     : description;
 }
 
+/** Expanded from 4 to 9 categories (2026-08-02) after reviewing all 158 real
+ * live+archived stories — "Politics" and "World" had become overloaded
+ * catch-alls hiding several genuinely distinct, recurring clusters. See
+ * CONTENT_PIPELINE.md for the full breakdown. Shared between the clustering
+ * and story-generation prompts so both stay in sync. */
+const CATEGORY_ENUM =
+  "Politics|Security & Defense|Law & Courts|Crime & Safety|World|Business & Economy|Technology|Science|Society & Religion";
+
+/** Without explicit guidance, a model defaults back to whichever broad
+ * category it's more used to reaching for (observed directly in the
+ * pre-2026-08-02 data: Iran/Hezbollah security news, court rulings, and
+ * routine crime were all getting stuffed into "Politics" or "World" out of
+ * habit) — this spells out what each new, more specific category is FOR so
+ * generation actually uses them instead of the old fallback buckets. */
+const CATEGORY_GUIDANCE = `Category guidance — use the MOST SPECIFIC category that genuinely fits, not a generic fallback:
+- "Security & Defense": military operations, Iran/Hezbollah/regional conflict, IDF policy, defense diplomacy — not "World" or "Politics".
+- "Law & Courts": court rulings, Supreme Court/Bagatz decisions, defamation suits, legal proceedings — not "Politics".
+- "Crime & Safety": routine crime, arrests, accidents, missing persons, local incidents with no political or international dimension — not "World".
+- "Business & Economy": markets, corporate deals, economic policy — not "Technology" (reserve "Technology" for tech products/companies/AI specifically) or "World".
+- "Society & Religion": Haredi-secular relations, religious-vs-secular disputes, cultural/social tension — not "Politics" unless it's specifically about electoral/coalition politics.
+- "Politics": domestic political process — elections, parties, coalition, Knesset.
+- "World": genuine international news not covered by any of the above (not Israeli-security-specific).`;
+
 function buildClusteringPrompt(articles: RawArticleRow[], maxClusters: number): string {
   const list = articles
     .map((a, i) => `${i}. ${a.source_name} (${a.source_lean}): ${a.title} — ${truncateDescription(a.description)}`)
@@ -220,6 +243,7 @@ Rules:
 - Give each cluster a short descriptive name (e.g. 'Iran War Escalation', 'Spain World Cup Win', 'Tate Brothers Arrest')
 - For each cluster, set "has_genuine_dispute" to true only if it's a story where real people or groups substantively disagree — about what happened, who's responsible, or what should happen next. This applies to ANY topic, not just politics — a genuine dispute can be about business (a contested merger, disputed layoffs, a boardroom fight, an activist investor campaign), sports (a disputed referee call, a doping accusation, a bitter contract/transfer dispute, a coaching controversy), entertainment/culture, science or technology (a contested study, an ethics debate over new tech), law, or politics/security (a policy debate, a contested decision, a controversial use of force, a disputed ruling) — treat all of these as equally eligible. Set it to false for a routine report with a clear, undisputed outcome and no real controversy, regardless of topic (e.g. an arrest with no dispute about what happened, a traffic accident, someone hospitalized, a routine business earnings report, a final sports score nobody is contesting, a routine indictment) — these don't have two honest sides to represent, and forcing one produces a fake, manufactured disagreement.
 - For each cluster where "has_genuine_dispute" is true, set "dispute_intensity" to a number 1-5 rating how significant and substantive the disagreement actually is: 1 is a minor procedural or technical disagreement few people care about, 5 is a major clash of values or policy with broad public significance. For clusters where "has_genuine_dispute" is false, set "dispute_intensity" to 0.
+- ${CATEGORY_GUIDANCE}
 - Return ONLY valid JSON, no other text
 
 Return this exact JSON structure:
@@ -227,7 +251,7 @@ Return this exact JSON structure:
   "clusters": [
     {
       "topic_name": "string",
-      "category": "Politics|World|Technology|Science",
+      "category": "${CATEGORY_ENUM}",
       "has_genuine_dispute": true,
       "dispute_intensity": 4,
       "article_indices": [0, 3, 7]
@@ -332,11 +356,13 @@ ${noRepeatInstruction}
 
 ${epistemicParity}
 
+${CATEGORY_GUIDANCE}
+
 Return ONLY valid JSON with this exact structure:
 {
   "title": "Engaging, objective headline under 15 words, no question mark at end",
   "summary": "2 sentence neutral summary of what happened",
-  "category": "Politics|World|Technology|Science",
+  "category": "${CATEGORY_ENUM}",
   "perspective_a_name": "string",
   "perspective_a": "3-4 sentence summary of this perspective's take on the story",
   "perspective_a_claims": ["claim 1", "claim 2", "claim 3"],

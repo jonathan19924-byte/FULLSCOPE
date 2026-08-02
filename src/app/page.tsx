@@ -46,12 +46,16 @@ export default async function HomePage({
   const latest = featured ? stories.filter((s) => s.slug !== featured.slug) : stories;
   const archivedStories = view === "history" ? await listArchivedStorySummaries() : [];
 
+  // Derived generically from CATEGORIES rather than one hardcoded line per
+  // category — the old hand-enumerated version silently produced
+  // `undefined` counts for any category not individually listed, which the
+  // `as` cast let through undetected until the 5-category expansion would
+  // have broken it at runtime.
   const counts = {
     All: allStories.length,
-    Politics: allStories.filter((s) => s.category === "Politics").length,
-    World: allStories.filter((s) => s.category === "World").length,
-    Technology: allStories.filter((s) => s.category === "Technology").length,
-    Science: allStories.filter((s) => s.category === "Science").length,
+    ...Object.fromEntries(
+      CATEGORIES.map((cat) => [cat, allStories.filter((s) => s.category === cat).length]),
+    ),
   } as Record<Category | "All", number>;
 
   return (

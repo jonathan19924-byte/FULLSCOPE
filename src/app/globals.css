@@ -19,6 +19,16 @@
   --color-technology-bg: var(--technology-bg);
   --color-science: var(--science);
   --color-science-bg: var(--science-bg);
+  --color-security: var(--security);
+  --color-security-bg: var(--security-bg);
+  --color-law: var(--law);
+  --color-law-bg: var(--law-bg);
+  --color-crime: var(--crime);
+  --color-crime-bg: var(--crime-bg);
+  --color-business: var(--business);
+  --color-business-bg: var(--business-bg);
+  --color-society: var(--society);
+  --color-society-bg: var(--society-bg);
   --color-perspective-a: var(--perspective-a);
   --color-perspective-b: var(--perspective-b);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -102,6 +112,16 @@
   --technology-bg: oklch(0.96 0.02 300);
   --science: oklch(0.5 0.13 165);
   --science-bg: oklch(0.95 0.03 165);
+  --security: oklch(0.55 0.19 60);
+  --security-bg: oklch(0.96 0.03 60);
+  --crime: oklch(0.52 0.17 90);
+  --crime-bg: oklch(0.95 0.03 90);
+  --business: oklch(0.5 0.15 120);
+  --business-bg: oklch(0.96 0.025 120);
+  --law: oklch(0.5 0.15 205);
+  --law-bg: oklch(0.96 0.02 205);
+  --society: oklch(0.55 0.19 345);
+  --society-bg: oklch(0.96 0.03 345);
 
   /* Perspective A/B accents — used only on the reader-post volume bar.
      Same lightness and chroma for both, hue-only difference (cool vs warm
@@ -151,6 +171,16 @@
   --technology-bg: oklch(0.28 0.06 300);
   --science: oklch(0.68 0.12 165);
   --science-bg: oklch(0.26 0.06 165);
+  --security: oklch(0.72 0.16 60);
+  --security-bg: oklch(0.28 0.06 60);
+  --crime: oklch(0.68 0.15 90);
+  --crime-bg: oklch(0.27 0.06 90);
+  --business: oklch(0.68 0.13 120);
+  --business-bg: oklch(0.27 0.055 120);
+  --law: oklch(0.68 0.13 205);
+  --law-bg: oklch(0.27 0.055 205);
+  --society: oklch(0.7 0.16 345);
+  --society-bg: oklch(0.28 0.06 345);
 
   --perspective-a: oklch(0.42 0.015 250);
   --perspective-b: oklch(0.42 0.015 70);

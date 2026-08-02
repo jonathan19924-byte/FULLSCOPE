@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Bookmark, LogOut, MessageSquareText, Pencil, Settings, TrendingUp, UserRound } from "lucide-react";
+import { Bookmark, ChevronDown, LogOut, MessageSquareText, Pencil, Settings, TrendingUp, UserRound } from "lucide-react";
 import { CATEGORY_META } from "@/lib/category";
 import { CATEGORIES } from "@/types/domain";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,10 @@ import { useUser } from "@/components/auth/user-provider";
 import { signOutAction } from "@/lib/auth/actions";
 import { t } from "@/lib/i18n";
 
+const VISIBLE_PREFERENCE_CATEGORY_COUNT = 5;
+
 export function ProfilePageClient() {
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   const { bookmarkedSlugs, isReady: bookmarksReady } = useBookmarks();
   const { communityPosts, isReady: postsReady } = usePosts();
   const { user } = useUser();
@@ -130,23 +134,41 @@ export function ProfilePageClient() {
         <h2 className="text-sm font-medium text-muted-foreground">{t.profile.contentPreferences}</h2>
         <p className="text-sm text-muted-foreground">{t.profile.contentPreferencesDescription}</p>
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((category) => {
-            const meta = CATEGORY_META[category];
-            const Icon = meta.icon;
-            return (
-              <span
-                key={category}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium",
-                  meta.bg,
-                  meta.text,
-                )}
-              >
-                <Icon className="size-3.5" strokeWidth={1.75} />
-                {meta.label}
-              </span>
-            );
-          })}
+          {(categoriesExpanded ? CATEGORIES : CATEGORIES.slice(0, VISIBLE_PREFERENCE_CATEGORY_COUNT)).map(
+            (category) => {
+              const meta = CATEGORY_META[category];
+              const Icon = meta.icon;
+              return (
+                <span
+                  key={category}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium",
+                    meta.bg,
+                    meta.text,
+                  )}
+                >
+                  <Icon className="size-3.5" strokeWidth={1.75} />
+                  {meta.label}
+                </span>
+              );
+            },
+          )}
+          {CATEGORIES.length > VISIBLE_PREFERENCE_CATEGORY_COUNT && (
+            <button
+              type="button"
+              onClick={() => setCategoriesExpanded((v) => !v)}
+              aria-expanded={categoriesExpanded}
+              className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+            >
+              {categoriesExpanded
+                ? t.common.showLess
+                : t.story.moreCategories(CATEGORIES.length - VISIBLE_PREFERENCE_CATEGORY_COUNT)}
+              <ChevronDown
+                className={cn("size-3.5 transition-transform", categoriesExpanded && "rotate-180")}
+                strokeWidth={1.75}
+              />
+            </button>
+          )}
         </div>
       </section>
 

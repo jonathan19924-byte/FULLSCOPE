@@ -4,13 +4,37 @@
  * repository and service in this app speaks in these types.
  */
 
-export type Category = "Politics" | "World" | "Technology" | "Science";
+/**
+ * Expanded from 4 to 9 categories (2026-08-02) after reviewing all 158 real
+ * live+archived stories: "Politics" and "World" had become overloaded
+ * catch-alls hiding several genuinely distinct, recurring clusters (Iran/
+ * Hezbollah/IDF security news, court rulings and defamation suits, routine
+ * crime, Haredi-secular tension, business/market news miscategorized into
+ * Technology) — see CONTENT_PIPELINE.md for the full breakdown. Existing
+ * stories keep whatever category they already have; only new generations
+ * use the finer taxonomy.
+ */
+export type Category =
+  | "Politics"
+  | "Security & Defense"
+  | "Law & Courts"
+  | "Crime & Safety"
+  | "World"
+  | "Business & Economy"
+  | "Technology"
+  | "Science"
+  | "Society & Religion";
 
 export const CATEGORIES: Category[] = [
   "Politics",
+  "Security & Defense",
+  "Law & Courts",
+  "Crime & Safety",
   "World",
+  "Business & Economy",
   "Technology",
   "Science",
+  "Society & Religion",
 ];
 
 export type Confidence = "confirmed" | "reported" | "disputed" | "unknown";
