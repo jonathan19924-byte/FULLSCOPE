@@ -95,13 +95,30 @@ export const FEEDS: FeedConfig[] = [
  * for the full reasoning. Two changes worth noting explicitly: Cursorinfo
  * was dropped for publishing in Russian (not Hebrew), which actively hurt
  * clustering quality, not just added volume noise. And the left/right split
- * is deliberately kept at 4-and-4 (Davar/Local Call/Kol Ha'ir/Shakuf vs.
+ * was originally kept at 4-and-4 (Davar/Local Call/Kol Ha'ir/Shakuf vs.
  * Israel National News/Srugim/Kipa/Israel Defense) rather than trimming
  * left-leaning sources down to one — Srugim and Kipa alone are the two
  * highest-volume sources in the whole list, so cutting left-leaning
  * coverage down further while keeping those would have skewed the input
  * pool itself before any generation happens, which matters for an app
  * whose whole premise is genuine two-sided coverage.
+ *
+ * Five sources removed 2026-08-02 (Times of Israel, Now 14, Kol Ha'ir,
+ * Israel Defense, Geektime) after confirming — via a real diagnostic
+ * GitHub Actions run, not guessing — that all five are permanently blocked
+ * by Cloudflare's bot-challenge system on GitHub Actions' IP range
+ * specifically (every response came back `cf-mitigated: challenge` with an
+ * actual CAPTCHA/"Just a moment..." interstitial page, identical whether
+ * requested with the bot's own User-Agent or a real browser one — proving
+ * this isn't a header issue and can't be fixed without paid proxy
+ * infrastructure). These five had been contributing zero articles every
+ * run since the 2026-07-31 curation regardless. Removing Kol Ha'ir (left)
+ * and Israel Defense (right) together happens to preserve the left/right
+ * balance at 3-and-3 rather than requiring a separate rebalancing decision.
+ * Geektime was the only "technology" category source — its removal means
+ * this list currently has no working technology-category source at all;
+ * worth deciding later whether that category needs a replacement or should
+ * be dropped from the taxonomy for Hebrew mode.
  */
 export const HEBREW_FEEDS: FeedConfig[] = [
   // centre / mainstream
@@ -110,24 +127,18 @@ export const HEBREW_FEEDS: FeedConfig[] = [
   { name: "Mako / N12", url: "https://rcs.mako.co.il/rss/news-military.xml", lean: "centre" },
   { name: "Maariv", url: "https://www.maariv.co.il/rss/rssfeeds.aspx", lean: "centre" },
   { name: "Israel Hayom", url: "https://www.israelhayom.com/feed/", lean: "centre" },
-  { name: "The Times of Israel", url: "https://www.timesofisrael.com/feed/", lean: "centre" },
   { name: "The Jerusalem Post", url: "https://www.jpost.com/rss/rssallnews", lean: "centre" },
-  { name: "Now 14", url: "https://www.c14.co.il/feed/", lean: "centre" },
   // left / progressive
   { name: "Davar", url: "https://www.davar1.co.il/feed/", lean: "left" },
   { name: "Local Call", url: "https://www.mekomit.co.il/feed/", lean: "left" },
-  { name: "Kol Ha'ir", url: "https://www.kolhair.co.il/feed/", lean: "left" },
   { name: "Shakuf", url: "https://shakuf.co.il/feed/", lean: "left" },
   // right / religious-nationalist
   { name: "Israel National News", url: "https://www.inn.co.il/Rss.aspx", lean: "right" },
   { name: "Srugim", url: "https://www.srugim.co.il/feed", lean: "right" },
   { name: "Kipa", url: "https://www.kipa.co.il/feed/", lean: "right" },
-  { name: "Israel Defense", url: "https://www.israeldefense.co.il/rss.xml", lean: "right" },
   { name: "Kore", url: "https://www.kore.co.il/rss", lean: "right" },
   // business
   { name: "Globes", url: "https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=2", lean: "centre" },
-  // technology
-  { name: "Geektime", url: "https://www.geektime.co.il/feed/", lean: "technology" },
 ];
 
 export const ACTIVE_FEEDS: FeedConfig[] = LOCALE === "he" ? HEBREW_FEEDS : FEEDS;
@@ -225,8 +236,26 @@ function extractItems(parsed: Record<string, unknown>): Record<string, unknown>[
   return [];
 }
 
+/** One retry after a short pause for a rare, unexplained transient failure
+ * (observed as "JWT issued at future" from Node's fetch/undici — ruled out
+ * clock skew via a real diagnostic GitHub Actions run, so treating it as a
+ * one-off network/TLS blip rather than something to root-cause further; in
+ * 5 repeated attempts against the same sources that had shown it, it never
+ * reproduced once, suggesting a simple retry absorbs it). Does not retry a
+ * real HTTP error response (e.g. the permanently-blocked-by-Cloudflare
+ * sources' 403s) — those fail the same way every time, so a retry there
+ * would just double the wasted request for no benefit. */
+async function fetchWithOneRetry(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return fetch(url, init);
+  }
+}
+
 async function fetchFeedArticles(feed: FeedConfig): Promise<RawArticleRow[]> {
-  const res = await fetch(feed.url, {
+  const res = await fetchWithOneRetry(feed.url, {
     headers: {
       "User-Agent": "FullScopeRSSBot/1.0 (+https://fullscope-eight.vercel.app)",
       Accept: "application/rss+xml, application/xml, text/xml, application/atom+xml",
