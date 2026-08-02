@@ -70,7 +70,12 @@ export function SignInForm() {
       </label>
 
       <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">{t.auth.password}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">{t.auth.password}</span>
+          <Link href="/forgot-password" className="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground">
+            {t.auth.forgotPassword}
+          </Link>
+        </div>
         <input
           type="password"
           required
