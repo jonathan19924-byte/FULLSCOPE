@@ -12,7 +12,12 @@ import { t } from "@/lib/i18n";
 export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/";
+  // Defaults to the profile page rather than home — landing on a
+  // recognizably different page makes a successful sign-in obvious, instead
+  // of returning to a big scrolling page that looks unchanged. An explicit
+  // `next` (e.g. set when Follow/Like redirected here while signed out)
+  // still wins, so those flows return to where the user actually was.
+  const next = searchParams.get("next") ?? "/profile";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
