@@ -8,7 +8,12 @@ declare global {
     turnstile?: {
       render: (
         container: HTMLElement,
-        options: { sitekey: string; callback: (token: string) => void; "expired-callback"?: () => void },
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          "expired-callback"?: () => void;
+          size?: "flexible" | "normal" | "compact";
+        },
       ) => string;
       reset: (widgetId?: string) => void;
     };
@@ -32,6 +37,7 @@ export function TurnstileWidget({ onVerify }: { onVerify: (token: string | null)
       sitekey: siteKey,
       callback: (token: string) => onVerify(token),
       "expired-callback": () => onVerify(null),
+      size: "flexible",
     });
     // onVerify is a stable setState wrapper from the parent — safe to omit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -46,7 +52,7 @@ export function TurnstileWidget({ onVerify }: { onVerify: (token: string | null)
         strategy="afterInteractive"
         onLoad={() => setScriptLoaded(true)}
       />
-      <div ref={containerRef} />
+      <div ref={containerRef} className="w-full" />
     </>
   );
 }
