@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Heart, MessageCircle, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Newspaper, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,7 +14,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CATEGORY_META } from "@/lib/category";
 import { formatUpdatedAt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types/domain";
@@ -104,7 +103,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
   );
 
   return (
-    <li className="flex gap-3 px-1 py-3.5">
+    <li className="flex gap-3 px-4 py-4">
       {post.authorUsername ? (
         <Link href={`/profile/${post.authorUsername}`} className="shrink-0">
           {avatarEl}
@@ -139,6 +138,16 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
               <span className="text-xs text-muted-foreground">· {formatUpdatedAt(post.createdAt)}</span>
             </div>
             <p className="text-sm leading-relaxed text-foreground/90">{post.content}</p>
+            {post.story && (
+              <Link
+                href={`/story/${post.story.slug}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex w-fit min-w-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
+              >
+                <Newspaper className="size-3 shrink-0" strokeWidth={1.75} />
+                {t.posts.seeRelatedStory}
+              </Link>
+            )}
             {post.contributionTheme && (
               <span
                 title={post.contributionTheme}
@@ -173,9 +182,10 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
                 {post.story && (
                   <Link
                     href={`/story/${post.story.slug}`}
-                    className={`mt-1 w-fit rounded-full px-2.5 py-1 text-[11px] font-medium ${CATEGORY_META[post.story.category].bg} ${CATEGORY_META[post.story.category].text}`}
+                    className="mt-1 flex w-fit items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
                   >
-                    {post.story.title}
+                    <Newspaper className="size-3 shrink-0" strokeWidth={1.75} />
+                    {t.posts.seeRelatedStory}
                   </Link>
                 )}
               </div>

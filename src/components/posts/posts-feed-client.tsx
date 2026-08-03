@@ -177,7 +177,7 @@ export function PostsFeedClient({
           />
         )
       ) : (
-        <ul className="flex flex-col divide-y divide-border/60 border-t border-border/60">
+        <ul className="-mx-4 flex flex-col divide-y divide-border/40">
           {visibleFeed.map((post) => (
             <PostFeedCard key={post.id} post={post} />
           ))}
