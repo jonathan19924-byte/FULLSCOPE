@@ -43,8 +43,14 @@ export function ReactionsFeed({
       <p className="text-xs text-muted-foreground">{t.story.publicReactionsDisclaimer}</p>
       <Tabs value={tab} onValueChange={(v) => setTab(v as "A" | "B")}>
         <TabsList className="w-full">
-          <TabsTrigger value="A">{perspectiveAName} ({postsA.length})</TabsTrigger>
-          <TabsTrigger value="B">{perspectiveBName} ({postsB.length})</TabsTrigger>
+          <TabsTrigger value="A" className="min-w-0">
+            <span className="truncate">{perspectiveAName}</span>
+            <span className="shrink-0">({postsA.length})</span>
+          </TabsTrigger>
+          <TabsTrigger value="B" className="min-w-0">
+            <span className="truncate">{perspectiveBName}</span>
+            <span className="shrink-0">({postsB.length})</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="A">
           <ul className="flex flex-col divide-y divide-border/60 border-t border-border/60">

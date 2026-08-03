@@ -126,8 +126,8 @@
   /* Perspective A/B accents — used only on the reader-post volume bar.
      Same lightness and chroma for both, hue-only difference (cool vs warm
      neutral gray) so neither side reads as visually "winning". */
-  --perspective-a: oklch(0.47 0.015 250);
-  --perspective-b: oklch(0.47 0.015 70);
+  --perspective-a: oklch(0.47 0.09 250);
+  --perspective-b: oklch(0.47 0.09 70);
 }
 
 .dark {
@@ -182,8 +182,8 @@
   --society: oklch(0.7 0.16 345);
   --society-bg: oklch(0.28 0.06 345);
 
-  --perspective-a: oklch(0.42 0.015 250);
-  --perspective-b: oklch(0.42 0.015 70);
+  --perspective-a: oklch(0.42 0.09 250);
+  --perspective-b: oklch(0.42 0.09 70);
 }
 
 @layer base {

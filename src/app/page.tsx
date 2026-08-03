@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BadgeCheck, Clock, Newspaper, Scale, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { CATEGORIES, type Category } from "@/types/domain";
 import {
   getFeaturedStory,
@@ -20,15 +20,6 @@ function parseCategory(raw: string | string[] | undefined): Category | "All" {
   const value = Array.isArray(raw) ? raw[0] : raw;
   return (CATEGORIES as string[]).includes(value ?? "") ? (value as Category) : "All";
 }
-
-// Kept in English per explicit request — an exception to the rest of the
-// Hebrew UI translation, specific to this row.
-const VALUE_PROPS = [
-  { icon: BadgeCheck, label: "Named sources" },
-  { icon: Clock, label: "Timelines" },
-  { icon: Scale, label: "Two perspectives" },
-  { icon: Newspaper, label: "Sources" },
-] as const;
 
 export default async function HomePage({
   searchParams,
@@ -60,11 +51,11 @@ export default async function HomePage({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 pt-6 pb-8 sm:pt-10">
-      <div className="flex flex-col items-center gap-2 border-b border-border/60 pb-6 text-center">
-        <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground">
+      <div className="flex flex-col items-center gap-2 border-b border-border/60 pb-4 text-center">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
           FullScope
         </h1>
-        <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
+        <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
           {t.brand.tagline}
         </p>
         {/* Kept in English per explicit request — an exception to the rest
@@ -75,14 +66,6 @@ export default async function HomePage({
           <span>{CATEGORIES.length} categories</span>
           <span aria-hidden>·</span>
           <span>every story, both sides</span>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 pt-2 text-xs text-muted-foreground">
-          {VALUE_PROPS.map(({ icon: Icon, label }) => (
-            <span key={label} className="flex items-center gap-1.5">
-              <Icon className="size-3.5" strokeWidth={1.75} />
-              {label}
-            </span>
-          ))}
         </div>
       </div>
 

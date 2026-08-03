@@ -97,21 +97,22 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
               {t.story.topStory}
             </span>
           )}
-          {story.recentUpdateType && (
-            <span className="flex items-center gap-1 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
-              {story.recentUpdateType === "trend" ? (
-                <TrendingUp className="size-3" strokeWidth={2} />
-              ) : (
-                <Newspaper className="size-3" strokeWidth={2} />
-              )}
-              {t.story.updatedBadge}
-            </span>
-          )}
-          {story.addedToday && (
+          {story.addedToday ? (
             <span className="flex items-center gap-1 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
               <Sparkles className="size-3" strokeWidth={2} />
               {t.story.addedTodayBadge}
             </span>
+          ) : (
+            story.recentUpdateType && (
+              <span className="flex items-center gap-1 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+                {story.recentUpdateType === "trend" ? (
+                  <TrendingUp className="size-3" strokeWidth={2} />
+                ) : (
+                  <Newspaper className="size-3" strokeWidth={2} />
+                )}
+                {t.story.updatedBadge}
+              </span>
+            )
           )}
         </div>
       </div>
