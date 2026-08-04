@@ -13,7 +13,8 @@ interface PostsContextValue {
     relatedStorySlug?: string;
     relatedStoryTitle?: string;
     relatedStoryCategory?: Category;
-  }) => Promise<{ success: true } | { error: string }>;
+    mediaUrl?: string;
+  }) => Promise<{ success: true; mediaRejected: boolean } | { error: string }>;
   toggleLike: (postId: string) => Promise<{ success: true } | { error: string }>;
   isReady: boolean;
 }
@@ -46,6 +47,7 @@ export function PostsProvider({
         relatedStoryCategory: input.relatedStoryCategory,
         likeCount: 0,
         likedByMe: false,
+        mediaUrl: input.mediaUrl,
       };
 
       setCommunityPosts((current) => [optimisticPost, ...current]);
@@ -54,6 +56,10 @@ export function PostsProvider({
 
       if ("error" in result) {
         setCommunityPosts((current) => current.filter((p) => p.id !== optimisticPost.id));
+      } else if (result.mediaRejected) {
+        setCommunityPosts((current) =>
+          current.map((p) => (p.id === optimisticPost.id ? { ...p, mediaUrl: undefined } : p)),
+        );
       }
 
       return result;

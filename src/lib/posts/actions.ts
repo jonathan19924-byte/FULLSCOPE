@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Category } from "@/types/domain";
 import { createClient } from "@/lib/supabase/server";
+import { isPostPhotoClean } from "./media-moderation";
 import { t } from "@/lib/i18n";
 
 export async function createCommunityPostAction(input: {
@@ -10,7 +11,8 @@ export async function createCommunityPostAction(input: {
   relatedStorySlug?: string;
   relatedStoryTitle?: string;
   relatedStoryCategory?: Category;
-}): Promise<{ success: true } | { error: string }> {
+  mediaUrl?: string;
+}): Promise<{ success: true; mediaRejected: boolean } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -34,21 +36,40 @@ export async function createCommunityPostAction(input: {
     return { error: t.posts.postingTooFast };
   }
 
-  const { error } = await supabase.from("community_posts").insert({
-    user_id: user.id,
-    content: input.content,
-    related_story_slug: input.relatedStorySlug ?? null,
-    related_story_title: input.relatedStoryTitle ?? null,
-    related_story_category: input.relatedStoryCategory ?? null,
-  });
+  const { data: inserted, error } = await supabase
+    .from("community_posts")
+    .insert({
+      user_id: user.id,
+      content: input.content,
+      related_story_slug: input.relatedStorySlug ?? null,
+      related_story_title: input.relatedStoryTitle ?? null,
+      related_story_category: input.relatedStoryCategory ?? null,
+      media_url: input.mediaUrl ?? null,
+      media_status: input.mediaUrl ? "pending" : null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { error: error.message };
   }
 
+  // Checked synchronously (one image, cheap) so a bad photo never has a
+  // window where it's live in the public feed before a cron pass catches it
+  // — see media-moderation.ts for why this fails closed on error.
+  let mediaRejected = false;
+  if (input.mediaUrl) {
+    const clean = await isPostPhotoClean(input.mediaUrl);
+    mediaRejected = !clean;
+    await supabase
+      .from("community_posts")
+      .update({ media_status: clean ? "approved" : "rejected" })
+      .eq("id", inserted.id);
+  }
+
   revalidatePath("/posts");
   revalidatePath("/story/[slug]", "page");
-  return { success: true };
+  return { success: true, mediaRejected };
 }
 
 /** Toggles the current user's like on a community post — real, persisted

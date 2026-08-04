@@ -57,6 +57,7 @@ export async function getCommunityPosts(): Promise<CommunityPost[]> {
       contributionTheme: themeByPostId.get(row.id),
       likeCount: likeCountByPostId.get(row.id) ?? 0,
       likedByMe: user ? likedByMePostIds.has(row.id) : undefined,
+      mediaUrl: row.media_status === "approved" ? (row.media_url ?? undefined) : undefined,
     };
   });
 }

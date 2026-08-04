@@ -188,6 +188,10 @@ export interface CommunityPost {
   /** Whether the CURRENTLY SIGNED-IN reader has liked this post — undefined
    * when viewing signed out (there's no "my like" to speak of). */
   likedByMe?: boolean;
+  /** A publicly-readable URL for the photo attached to this post, present
+   * only once the photo has passed the vision moderation check run at
+   * creation time — a pending or rejected photo never populates this. */
+  mediaUrl?: string;
 }
 
 /** A user's public identity — the subset of `profiles` anyone can see,

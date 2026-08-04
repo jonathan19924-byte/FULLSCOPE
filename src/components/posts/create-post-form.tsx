@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ImagePlus, X } from "lucide-react";
 import type { StorySummary } from "@/types/domain";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 
 const MAX_LENGTH = 280;
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
   const router = useRouter();
@@ -20,9 +25,38 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
   const [content, setContent] = useState("");
   const [relatedSlug, setRelatedSlug] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const remaining = MAX_LENGTH - content.length;
   const trimmed = content.trim();
+
+  function handlePhotoPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      toast(t.posts.photoWrongType);
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      toast(t.posts.photoTooLarge);
+      return;
+    }
+
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function removePhoto() {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoFile(null);
+    setPhotoPreviewUrl(null);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,12 +64,33 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
 
     setIsSubmitting(true);
 
+    let mediaUrl: string | undefined;
+    if (photoFile) {
+      setIsUploadingPhoto(true);
+      const supabase = createClient();
+      const ext = photoFile.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("post-photos")
+        .upload(path, photoFile, { contentType: photoFile.type });
+      setIsUploadingPhoto(false);
+
+      if (uploadError) {
+        setIsSubmitting(false);
+        toast(t.posts.photoUploadFailed);
+        return;
+      }
+
+      mediaUrl = supabase.storage.from("post-photos").getPublicUrl(path).data.publicUrl;
+    }
+
     const relatedStory = stories.find((s) => s.slug === relatedSlug);
     const result = await addPost({
       content: trimmed,
       relatedStorySlug: relatedStory?.slug,
       relatedStoryTitle: relatedStory?.title,
       relatedStoryCategory: relatedStory?.category,
+      mediaUrl,
     });
 
     setIsSubmitting(false);
@@ -45,7 +100,11 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
       return;
     }
 
-    toast(t.posts.posted, { description: t.posts.postedDescription });
+    if (result.mediaRejected) {
+      toast(t.posts.photoRejectedToast, { description: t.posts.photoRejectedDescription });
+    } else {
+      toast(t.posts.posted, { description: t.posts.postedDescription });
+    }
     router.push("/posts");
   }
 
@@ -88,6 +147,45 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
         </span>
       </label>
 
+      <div className="flex flex-col gap-2">
+        {photoPreviewUrl ? (
+          <div className="relative w-fit">
+            <Image
+              src={photoPreviewUrl}
+              alt=""
+              width={160}
+              height={160}
+              unoptimized
+              className="size-40 rounded-2xl border border-border object-cover"
+            />
+            <button
+              type="button"
+              onClick={removePhoto}
+              aria-label={t.posts.removePhotoAria}
+              className="absolute end-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm"
+            >
+              <X className="size-3.5" strokeWidth={2} />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex w-fit items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+          >
+            <ImagePlus className="size-4" strokeWidth={1.75} />
+            {t.posts.addPhoto}
+          </button>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handlePhotoPick}
+          className="hidden"
+        />
+      </div>
+
       <label className="flex flex-col gap-2">
         <span className="text-sm font-medium text-foreground">{t.posts.tagRelatedStory}</span>
         <select
@@ -110,7 +208,7 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
         disabled={!user || !trimmed || remaining < 0 || isSubmitting}
         className="h-12 w-full rounded-full"
       >
-        {isSubmitting ? t.posts.posting : t.posts.post}
+        {isUploadingPhoto ? t.posts.uploadingPhoto : isSubmitting ? t.posts.posting : t.posts.post}
       </Button>
       <p className="text-center text-xs text-muted-foreground">{t.posts.visibleToEveryone}</p>
     </form>

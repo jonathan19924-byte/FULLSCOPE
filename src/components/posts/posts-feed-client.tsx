@@ -62,6 +62,7 @@ export function PostsFeedClient({
       contributionTheme: p.contributionTheme,
       communityPostId: p.id,
       likedByMe: p.likedByMe,
+      mediaUrl: p.mediaUrl,
     }));
 
     const fromSeed: FeedPost[] = seedPosts.map((p) => ({

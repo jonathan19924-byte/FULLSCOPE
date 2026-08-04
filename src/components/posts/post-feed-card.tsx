@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Heart, MessageCircle, Newspaper, Sparkles } from "lucide-react";
@@ -49,6 +50,9 @@ export interface FeedPost {
    * backing row to like against, so they keep the old local-only toggle. */
   communityPostId?: string;
   likedByMe?: boolean;
+  /** A publicly-readable photo URL — present only for real community posts
+   * whose attached photo passed the moderation check run at creation time. */
+  mediaUrl?: string;
 }
 
 export function PostFeedCard({ post }: { post: FeedPost }) {
@@ -128,6 +132,15 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
               <span className="text-xs text-muted-foreground">· {formatUpdatedAt(post.createdAt)}</span>
             </div>
             <p className="text-sm leading-relaxed text-foreground/90">{post.content}</p>
+            {post.mediaUrl && (
+              <Image
+                src={post.mediaUrl}
+                alt=""
+                width={480}
+                height={480}
+                className="max-h-80 w-full rounded-xl border border-border/60 object-cover"
+              />
+            )}
             {post.story && (
               <Link
                 href={`/story/${post.story.slug}`}

@@ -118,6 +118,8 @@ export interface Database {
           moderation_checked_at: string | null;
           is_hidden: boolean;
           flagged_reason: string | null;
+          media_url: string | null;
+          media_status: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["community_posts"]["Row"]> &
           Pick<Database["public"]["Tables"]["community_posts"]["Row"], "user_id" | "content">;

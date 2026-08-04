@@ -37,6 +37,7 @@ export function PublicProfilePageClient({ profile }: { profile: PublicProfile })
       contributionTheme: p.contributionTheme,
       communityPostId: p.id,
       likedByMe: p.likedByMe,
+      mediaUrl: p.mediaUrl,
     }));
 
   return (
