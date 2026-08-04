@@ -44,6 +44,18 @@ export const TELEGRAM_CHANNELS: TelegramChannelConfig[] = [
   { name: "חדשות 100שטח", handle: "yediotnews25" },
   { name: "אהרון ידיעות", handle: "aharonyediotnews" },
   { name: "אמיר אטינגר & יובל שגב", handle: "no_politix" },
+  // Added 2026-08-04 — all live-verified (real, active, posting same-day)
+  // before adding, same process as the original 8.
+  { name: "אלמוג בוקר", handle: "almogboker78" },
+  { name: "דפנה ליאל", handle: "lieldaphna" },
+  { name: "צבי יחזקאלי", handle: "tzviyeh" },
+  { name: "ינון מגל", handle: "yinonews" },
+  { name: "בן כספית", handle: "Ben_Caspit" },
+  { name: "בחדרי חרדים", handle: "behadrey" },
+  { name: "חרדים אקספרס", handle: "haredimex" },
+  { name: "חדשות ישראל מהשטח", handle: "newsisrael_live" },
+  { name: "חדשות ישראל ללא צנזורה", handle: "israel1" },
+  { name: "חדשות 8200 דיווחים ראשוניים", handle: "news_il" },
 ];
 
 interface RawArticleRow {
