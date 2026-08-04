@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Category } from "@/types/domain";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isPostPhotoClean } from "./media-moderation";
 import { t } from "@/lib/i18n";
 
@@ -56,12 +57,16 @@ export async function createCommunityPostAction(input: {
 
   // Checked synchronously (one image, cheap) so a bad photo never has a
   // window where it's live in the public feed before a cron pass catches it
-  // — see media-moderation.ts for why this fails closed on error.
+  // — see media-moderation.ts for why this fails closed on error. Written
+  // via the admin client, not the user's own RLS-scoped session: deciding
+  // moderation outcome is a trusted server decision, not something a user's
+  // own row-ownership should grant write access to (there's deliberately no
+  // general "update your own post" policy on this table).
   let mediaRejected = false;
   if (input.mediaUrl) {
     const clean = await isPostPhotoClean(input.mediaUrl);
     mediaRejected = !clean;
-    await supabase
+    await createAdminClient()
       .from("community_posts")
       .update({ media_status: clean ? "approved" : "rejected" })
       .eq("id", inserted.id);
