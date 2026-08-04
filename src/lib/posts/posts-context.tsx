@@ -33,6 +33,19 @@ export function PostsProvider({
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>(initialPosts);
   const { user } = useUser();
 
+  // initialPosts only seeds useState on first mount — without this, a
+  // router.refresh() (pull-to-refresh, or a revalidatePath after posting
+  // elsewhere) re-fetches fresh data in the root layout's Server Component
+  // but this already-mounted client provider would never see it. Adjusting
+  // state during render (rather than in an effect) avoids an extra
+  // cascading re-render — this is React's documented pattern for syncing
+  // state from a changed prop.
+  const [prevInitialPosts, setPrevInitialPosts] = useState(initialPosts);
+  if (initialPosts !== prevInitialPosts) {
+    setPrevInitialPosts(initialPosts);
+    setCommunityPosts(initialPosts);
+  }
+
   const addPost = useCallback<PostsContextValue["addPost"]>(
     async (input) => {
       const optimisticPost: CommunityPost = {

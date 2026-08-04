@@ -13,6 +13,7 @@ import { StoryCard } from "@/components/story/story-card";
 import { MostDiscussed } from "@/components/story/most-discussed";
 import { BookmarksPageClient } from "@/components/bookmarks/bookmarks-page-client";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { t } from "@/lib/i18n";
 import { Archive } from "lucide-react";
 
@@ -50,6 +51,7 @@ export default async function HomePage({
   } as Record<Category | "All", number>;
 
   return (
+    <PullToRefresh>
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 pt-6 pb-8 sm:pt-10">
       <div className="flex flex-col items-center gap-2 border-b border-border/60 pb-4 text-center">
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
@@ -142,5 +144,6 @@ export default async function HomePage({
         <BookmarksPageClient stories={allStories} hideHeading />
       )}
     </div>
+    </PullToRefresh>
   );
 }
