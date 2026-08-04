@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
+import { isNativeApp } from "@/lib/capacitor";
 import { t } from "@/lib/i18n";
 
 export function SignInForm() {
@@ -24,8 +25,18 @@ export function SignInForm() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   // Only require the token when Turnstile is actually configured — mirrors
   // TurnstileWidget's own check, so local dev (no site key set) isn't
-  // permanently blocked waiting for a widget that will never render.
-  const captchaRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  // permanently blocked waiting for a widget that will never render. Also
+  // skipped inside the native app shell — see isNativeApp's doc comment.
+  const [captchaRequired, setCaptchaRequired] = useState(
+    Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),
+  );
+  useEffect(() => {
+    // One-time platform read, not a changing prop to derive from — the
+    // lint rule's "adjust state during render" alternative doesn't apply
+    // here, and there's no browser-safe way to read this before mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isNativeApp()) setCaptchaRequired(false);
+  }, []);
   const captchaPending = captchaRequired && !captchaToken;
 
   async function handleSubmit(e: React.FormEvent) {

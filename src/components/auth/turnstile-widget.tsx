@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
+import { isNativeApp } from "@/lib/capacitor";
 
 declare global {
   interface Window {
@@ -29,6 +30,18 @@ export function TurnstileWidget({ onVerify }: { onVerify: (token: string | null)
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  // Starts false to match the server-rendered assumption (not native), then
+  // flips right after mount if we're actually inside the app shell — see
+  // isNativeApp's doc comment for why Turnstile is skipped there entirely.
+  const [skipForNativeApp, setSkipForNativeApp] = useState(false);
+
+  useEffect(() => {
+    // One-time platform read, not a changing prop to derive from — the
+    // lint rule's "adjust state during render" alternative doesn't apply
+    // here, and there's no browser-safe way to read this before mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isNativeApp()) setSkipForNativeApp(true);
+  }, []);
 
   useEffect(() => {
     if (!scriptLoaded || !siteKey || !containerRef.current || !window.turnstile) return;
@@ -43,7 +56,7 @@ export function TurnstileWidget({ onVerify }: { onVerify: (token: string | null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scriptLoaded, siteKey]);
 
-  if (!siteKey) return null;
+  if (!siteKey || skipForNativeApp) return null;
 
   return (
     <>
