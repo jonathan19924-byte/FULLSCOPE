@@ -56,6 +56,18 @@ export const TELEGRAM_CHANNELS: TelegramChannelConfig[] = [
   { name: "חדשות ישראל מהשטח", handle: "newsisrael_live" },
   { name: "חדשות ישראל ללא צנזורה", handle: "israel1" },
   { name: "חדשות 8200 דיווחים ראשוניים", handle: "news_il" },
+  // Added 2026-08-05 — all live-verified (real, active, posting same-day)
+  // before adding, same process as the earlier batches.
+  { name: "אריאל כהנא", handle: "Ariel_Kahana" },
+  { name: "מיכאל שמש", handle: "MichaelShemesh" },
+  { name: "אסף רוזנצוויג", handle: "asafroz" },
+  { name: "קבינט מדיני ביטחוני", handle: "moriahdoron" },
+  { name: "12 פינת 99", handle: "yaronyanir1299" },
+  { name: "N12 צ'אט הכתבים", handle: "N12chat" },
+  { name: "GPLANET - גיא בכור", handle: "myGplanet" },
+  { name: "מוטי קסטל", handle: "kastelmoti14" },
+  { name: "ישראל ימין - חדשות", handle: "israel_yamin" },
+  { name: "תמיר מורג", handle: "tamirmorag14" },
 ];
 
 interface RawArticleRow {
