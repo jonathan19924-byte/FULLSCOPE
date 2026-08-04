@@ -58,6 +58,12 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0a0a0a",
+  // Required for env(safe-area-inset-*) to resolve to real values rather
+  // than 0 — without it, content can't tell the notch/Dynamic Island is
+  // there at all. Matters most in the native app shell and installed PWA
+  // (standalone display, no browser chrome pushing content down); a normal
+  // Safari tab already keeps content clear of the notch on its own.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
