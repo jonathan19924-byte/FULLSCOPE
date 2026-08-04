@@ -53,14 +53,14 @@ export function ReactionsFeed({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="A">
-          <ul className="flex flex-col divide-y divide-border/60 border-t border-border/60">
+          <ul className="-mx-4 flex flex-col divide-y divide-border/40">
             {postsA.map((post) => (
               <PostFeedCard key={post.id} post={toFeedPost(post)} />
             ))}
           </ul>
         </TabsContent>
         <TabsContent value="B">
-          <ul className="flex flex-col divide-y divide-border/60 border-t border-border/60">
+          <ul className="-mx-4 flex flex-col divide-y divide-border/40">
             {postsB.map((post) => (
               <PostFeedCard key={post.id} post={toFeedPost(post)} />
             ))}

@@ -86,10 +86,7 @@ export function FeedbackForm() {
   const [impression, setImpression] = useState("");
   const [device, setDevice] = useState("");
   const [storyTested, setStoryTested] = useState("");
-  const [mostUseful, setMostUseful] = useState("");
-  const [confusing, setConfusing] = useState("");
-  const [unnecessary, setUnnecessary] = useState("");
-  const [comments, setComments] = useState("");
+  const [stoodOut, setStoodOut] = useState("");
   const [sent, setSent] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
@@ -99,11 +96,8 @@ export function FeedbackForm() {
     const body = [
       `${t.feedback.mailOverallImpression}${impression || t.feedback.mailNotAnswered}`,
       `${t.feedback.mailDeviceType}${device || t.feedback.mailNotAnswered}`,
-      `${t.feedback.mailStoryTested}${storyTested || t.feedback.mailNotAnswered}`,
-      `${t.feedback.mailMostUseful}${mostUseful || t.feedback.mailNotAnswered}`,
-      `${t.feedback.mailConfusing}${confusing || t.feedback.mailNotAnswered}`,
-      `${t.feedback.mailUnnecessary}${unnecessary || t.feedback.mailNotAnswered}`,
-      `${t.feedback.mailAdditionalComments}${comments || t.feedback.mailNone}`,
+      `${t.feedback.mailStoryTested}${storyTested || t.feedback.mailNone}`,
+      `${t.feedback.mailStoodOut}${stoodOut || t.feedback.mailNone}`,
     ].join("\n");
 
     const mailto = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -127,27 +121,9 @@ export function FeedbackForm() {
         placeholder={t.feedback.whichStoryPlaceholder}
       />
       <TextField
-        label={t.feedback.mostUseful}
-        value={mostUseful}
-        onChange={setMostUseful}
-        multiline
-      />
-      <TextField
-        label={t.feedback.confusing}
-        value={confusing}
-        onChange={setConfusing}
-        multiline
-      />
-      <TextField
-        label={t.feedback.unnecessary}
-        value={unnecessary}
-        onChange={setUnnecessary}
-        multiline
-      />
-      <TextField
-        label={t.feedback.anythingElse}
-        value={comments}
-        onChange={setComments}
+        label={t.feedback.stoodOut}
+        value={stoodOut}
+        onChange={setStoodOut}
         multiline
       />
 

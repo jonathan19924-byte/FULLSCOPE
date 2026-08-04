@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { UserRound } from "lucide-react";
 import type { PublicProfile } from "@/types/domain";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
@@ -11,6 +10,7 @@ import { FollowButton } from "@/components/profile/follow-button";
 import { BackButton } from "@/components/shared/back-button";
 import { buttonVariants } from "@/components/ui/button";
 import { MessageSquare, Settings } from "lucide-react";
+import { initials } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 export function PublicProfilePageClient({ profile }: { profile: PublicProfile }) {
@@ -50,7 +50,9 @@ export function PublicProfilePageClient({ profile }: { profile: PublicProfile })
 
       <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
-          <UserRound className="size-7 text-muted-foreground" strokeWidth={1.5} />
+          <span className="text-lg font-medium text-muted-foreground">
+            {initials(displayName)}
+          </span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-foreground">{displayName}</p>

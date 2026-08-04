@@ -68,7 +68,7 @@ export function SearchPageClient({
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.search.placeholder}
           aria-label={t.search.searchAria}
-          className="h-12 w-full rounded-full border border-border bg-muted/50 ps-11 pe-11 text-[15px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
+          className="h-12 w-full rounded-full border border-border bg-muted/50 ps-11 pe-11 text-[15px] text-foreground outline-none [&::-webkit-search-cancel-button]:appearance-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
         />
         {query && (
           <Button

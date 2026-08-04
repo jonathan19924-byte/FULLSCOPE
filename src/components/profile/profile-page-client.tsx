@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Bookmark, ChevronDown, LogOut, MessageSquareText, Pencil, Settings, TrendingUp, UserRound } from "lucide-react";
+import { Bookmark, ChevronDown, LogOut, MessageSquareText, Pencil, Settings, TrendingUp } from "lucide-react";
 import { CATEGORY_META } from "@/lib/category";
 import { CATEGORIES } from "@/types/domain";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { useBookmarks } from "@/lib/bookmarks/bookmarks-context";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
 import { signOutAction } from "@/lib/auth/actions";
+import { initials } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 const VISIBLE_PREFERENCE_CATEGORY_COUNT = 5;
@@ -49,7 +50,9 @@ export function ProfilePageClient() {
 
       <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4">
         <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
-          <UserRound className="size-7 text-muted-foreground" strokeWidth={1.5} />
+          <span className="text-lg font-medium text-muted-foreground">
+            {initials(displayName)}
+          </span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-foreground">{displayName}</p>

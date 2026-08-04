@@ -14,22 +14,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { formatUpdatedAt } from "@/lib/format";
+import { formatUpdatedAt, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types/domain";
 import { t } from "@/lib/i18n";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
 
 function username(name: string) {
   return `@${name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "")}`;
