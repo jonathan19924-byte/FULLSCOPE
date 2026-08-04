@@ -29,7 +29,13 @@ export type SourceLean =
   | "international"
   | "technology"
   | "science"
-  | "middle_east";
+  | "middle_east"
+  // Same reasoning as Telegram sources (see fetch-telegram.ts): new sources
+  // start unclassified until there's enough real content to make an actual
+  // lean judgment call, rather than forcing a fit into the existing
+  // left/right political axis, which doesn't map cleanly onto Haredi-sector
+  // press.
+  | "unclassified";
 
 export interface FeedConfig {
   name: string;
@@ -139,6 +145,12 @@ export const HEBREW_FEEDS: FeedConfig[] = [
   { name: "Kore", url: "https://www.kore.co.il/rss", lean: "right" },
   // business
   { name: "Globes", url: "https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=2", lean: "centre" },
+  // Haredi sector — added 2026-08-05, live-verified. Unclassified rather
+  // than forced into left/right (see SourceLean's comment); revisit once
+  // there's enough real content to classify properly.
+  { name: "Kikar HaShabbat", url: "https://a.kikar.co.il/v1/rss/articles/latest/rss2", lean: "unclassified" },
+  { name: "Behadrei Haredim", url: "https://www.bhol.co.il/rss", lean: "unclassified" },
+  { name: "JDN", url: "https://www.jdn.co.il/feed/", lean: "unclassified" },
 ];
 
 export const ACTIVE_FEEDS: FeedConfig[] = LOCALE === "he" ? HEBREW_FEEDS : FEEDS;
