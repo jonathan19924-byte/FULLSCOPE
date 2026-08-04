@@ -105,7 +105,14 @@ async function fetchChannelArticles(channel: TelegramChannelConfig): Promise<Raw
     const $el = $(el);
     const postPath = $el.attr("data-post");
     const text = $el.find(".tgme_widget_message_text").first().text().trim();
-    const datetime = $el.find("time.datetime, time").first().attr("datetime");
+    // Was "time.datetime, time" — the real timestamp element's class is
+    // "time" (not "datetime"), so that half never matched and it fell
+    // through to the bare "time" selector, which also matches Telegram's
+    // video-duration <time> elements (no datetime attr, and DOM-earlier
+    // than the real timestamp for video posts) — .first() silently grabbed
+    // those instead. Selecting on the attribute's presence, not a guessed
+    // class name, is what actually identifies the timestamp element.
+    const datetime = $el.find("time[datetime]").first().attr("datetime");
 
     if (!postPath || !text) return; // skip photo/video-only posts with no caption
 
