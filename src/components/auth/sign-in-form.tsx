@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { isNativeApp } from "@/lib/capacitor";
+import { nativeSignInAction } from "@/lib/auth/actions";
 import { t } from "@/lib/i18n";
 
 export function SignInForm() {
@@ -45,6 +46,28 @@ export function SignInForm() {
     setIsSubmitting(true);
 
     const supabase = createClient();
+
+    if (isNativeApp()) {
+      const result = await nativeSignInAction(email, password);
+      if ("error" in result) {
+        setIsSubmitting(false);
+        setError(result.error);
+        return;
+      }
+      const { error: setSessionError } = await supabase.auth.setSession({
+        access_token: result.accessToken,
+        refresh_token: result.refreshToken,
+      });
+      setIsSubmitting(false);
+      if (setSessionError) {
+        setError(setSessionError.message);
+        return;
+      }
+      toast(t.auth.signedInToast);
+      window.location.href = next;
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,

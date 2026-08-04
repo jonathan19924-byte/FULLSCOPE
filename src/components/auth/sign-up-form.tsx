@@ -9,6 +9,7 @@ import { updateProfileAction } from "@/lib/profile/actions";
 import { Button } from "@/components/ui/button";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { isNativeApp } from "@/lib/capacitor";
+import { nativeSignUpAction } from "@/lib/auth/actions";
 import { t } from "@/lib/i18n";
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
@@ -65,16 +66,35 @@ export function SignUpForm() {
     setIsSubmitting(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: captchaToken ? { captchaToken } : undefined,
-    });
 
-    if (error) {
-      setIsSubmitting(false);
-      setError(error.message);
-      return;
+    if (isNativeApp()) {
+      const result = await nativeSignUpAction(email, password);
+      if ("error" in result) {
+        setIsSubmitting(false);
+        setError(result.error);
+        return;
+      }
+      const { error: setSessionError } = await supabase.auth.setSession({
+        access_token: result.accessToken,
+        refresh_token: result.refreshToken,
+      });
+      if (setSessionError) {
+        setIsSubmitting(false);
+        setError(setSessionError.message);
+        return;
+      }
+    } else {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: captchaToken ? { captchaToken } : undefined,
+      });
+
+      if (error) {
+        setIsSubmitting(false);
+        setError(error.message);
+        return;
+      }
     }
 
     // signUp() returns an active session immediately (this project doesn't
