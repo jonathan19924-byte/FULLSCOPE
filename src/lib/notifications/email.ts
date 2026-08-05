@@ -114,6 +114,23 @@ export async function sendMissedRunAlertEmail(params: {
   await sendResendEmail("⚠️ FullScope: daily pipeline missed its run", html);
 }
 
+/** Fired by the new-signup Postgres trigger (via the /api/webhooks/new-signup
+ * route) the moment someone creates an account — every profile row starts
+ * 'pending', so this is the heads-up to go approve or reject them from the
+ * dashboard rather than having to check in on it. */
+export async function sendNewSignupEmail(params: { email: string; userId: string }): Promise<void> {
+  const { email, userId } = params;
+
+  const html = `
+    <h2>FullScope — new sign-up awaiting approval</h2>
+    <p><strong>${escapeHtml(email)}</strong> just created an account.</p>
+    <p><a href="https://fullscope-dashboard.vercel.app">Open the dashboard</a> to approve or reject it.</p>
+    <p><code>${escapeHtml(userId)}</code></p>
+  `.trim();
+
+  await sendResendEmail(`FullScope: new sign-up — ${email}`, html);
+}
+
 /** Fired by the moderation pass (folded into the every-2-hours trend-check
  * cron) when it hides one or more posts. Nothing is deleted — this is
  * purely a heads-up so a human can double-check and reverse a false
