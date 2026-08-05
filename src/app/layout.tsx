@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Source_Serif_4, Heebo, Frank_Ruhl_Libre } from "next
 import "./globals.css";
 import { Providers } from "./providers";
 import { SiteShell } from "@/components/layout/site-shell";
+import { PendingApprovalScreen } from "@/components/auth/pending-approval-screen";
+import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { createClient } from "@/lib/supabase/server";
 import { getBookmarkedSlugs } from "@/lib/bookmarks/get-bookmarks";
 import { getCommunityPosts } from "@/lib/posts/get-community-posts";
@@ -79,6 +81,7 @@ export default async function RootLayout({
   const initialCommunityPosts = await getCommunityPosts();
   const initialFollowingIds = user ? await getFollowingIds() : [];
   const myProfile = user ? await getMyProfile() : null;
+  const isBlocked = myProfile != null && myProfile.approvalStatus !== "approved";
 
   return (
     <html
@@ -94,6 +97,7 @@ export default async function RootLayout({
         >
           {t.common.skipToContent}
         </a>
+        <PageViewTracker />
         <Providers
           initialUser={user}
           initialBookmarkedSlugs={initialBookmarkedSlugs}
@@ -101,7 +105,13 @@ export default async function RootLayout({
           initialFollowingIds={initialFollowingIds}
           myProfile={myProfile}
         >
-          <SiteShell>{children}</SiteShell>
+          {isBlocked ? (
+            <PendingApprovalScreen
+              status={myProfile!.approvalStatus === "rejected" ? "rejected" : "pending"}
+            />
+          ) : (
+            <SiteShell>{children}</SiteShell>
+          )}
         </Providers>
       </body>
     </html>

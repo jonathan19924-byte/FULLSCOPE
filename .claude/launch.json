@@ -10,6 +10,16 @@
       ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "fullscope-dashboard-dev",
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=\"/Users/operations/.nvm/versions/node/v24.18.0/bin:$PATH\"; cd /Users/operations/Desktop/FullScope_Dashboard; exec node node_modules/next/dist/bin/next dev -p ${PORT}"
+      ],
+      "port": 4000,
+      "autoPort": true
     }
   ]
 }

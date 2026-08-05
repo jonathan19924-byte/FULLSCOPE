@@ -71,11 +71,24 @@ export interface Database {
           username: string | null;
           bio: string | null;
           preferences: unknown;
+          approval_status: string;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> &
           Pick<Database["public"]["Tables"]["profiles"]["Row"], "user_id">;
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Relationships: [];
+      };
+      page_views: {
+        Row: {
+          id: string;
+          path: string;
+          user_id: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["page_views"]["Row"]> &
+          Pick<Database["public"]["Tables"]["page_views"]["Row"], "path">;
+        Update: Partial<Database["public"]["Tables"]["page_views"]["Row"]>;
         Relationships: [];
       };
       follows: {

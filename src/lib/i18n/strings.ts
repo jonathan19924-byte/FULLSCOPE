@@ -12,6 +12,13 @@ export const strings = {
       metaDescription:
         "FullScope groups the news into Stories: verified facts, timelines, multiple perspectives, and public reaction in one place.",
     },
+    approval: {
+      pendingTitle: "Your account is awaiting approval",
+      pendingBody:
+        "FullScope is currently invite-only. You'll get access as soon as the account owner approves your sign-up.",
+      rejectedTitle: "This account wasn't approved",
+      rejectedBody: "Reach out to the person who invited you if you think this is a mistake.",
+    },
     common: {
       skipToContent: "Skip to content",
       close: "Close",
@@ -348,6 +355,12 @@ export const strings = {
       tagline: "להבין את הסיפור, לא רק את הכותרת.",
       metaDescription:
         "FullScope מרכזת את החדשות בכתבות: עובדות מאומתות, ציר זמן, מספר נקודות מבט ותגובות הציבור — הכול במקום אחד.",
+    },
+    approval: {
+      pendingTitle: "החשבון שלך ממתין לאישור",
+      pendingBody: "FullScope כרגע פתוחה בהזמנה בלבד. תקבל/י גישה ברגע שבעל האפליקציה יאשר את ההרשמה.",
+      rejectedTitle: "החשבון הזה לא אושר",
+      rejectedBody: "אם לדעתך זו טעות, פנה/י לאדם שהזמין אותך.",
     },
     common: {
       skipToContent: "דלג לתוכן",

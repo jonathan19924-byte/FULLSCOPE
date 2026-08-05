@@ -10,6 +10,7 @@ export async function getMyProfile(): Promise<{
   username: string | null;
   displayName: string | null;
   bio: string | null;
+  approvalStatus: "pending" | "approved" | "rejected";
 } | null> {
   const supabase = await createClient();
   const {
@@ -19,7 +20,7 @@ export async function getMyProfile(): Promise<{
 
   const { data } = await supabase
     .from("profiles")
-    .select("user_id, username, display_name, bio")
+    .select("user_id, username, display_name, bio, approval_status")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -30,6 +31,7 @@ export async function getMyProfile(): Promise<{
     username: data.username,
     displayName: data.display_name,
     bio: data.bio,
+    approvalStatus: data.approval_status as "pending" | "approved" | "rejected",
   };
 }
 
