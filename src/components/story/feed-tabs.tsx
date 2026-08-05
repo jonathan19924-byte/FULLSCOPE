@@ -18,7 +18,7 @@ export function FeedTabs({ active }: FeedTabsProps) {
   ];
 
   return (
-    <nav className="flex gap-2">
+    <nav className="flex border-b border-border/60">
       {tabs.map((tab) => {
         const isActive = tab.key === active;
         return (
@@ -27,13 +27,14 @@ export function FeedTabs({ active }: FeedTabsProps) {
             href={tab.href}
             aria-current={isActive ? "true" : undefined}
             className={cn(
-              "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
-              isActive
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground",
+              "relative flex-1 px-4 py-3 text-center text-sm font-medium transition-colors hover:bg-muted/40",
+              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
             {tab.label}
+            {isActive && (
+              <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-foreground" />
+            )}
           </Link>
         );
       })}

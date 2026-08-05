@@ -81,6 +81,7 @@ export const strings = {
       sources: "Sources",
       sourcesDisclaimer:
         "Supporting references reported this story — not FullScope stories themselves.",
+      showSources: (n: number) => `Show sources (${n})`,
       fromReaders: "From readers",
       readingProgressAria: "Reading progress",
       readerPosts: (n: number) => `${n} reader ${n === 1 ? "post" : "posts"}`,
@@ -416,6 +417,7 @@ export const strings = {
       whatItAffects: "על מה זה משפיע",
       sources: "מקורות",
       sourcesDisclaimer: "מקורות התומכים שדיווחו על הכתבה — לא כתבות של FullScope עצמה.",
+      showSources: (n: number) => `הצגת מקורות (${n})`,
       fromReaders: "מהקוראים",
       readingProgressAria: "התקדמות קריאה",
       readerPosts: (n: number) => `${n} ${n === 1 ? "תגובת קורא" : "תגובות קוראים"}`,
