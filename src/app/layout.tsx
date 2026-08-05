@@ -77,10 +77,13 @@ export default async function RootLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const initialBookmarkedSlugs = user ? await getBookmarkedSlugs() : [];
-  const initialCommunityPosts = await getCommunityPosts();
-  const initialFollowingIds = user ? await getFollowingIds() : [];
-  const myProfile = user ? await getMyProfile() : null;
+  const [initialBookmarkedSlugs, initialCommunityPosts, initialFollowingIds, myProfile] =
+    await Promise.all([
+      user ? getBookmarkedSlugs() : Promise.resolve([]),
+      getCommunityPosts(),
+      user ? getFollowingIds() : Promise.resolve([]),
+      user ? getMyProfile() : Promise.resolve(null),
+    ]);
   const isBlocked = myProfile != null && myProfile.approvalStatus !== "approved";
 
   return (

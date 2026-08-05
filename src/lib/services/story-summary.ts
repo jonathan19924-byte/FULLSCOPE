@@ -1,4 +1,8 @@
 import type { StorySummary, StoryWithPosts } from "@/types/domain";
+// Type-only import — erased at compile time, so this doesn't pull the
+// server-only repository module into client bundles (search-page-client.tsx
+// imports toSummary/matchesQuery from this file specifically to avoid that).
+import type { StorySummaryRow } from "@/lib/repositories/story-repository";
 
 const TRENDING_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -23,7 +27,7 @@ function isSameCalendarDay(isoDate: string, compareToMs: number): boolean {
  * these two functions from a Client Component.
  */
 
-export function toSummary(story: StoryWithPosts): StorySummary {
+export function toSummary(story: StorySummaryRow): StorySummary {
   return {
     id: story.id,
     slug: story.slug,

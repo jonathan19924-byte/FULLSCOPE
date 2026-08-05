@@ -6,7 +6,8 @@ import type {
 } from "@/types/domain";
 import {
   getAllStories,
-  getArchivedStories,
+  getAllStorySummaries,
+  getArchivedStorySummaries,
   getRecentStoryUpdateTypes,
   getStandaloneSeedPosts,
   getStoryBySlug,
@@ -17,7 +18,10 @@ export { getStoryBySlug, getStandaloneSeedPosts, matchesQuery, toSummary };
 
 /** Newest-first list of every story, as lightweight summaries for cards. */
 export async function listStorySummaries(): Promise<StorySummary[]> {
-  const [stories, recentUpdates] = await Promise.all([getAllStories(), getRecentStoryUpdateTypes()]);
+  const [stories, recentUpdates] = await Promise.all([
+    getAllStorySummaries(),
+    getRecentStoryUpdateTypes(),
+  ]);
   return stories
     .map(toSummary)
     .map((summary) => ({ ...summary, recentUpdateType: recentUpdates.get(summary.id) }))
@@ -27,7 +31,7 @@ export async function listStorySummaries(): Promise<StorySummary[]> {
 /** Stories removed from the main feed (cap eviction or dedup merge), newest
  * archived first — for the Home page's History tab. */
 export async function listArchivedStorySummaries(): Promise<StorySummary[]> {
-  const stories = await getArchivedStories();
+  const stories = await getArchivedStorySummaries();
   return stories.map(toSummary);
 }
 
@@ -58,7 +62,7 @@ export async function searchStories(query: string): Promise<StorySummary[]> {
 
 /** Every seeded post across every story, newest-first, for the Posts feed. */
 export async function getAllSeedPosts(): Promise<SeedPostWithStory[]> {
-  const stories = await getAllStories();
+  const stories = await getAllStorySummaries();
   return stories
     .flatMap((story) =>
       story.posts.map((post) => ({
