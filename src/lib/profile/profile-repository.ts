@@ -70,14 +70,19 @@ export async function getProfileByUsername(username: string): Promise<PublicProf
 }
 
 /** Batch identity lookup for joining post authors — one query for however
- * many distinct authors are in a page of posts, rather than one per post. */
+ * many distinct authors are in a page of posts, rather than one per post.
+ * Takes an optional client so callers that need to run inside a cached,
+ * cookie-free context (e.g. getCommunityPosts' cached base query) can pass
+ * a public client instead of the default cookie-bound one — profile display
+ * names/usernames are public data either way. */
 export async function getProfilesByUserIds(
   userIds: string[],
+  client?: Awaited<ReturnType<typeof createClient>>,
 ): Promise<Map<string, { username: string | null; displayName: string | null }>> {
   const map = new Map<string, { username: string | null; displayName: string | null }>();
   if (userIds.length === 0) return map;
 
-  const supabase = await createClient();
+  const supabase = client ?? (await createClient());
   const { data } = await supabase
     .from("profiles")
     .select("user_id, username, display_name")
