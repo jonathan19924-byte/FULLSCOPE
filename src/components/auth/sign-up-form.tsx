@@ -31,6 +31,12 @@ export function SignUpForm() {
   const [captchaRequired, setCaptchaRequired] = useState(
     Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),
   );
+  // Set when Turnstile's script fails to load or load in time (blocked by a
+  // content blocker, a restrictive network, or just slow) — without this,
+  // the submit button sits permanently disabled on "Verifying…" with no way
+  // out, since a token can never arrive. Falls back to the same server-side
+  // captcha bypass already used inside the native app shell.
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
   useEffect(() => {
     // One-time platform read, not a changing prop to derive from — the
     // lint rule's "adjust state during render" alternative doesn't apply
@@ -38,7 +44,7 @@ export function SignUpForm() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isNativeApp()) setCaptchaRequired(false);
   }, []);
-  const captchaPending = captchaRequired && !captchaToken;
+  const captchaPending = captchaRequired && !captchaToken && !captchaUnavailable;
   const usernameFormatValid = USERNAME_PATTERN.test(username);
 
   // Live "is this taken" check — profiles are publicly readable, so this is
@@ -67,7 +73,7 @@ export function SignUpForm() {
 
     const supabase = createClient();
 
-    if (isNativeApp()) {
+    if (isNativeApp() || captchaUnavailable) {
       const result = await nativeSignUpAction(email, password);
       if ("error" in result) {
         setIsSubmitting(false);
@@ -165,7 +171,7 @@ export function SignUpForm() {
         />
       </label>
 
-      <TurnstileWidget onVerify={setCaptchaToken} />
+      <TurnstileWidget onVerify={setCaptchaToken} onLoadFailure={() => setCaptchaUnavailable(true)} />
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

@@ -13,11 +13,14 @@ export async function signOutAction() {
 type SessionTokens = { accessToken: string; refreshToken: string };
 
 /**
- * Sign-in path for the native app shell, which skips Turnstile entirely
- * (see isNativeApp's doc comment) — but Supabase Auth enforces its captcha
- * requirement server-side too, on every password-grant request regardless
- * of what the client sends, so a client that never gets a token still gets
- * rejected. Routing through the service-role client here sidesteps that:
+ * Sign-in path for the native app shell (which skips Turnstile entirely,
+ * see isNativeApp's doc comment) — and also the regular web sign-in form's
+ * fallback for whenever Turnstile's script fails to load or load in time
+ * (content blocker, restrictive network, or just slow — see
+ * TurnstileWidget's doc comment). Either way, Supabase Auth enforces its
+ * captcha requirement server-side too, on every password-grant request
+ * regardless of what the client sends, so a client that never gets a token
+ * still gets rejected. Routing through the service-role client here sidesteps that:
  * service-role-authenticated requests aren't subject to the public client's
  * captcha gate, since they're already server-to-server and trusted. Returns
  * raw tokens rather than setting cookies directly, because the caller then
@@ -39,8 +42,9 @@ export async function nativeSignInAction(
 }
 
 /**
- * Sign-up path for the native app shell — same captcha problem as sign-in,
- * but solved differently: admin.createUser is an admin-only operation with
+ * Sign-up path for the native app shell, and the regular web sign-up form's
+ * Turnstile-load-failure fallback (see nativeSignInAction's doc comment) —
+ * same captcha problem as sign-in, but solved differently: admin.createUser is an admin-only operation with
  * no password-grant flow at all, so it was never subject to the captcha
  * gate in the first place (this project's existing test-user scripts have
  * relied on that all along). Signs the freshly-created user in immediately
