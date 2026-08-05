@@ -70,6 +70,10 @@
 }
 
 :root {
+  /* Twin Lens brand accent — same value in both themes (the Logo Concepts
+     artifact's gold, #c69963), reads fine on both a light and dark
+     background so it isn't part of the light/dark token swap below. */
+  --brand-gold: #c69963;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
