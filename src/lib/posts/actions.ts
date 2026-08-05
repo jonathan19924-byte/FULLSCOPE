@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { Category } from "@/types/domain";
+import type { Category, PostComment } from "@/types/domain";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isPostPhotoClean } from "./media-moderation";
+import { getPostComments } from "./get-post-comments";
+import { getProfilesByUserIds } from "@/lib/profile/profile-repository";
 import { t } from "@/lib/i18n";
 
 export async function createCommunityPostAction(input: {
@@ -130,4 +132,105 @@ export async function toggleCommunityPostLikeAction(
   revalidatePath("/posts");
   revalidatePath("/story/[slug]", "page");
   return { liked, likeCount: count ?? 0 };
+}
+
+/** Fetched on demand when a post's dialog opens — see getPostComments for
+ * why this isn't bundled into the main feed payload. */
+export async function getPostCommentsAction(postId: string): Promise<PostComment[]> {
+  return getPostComments(postId);
+}
+
+/** Same anti-spam shape as createCommunityPostAction's rate limit — a
+ * comment isn't a policy violation the moderation pass would ever catch
+ * (it only flags content, not posting volume), so it needs the same guard
+ * independently. */
+export async function addCommentAction(
+  postId: string,
+  content: string,
+): Promise<{ comment: PostComment } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: t.common.notSignedInError };
+  }
+
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return { error: t.posts.commentContentRequired };
+  }
+
+  const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { count, error: countError } = await supabase
+    .from("community_post_comments")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", tenMinutesAgo);
+
+  if (countError) {
+    return { error: countError.message };
+  }
+  if ((count ?? 0) >= 10) {
+    return { error: t.posts.commentingTooFast };
+  }
+
+  const { data: inserted, error } = await supabase
+    .from("community_post_comments")
+    .insert({ post_id: postId, user_id: user.id, content: trimmed })
+    .select("id, created_at")
+    .single();
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  const profilesByUserId = await getProfilesByUserIds([user.id], supabase);
+  const profile = profilesByUserId.get(user.id);
+
+  revalidatePath("/posts");
+  revalidatePath("/story/[slug]", "page");
+
+  return {
+    comment: {
+      id: inserted.id,
+      postId,
+      userId: user.id,
+      displayName: profile?.displayName || profile?.username || t.profile.guestReader,
+      username: profile?.username ?? undefined,
+      content: trimmed,
+      createdAt: inserted.created_at,
+    },
+  };
+}
+
+/** Deletes the current user's own comment — RLS (`auth.uid() = user_id`)
+ * enforces this can never delete anyone else's regardless of what postId is
+ * passed. */
+export async function deleteCommentAction(
+  commentId: string,
+): Promise<{ success: true } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: t.common.notSignedInError };
+  }
+
+  const { error } = await supabase
+    .from("community_post_comments")
+    .delete()
+    .eq("id", commentId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/posts");
+  revalidatePath("/story/[slug]", "page");
+  return { success: true };
 }

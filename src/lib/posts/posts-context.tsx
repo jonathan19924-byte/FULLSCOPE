@@ -61,6 +61,7 @@ export function PostsProvider({
         likeCount: 0,
         likedByMe: false,
         mediaUrl: input.mediaUrl,
+        commentCount: 0,
       };
 
       setCommunityPosts((current) => [optimisticPost, ...current]);

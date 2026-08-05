@@ -18,17 +18,21 @@ const getCommunityPostsBase = unstable_cache(
   async (): Promise<CommunityPostBase[]> => {
     const supabase = createPublicClient();
 
-    const [{ data }, { data: contributions }, { data: likePostIds }] = await Promise.all([
-      supabase
-        .from("community_posts")
-        .select("*")
-        .eq("is_hidden", false)
-        .order("created_at", { ascending: false }),
-      supabase.from("post_contributions").select("post_ids, theme"),
-      // Only post_id — the per-post count is all the shared/cacheable view
-      // needs; who liked what is looked up separately, per-request, below.
-      supabase.from("community_post_likes").select("post_id"),
-    ]);
+    const [{ data }, { data: contributions }, { data: likePostIds }, { data: commentPostIds }] =
+      await Promise.all([
+        supabase
+          .from("community_posts")
+          .select("*")
+          .eq("is_hidden", false)
+          .order("created_at", { ascending: false }),
+        supabase.from("post_contributions").select("post_ids, theme"),
+        // Only post_id — the per-post count is all the shared/cacheable view
+        // needs; who liked what is looked up separately, per-request, below.
+        supabase.from("community_post_likes").select("post_id"),
+        // Same reasoning as likes — just the count for the feed badge. The
+        // actual comment content is fetched on demand per-post instead.
+        supabase.from("community_post_comments").select("post_id").eq("is_hidden", false),
+      ]);
 
     // Real per-author identity (added alongside the follow feature) — before
     // this, every post displayed the same hardcoded "Guest reader" string
@@ -53,6 +57,11 @@ const getCommunityPostsBase = unstable_cache(
       likeCountByPostId.set(like.post_id, (likeCountByPostId.get(like.post_id) ?? 0) + 1);
     }
 
+    const commentCountByPostId = new Map<string, number>();
+    for (const comment of commentPostIds ?? []) {
+      commentCountByPostId.set(comment.post_id, (commentCountByPostId.get(comment.post_id) ?? 0) + 1);
+    }
+
     return (data ?? []).map((row) => {
       const profile = profilesByUserId.get(row.user_id);
       return {
@@ -68,6 +77,7 @@ const getCommunityPostsBase = unstable_cache(
         contributionTheme: themeByPostId.get(row.id),
         likeCount: likeCountByPostId.get(row.id) ?? 0,
         mediaUrl: row.media_status === "approved" ? (row.media_url ?? undefined) : undefined,
+        commentCount: commentCountByPostId.get(row.id) ?? 0,
       };
     });
   },

@@ -29,7 +29,7 @@ export function PublicProfilePageClient({ profile }: { profile: PublicProfile })
       content: p.content,
       createdAt: p.createdAt,
       likeCount: p.likeCount,
-      replyCount: 0,
+      replyCount: p.commentCount,
       story:
         p.relatedStorySlug && p.relatedStoryTitle && p.relatedStoryCategory
           ? { slug: p.relatedStorySlug, title: p.relatedStoryTitle, category: p.relatedStoryCategory }

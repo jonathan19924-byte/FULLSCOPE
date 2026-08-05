@@ -19,7 +19,7 @@ export function CommunityPosts({ storySlug }: { storySlug: string }) {
     content: p.content,
     createdAt: p.createdAt,
     likeCount: p.likeCount,
-    replyCount: 0,
+    replyCount: p.commentCount,
     contributionTheme: p.contributionTheme,
     communityPostId: p.id,
     likedByMe: p.likedByMe,

@@ -163,6 +163,13 @@ export const strings = {
       photoUploadFailed: "Couldn't upload that photo — please try again.",
       photoRejectedToast: "Your photo was removed",
       photoRejectedDescription: "Your post was published, but the photo didn't pass our content check.",
+      noCommentsYet: "No comments yet — be the first to reply.",
+      loadingComments: "Loading comments…",
+      couldntComment: "Couldn't post that comment",
+      commentContentRequired: "Comment can't be empty",
+      commentingTooFast: "You're commenting too quickly — please wait a few minutes and try again.",
+      deleteCommentAria: "Delete comment",
+      commenting: "Posting…",
     },
     profile: {
       guestReader: "Guest Reader",
@@ -318,6 +325,7 @@ export const strings = {
     shared: {
       signInToBookmark: "Sign in to bookmark stories",
       signInToLike: "Sign in to like posts",
+      signInToComment: "Sign in to comment on posts",
       removedFromBookmarks: "Removed from bookmarks",
       savedToBookmarks: "Saved to bookmarks",
       removeFromBookmarksAria: (title: string) => `Remove ${title} from bookmarks`,
@@ -504,6 +512,13 @@ export const strings = {
       photoUploadFailed: "לא הצלחנו להעלות את התמונה — נסו שוב.",
       photoRejectedToast: "התמונה שלכם הוסרה",
       photoRejectedDescription: "הפוסט שלכם פורסם, אך התמונה לא עברה את בדיקת התוכן שלנו.",
+      noCommentsYet: "אין עדיין תגובות — היו הראשונים להגיב.",
+      loadingComments: "טוען תגובות...",
+      couldntComment: "לא הצלחנו לפרסם את התגובה",
+      commentContentRequired: "התגובה לא יכולה להיות ריקה",
+      commentingTooFast: "אתם מגיבים מהר מדי — נסו שוב בעוד כמה דקות.",
+      deleteCommentAria: "מחיקת תגובה",
+      commenting: "מפרסם...",
     },
     profile: {
       guestReader: "קורא אורח",
@@ -658,6 +673,7 @@ export const strings = {
     shared: {
       signInToBookmark: "התחברו כדי לשמור כתבות",
       signInToLike: "התחברו כדי לתת לייק לפוסטים",
+      signInToComment: "התחברו כדי להגיב לפוסטים",
       removedFromBookmarks: "הוסר מהשמורים",
       savedToBookmarks: "נשמר בשמורים",
       removeFromBookmarksAria: (title: string) => `הסרת ${title} מהשמורים`,

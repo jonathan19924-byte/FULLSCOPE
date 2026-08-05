@@ -50,7 +50,7 @@ export function PostsFeedClient({
       content: p.content,
       createdAt: p.createdAt,
       likeCount: p.likeCount,
-      replyCount: 0,
+      replyCount: p.commentCount,
       story:
         p.relatedStorySlug && p.relatedStoryTitle && p.relatedStoryCategory
           ? {

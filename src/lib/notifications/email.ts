@@ -132,24 +132,28 @@ export async function sendNewSignupEmail(params: { email: string; userId: string
 }
 
 /** Fired by the moderation pass (folded into the every-2-hours trend-check
- * cron) when it hides one or more posts. Nothing is deleted — this is
- * purely a heads-up so a human can double-check and reverse a false
+ * cron) when it hides one or more posts or comments. Nothing is deleted —
+ * this is purely a heads-up so a human can double-check and reverse a false
  * positive via the Supabase dashboard if needed. */
 export async function sendModerationAlertEmail(
   flagged: { id: string; content: string; reason: string }[],
+  kind: "post" | "comment" = "post",
 ): Promise<void> {
+  const table = kind === "comment" ? "community_post_comments" : "community_posts";
+  const itemLabel = kind === "comment" ? "Comment" : "Post";
+
   const itemsHtml = flagged
     .map(
       (f) =>
-        `<li><strong>Reason:</strong> ${escapeHtml(f.reason)}<br/><strong>Post:</strong> ${escapeHtml(f.content)}<br/><code>${f.id}</code></li>`,
+        `<li><strong>Reason:</strong> ${escapeHtml(f.reason)}<br/><strong>${itemLabel}:</strong> ${escapeHtml(f.content)}<br/><code>${f.id}</code></li>`,
     )
     .join("");
 
   const html = `
-    <h2>🚩 FullScope — ${flagged.length} reader post${flagged.length === 1 ? "" : "s"} auto-hidden by moderation</h2>
-    <p>Hidden automatically, not deleted — reversible in the Supabase dashboard (community_posts table, is_hidden column) if any of these look like a false positive.</p>
+    <h2>🚩 FullScope — ${flagged.length} reader ${kind}${flagged.length === 1 ? "" : "s"} auto-hidden by moderation</h2>
+    <p>Hidden automatically, not deleted — reversible in the Supabase dashboard (${table} table, is_hidden column) if any of these look like a false positive.</p>
     <ul>${itemsHtml}</ul>
   `.trim();
 
-  await sendResendEmail(`🚩 FullScope: ${flagged.length} post(s) auto-hidden by moderation`, html);
+  await sendResendEmail(`🚩 FullScope: ${flagged.length} ${kind}(s) auto-hidden by moderation`, html);
 }

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { checkStoryTrends } from "@/lib/articles/trend-detection";
-import { moderateNewPosts } from "@/lib/articles/moderation";
+import { moderateNewPosts, moderateNewComments } from "@/lib/articles/moderation";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
   }
 
   const moderation = await moderateNewPosts();
+  const commentModeration = await moderateNewComments();
   const trends = await checkStoryTrends();
 
-  return NextResponse.json({ trends, moderation });
+  return NextResponse.json({ trends, moderation, commentModeration });
 }

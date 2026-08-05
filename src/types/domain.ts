@@ -192,6 +192,22 @@ export interface CommunityPost {
    * only once the photo has passed the vision moderation check run at
    * creation time — a pending or rejected photo never populates this. */
   mediaUrl?: string;
+  /** Real comment count (community_post_comments), not-hidden only. Fetched
+   * on demand per-post (see getPostComments) rather than bundled in here —
+   * this is just the count for the feed's badge. */
+  commentCount: number;
+}
+
+/** A single comment on a community post. Fetched on demand when a post's
+ * dialog opens, not bundled into the main feed payload. */
+export interface PostComment {
+  id: string;
+  postId: string;
+  userId: string;
+  displayName: string;
+  username?: string;
+  content: string;
+  createdAt: string;
 }
 
 /** A user's public identity — the subset of `profiles` anyone can see,

@@ -1,10 +1,11 @@
 /**
  * Manual entry point for the every-2-hours periodic pass over real reader
- * posts — same logic the GitHub Actions cron runs
- * (.github/workflows/check-trends.yml). Does two things:
+ * posts and comments — same logic the GitHub Actions cron runs
+ * (.github/workflows/check-trends.yml). Does three things:
  *  1. Trend detection: folds a point made by several distinct users into
  *     the relevant story when found.
- *  2. Moderation: hides posts that violate content policy.
+ *  2. Post moderation: hides posts that violate content policy.
+ *  3. Comment moderation: same check, over community_post_comments.
  * Bundled into one script/cron since they run on the same cadence over the
  * same underlying data.
  *
@@ -16,7 +17,7 @@ import path from "node:path";
 config({ path: path.resolve(__dirname, "..", ".env.local") });
 
 import { checkStoryTrends } from "../src/lib/articles/trend-detection";
-import { moderateNewPosts } from "../src/lib/articles/moderation";
+import { moderateNewPosts, moderateNewComments } from "../src/lib/articles/moderation";
 
 async function main() {
   // Moderation runs first so a flagged post is already hidden before trend
@@ -25,6 +26,11 @@ async function main() {
   const moderationResult = await moderateNewPosts();
   console.log(
     `Moderation: checked ${moderationResult.checked} posts, flagged ${moderationResult.flagged}, ${moderationResult.errors} errors.`,
+  );
+
+  const commentModerationResult = await moderateNewComments();
+  console.log(
+    `Comment moderation: checked ${commentModerationResult.checked} comments, flagged ${commentModerationResult.flagged}, ${commentModerationResult.errors} errors.`,
   );
 
   const trendResult = await checkStoryTrends();

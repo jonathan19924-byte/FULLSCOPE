@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Heart, MessageCircle, Newspaper, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Newspaper, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -17,10 +17,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatUpdatedAt, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/types/domain";
+import type { Category, PostComment } from "@/types/domain";
 import { t } from "@/lib/i18n";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
+import { addCommentAction, deleteCommentAction, getPostCommentsAction } from "@/lib/posts/actions";
 
 function username(name: string) {
   return `@${name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "")}`;
@@ -66,6 +67,14 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
   const [localLikeCount, setLocalLikeCount] = useState(post.likeCount);
   const [reply, setReply] = useState("");
 
+  // Comments are fetched on demand (first time the dialog opens) rather
+  // than bundled into the main feed payload — see getPostComments.
+  const [comments, setComments] = useState<PostComment[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentCount, setCommentCount] = useState(post.replyCount);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
   const liked = isCommunityPost ? (post.likedByMe ?? false) : localLiked;
   const likeCount = isCommunityPost ? post.likeCount : localLikeCount;
 
@@ -84,10 +93,54 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
     setLocalLikeCount((c) => (localLiked ? c - 1 : c + 1));
   }
 
-  function handleReply(e: React.FormEvent) {
+  async function handleDialogOpenChange(open: boolean) {
+    if (!open || !isCommunityPost || commentsLoaded) return;
+    setCommentsLoading(true);
+    const result = await getPostCommentsAction(post.communityPostId!);
+    setComments(result);
+    setCommentsLoaded(true);
+    setCommentsLoading(false);
+  }
+
+  async function handleReply(e: React.FormEvent) {
     e.preventDefault();
-    toast(t.posts.repliesComingSoon);
+    const trimmed = reply.trim();
+    if (!trimmed) return;
+
+    if (!isCommunityPost) {
+      toast(t.posts.repliesComingSoon);
+      setReply("");
+      return;
+    }
+
+    if (!user) {
+      toast(t.shared.signInToComment);
+      router.push(`/sign-in?next=${encodeURIComponent(pathname)}`);
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    const result = await addCommentAction(post.communityPostId!, trimmed);
+    setIsSubmittingComment(false);
+
+    if ("error" in result) {
+      toast(t.posts.couldntComment, { description: result.error });
+      return;
+    }
+
+    setComments((current) => [...current, result.comment]);
+    setCommentCount((c) => c + 1);
     setReply("");
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    const result = await deleteCommentAction(commentId);
+    if ("error" in result) {
+      toast(t.posts.couldntComment, { description: result.error });
+      return;
+    }
+    setComments((current) => current.filter((c) => c.id !== commentId));
+    setCommentCount((c) => Math.max(0, c - 1));
   }
 
   const avatarEl = (
@@ -106,7 +159,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
         avatarEl
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <Dialog>
+        <Dialog onOpenChange={handleDialogOpenChange}>
           <DialogTrigger
             render={<div className="cursor-pointer text-start" />}
           >
@@ -193,6 +246,48 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
                 )}
               </div>
             </div>
+
+            {isCommunityPost && (
+              <div className="flex max-h-64 flex-col gap-3 overflow-y-auto border-t border-border/60 pt-3">
+                {commentsLoading ? (
+                  <p className="text-xs text-muted-foreground">{t.posts.loadingComments}</p>
+                ) : comments.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">{t.posts.noCommentsYet}</p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {comments.map((comment) => (
+                      <li key={comment.id} className="flex gap-2">
+                        <Avatar size="sm">
+                          <AvatarFallback>{initials(comment.displayName)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-foreground">
+                              {comment.displayName}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">
+                              · {formatUpdatedAt(comment.createdAt)}
+                            </span>
+                            {user?.id === comment.userId && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteComment(comment.id)}
+                                aria-label={t.posts.deleteCommentAria}
+                                className="ms-auto text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="size-3" strokeWidth={1.75} />
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-sm text-foreground/90">{comment.content}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
             <form onSubmit={handleReply} className="flex flex-col gap-2 border-t border-border/60 pt-3">
               <textarea
                 value={reply}
@@ -201,8 +296,13 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
                 rows={3}
                 className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
               />
-              <Button type="submit" size="sm" className="self-end rounded-full">
-                {t.posts.reply}
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmittingComment || !reply.trim()}
+                className="self-end rounded-full"
+              >
+                {isSubmittingComment ? t.posts.commenting : t.posts.reply}
               </Button>
             </form>
           </DialogContent>
@@ -224,7 +324,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
           </button>
           <span className="flex items-center gap-1">
             <MessageCircle className="size-3.5" strokeWidth={1.75} />
-            {post.replyCount}
+            {isCommunityPost ? commentCount : post.replyCount}
           </span>
         </div>
       </div>

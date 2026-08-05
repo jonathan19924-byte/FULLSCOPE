@@ -151,6 +151,22 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["community_post_likes"]["Row"]>;
         Relationships: [];
       };
+      community_post_comments: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string;
+          content: string;
+          moderation_checked_at: string | null;
+          is_hidden: boolean;
+          flagged_reason: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["community_post_comments"]["Row"]> &
+          Pick<Database["public"]["Tables"]["community_post_comments"]["Row"], "post_id" | "user_id" | "content">;
+        Update: Partial<Database["public"]["Tables"]["community_post_comments"]["Row"]>;
+        Relationships: [];
+      };
       post_contributions: {
         Row: {
           id: string;
