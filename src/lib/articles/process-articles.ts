@@ -118,7 +118,7 @@ interface StoryGenerationResponse {
   perspective_b: string;
   perspective_b_claims: string[];
   what_happened: string;
-  what_happened_timeline: string[];
+  what_happened_timeline: { text: string; confidence: "confirmed" | "reported" | "disputed" | "unknown" }[];
   key_differences_cause: string;
   key_differences_impact: string;
   sources: string;
@@ -320,9 +320,9 @@ export function buildStoryPrompt(topicName: string, articles: RawArticleRow[]): 
   // duplicating another field's content is a defect, not just describing
   // each field's length/tone in isolation the way this prompt used to.
   const noRepeatInstruction = `IMPORTANT — these fields all appear together on the same story page. Each one must add NEW information not already stated in another field. Do not rephrase one field as another field in different words. Specifically:
-- "summary" is the headline-level takeaway (what happened + why it matters) — the only place for a broad-strokes framing.
-- "what_happened" covers the mechanical facts (who did what, when, where) that "summary" didn't already cover — do not just reword "summary" at greater length.
-- "what_happened_timeline" entries must be sequential, concrete events (each with what distinguishes it in time/order) — do not restate "what_happened" as a bulleted list; if an entry doesn't add a fact beyond what's already said elsewhere, cut it.
+- "summary" is ONLY the stakes: why this matters, what it changes, who it affects. Do not restate the mechanical facts here — assume the reader will also read "what_happened" and needs "summary" to tell them something that section won't.
+- "what_happened" is ONLY the mechanical facts (who did what, when, where) — no stakes, no "why it matters" framing. That belongs exclusively to "summary". If you can't write "what_happened" without repeating a sentence from "summary", you've put the wrong content in one of them.
+- "what_happened_timeline" entries must each anchor a genuinely distinct point in time or step in a sequence — not a restatement of "what_happened" broken into bullets. If the source material only supports one or two real time-distinct events, return only that many; return an empty array rather than padding with a rephrased fact. Each entry also needs an honest "confidence" rating (see schema below) — do not default every entry to the same value if the sources actually differ in how firmly they report each fact.
 - "perspective_a"/"perspective_b" are each side's narrative reasoning — why they see it that way.
 - "perspective_a_claims"/"perspective_b_claims" are specific, concrete assertions that side makes — distinct from and more granular than the perspective's own summary sentence, not that summary split into 3 pieces.
 - "key_differences_cause"/"key_differences_impact" describe WHY the two sides diverge (the mechanism of disagreement), not a restatement of either side's position.`;
@@ -361,7 +361,7 @@ ${CATEGORY_GUIDANCE}
 Return ONLY valid JSON with this exact structure:
 {
   "title": "Engaging, objective headline under 15 words, no question mark at end",
-  "summary": "2 sentence neutral summary of what happened",
+  "summary": "2 sentence neutral statement of why this matters and what it affects — no mechanical facts, those belong in what_happened",
   "category": "${CATEGORY_ENUM}",
   "perspective_a_name": "string",
   "perspective_a": "3-4 sentence summary of this perspective's take on the story",
@@ -369,8 +369,8 @@ Return ONLY valid JSON with this exact structure:
   "perspective_b_name": "string",
   "perspective_b": "3-4 sentence summary of this perspective's take on the story",
   "perspective_b_claims": ["claim 1", "claim 2", "claim 3"],
-  "what_happened": "3-4 sentence neutral factual summary with no opinion",
-  "what_happened_timeline": ["event 1", "event 2", "event 3"],
+  "what_happened": "3-4 sentence neutral factual summary with no opinion and no stakes/why-it-matters framing",
+  "what_happened_timeline": [{"text": "concrete, time-distinct event", "confidence": "confirmed | reported | disputed | unknown — confirmed: multiple independent sources agree; reported: stated by named sources without independent confirmation; disputed: sources conflict; unknown: single unverified source"}],
   "key_differences_cause": "One sentence explaining why people disagree on the cause",
   "key_differences_impact": "One sentence explaining why people disagree on the impact",
   "sources": "comma separated list of source names used",
@@ -1070,7 +1070,7 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
             category: story.category,
             summary: story.summary,
             what_happened: story.what_happened,
-            timeline: story.what_happened_timeline.map((text) => ({ text, confidence: "reported" })),
+            timeline: story.what_happened_timeline,
             perspective_a: {
               name: story.perspective_a_name,
               summary: story.perspective_a,

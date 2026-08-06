@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BadgeCheck, CircleAlert, CircleHelp, Newspaper } from "lucide-react";
+import { BadgeCheck, ChevronDown, CircleAlert, CircleHelp, Newspaper } from "lucide-react";
 import type { Confidence, Fact } from "@/types/domain";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
@@ -76,6 +76,8 @@ function TimelineEntry({ fact, index }: { fact: Fact; index: number }) {
 }
 
 export function Timeline({ facts }: { facts: Fact[] }) {
+  const [expanded, setExpanded] = useState(false);
+
   if (facts.length === 0) return null;
 
   return (
@@ -86,11 +88,25 @@ export function Timeline({ facts }: { facts: Fact[] }) {
         </h2>
         <p className="text-xs text-muted-foreground">{t.story.timelineDisclaimer}</p>
       </div>
-      <ol className="flex flex-col">
-        {facts.map((fact, i) => (
-          <TimelineEntry key={i} fact={fact} index={i} />
-        ))}
-      </ol>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="flex w-fit items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+      >
+        {expanded ? t.common.showLess : t.story.showTimeline(facts.length)}
+        <ChevronDown
+          className={cn("size-3.5 transition-transform", expanded && "rotate-180")}
+          strokeWidth={1.75}
+        />
+      </button>
+      {expanded && (
+        <ol className="flex flex-col">
+          {facts.map((fact, i) => (
+            <TimelineEntry key={i} fact={fact} index={i} />
+          ))}
+        </ol>
+      )}
     </section>
   );
 }

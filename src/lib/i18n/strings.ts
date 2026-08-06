@@ -110,6 +110,7 @@ export const strings = {
       timeline: "Timeline",
       timelineDisclaimer:
         "Reported by named news sources. FullScope does not independently verify claims beyond what those sources state.",
+      showTimeline: (n: number) => `Show timeline (${n})`,
       shapedThisStory: "Shaped this story",
       howThisDeveloped: "How this story developed",
       updateTrendPrefix: "Readers pointed out: ",
@@ -464,6 +465,7 @@ export const strings = {
       timeline: "ציר זמן",
       timelineDisclaimer:
         "מדווח על ידי מקורות חדשות בשם. FullScope אינה מאמתת באופן עצמאי טענות מעבר למה שמקורות אלו מוסרים.",
+      showTimeline: (n: number) => `הצגת ציר זמן (${n})`,
       shapedThisStory: "השפיע על הכתבה הזו",
       howThisDeveloped: "איך הכתבה התפתחה",
       updateTrendPrefix: "קוראים ציינו: ",
