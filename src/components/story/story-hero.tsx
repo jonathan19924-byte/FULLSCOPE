@@ -6,6 +6,7 @@ import { formatUpdatedAt, formatReadingTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { BackButton } from "@/components/shared/back-button";
 import { BookmarkButton } from "@/components/shared/bookmark-button";
+import { DislikeButton } from "@/components/shared/dislike-button";
 import { ShareButton } from "@/components/shared/share-button";
 import { t } from "@/lib/i18n";
 
@@ -67,6 +68,7 @@ export function StoryHero({ story }: { story: Story }) {
           </div>
           <div className="flex items-center gap-1">
             <BookmarkButton slug={story.slug} title={story.title} />
+            <DislikeButton slug={story.slug} title={story.title} />
             <ShareButton title={story.title} text={story.summary} path={`/story/${story.slug}`} />
           </div>
         </div>

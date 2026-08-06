@@ -7,6 +7,11 @@ interface BookmarksContextValue {
   bookmarkedSlugs: string[];
   isBookmarked: (slug: string) => boolean;
   toggleBookmark: (slug: string) => void;
+  /** Local-only removal, no server call — for the Dislike button to call
+   * when disliking a story clears its like server-side (see
+   * toggleDislikeAction), so this context's client state stays in sync
+   * without a refetch. */
+  removeBookmarkLocally: (slug: string) => void;
   isReady: boolean;
 }
 
@@ -38,14 +43,18 @@ export function BookmarksProvider({
     });
   }, []);
 
+  const removeBookmarkLocally = useCallback((slug: string) => {
+    setBookmarkedSlugs((current) => current.filter((s) => s !== slug));
+  }, []);
+
   const isBookmarked = useCallback(
     (slug: string) => bookmarkedSlugs.includes(slug),
     [bookmarkedSlugs],
   );
 
   const value = useMemo(
-    () => ({ bookmarkedSlugs, isBookmarked, toggleBookmark, isReady: true }),
-    [bookmarkedSlugs, isBookmarked, toggleBookmark],
+    () => ({ bookmarkedSlugs, isBookmarked, toggleBookmark, removeBookmarkLocally, isReady: true }),
+    [bookmarkedSlugs, isBookmarked, toggleBookmark, removeBookmarkLocally],
   );
 
   return (

@@ -118,6 +118,21 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["bookmarks"]["Row"]>;
         Relationships: [];
       };
+      story_dislikes: {
+        Row: {
+          id: string;
+          user_id: string;
+          story_slug: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["story_dislikes"]["Row"]> &
+          Pick<
+            Database["public"]["Tables"]["story_dislikes"]["Row"],
+            "user_id" | "story_slug"
+          >;
+        Update: Partial<Database["public"]["Tables"]["story_dislikes"]["Row"]>;
+        Relationships: [];
+      };
       community_posts: {
         Row: {
           id: string;

@@ -31,6 +31,8 @@ export async function toggleBookmarkAction(
   }
 
   await supabase.from("bookmarks").insert({ user_id: user.id, story_slug: storySlug });
+  // Mutually exclusive with disliking — see toggleDislikeAction.
+  await supabase.from("story_dislikes").delete().eq("user_id", user.id).eq("story_slug", storySlug);
   revalidatePath("/bookmarks");
   revalidatePath("/profile");
   return { bookmarked: true };

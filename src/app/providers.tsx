@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "@/components/auth/user-provider";
 import { BookmarksProvider } from "@/lib/bookmarks/bookmarks-context";
+import { DislikesProvider } from "@/lib/dislikes/dislikes-context";
 import { PostsProvider } from "@/lib/posts/posts-context";
 import { FollowsProvider } from "@/lib/follows/follows-context";
 import type { CommunityPost } from "@/types/domain";
@@ -13,6 +14,7 @@ import type { CommunityPost } from "@/types/domain";
 export function Providers({
   initialUser,
   initialBookmarkedSlugs,
+  initialDislikedSlugs,
   initialCommunityPosts,
   initialFollowingIds,
   myProfile,
@@ -20,6 +22,7 @@ export function Providers({
 }: {
   initialUser: User | null;
   initialBookmarkedSlugs: string[];
+  initialDislikedSlugs: string[];
   initialCommunityPosts: CommunityPost[];
   initialFollowingIds: string[];
   myProfile: { username: string | null; displayName: string | null } | null;
@@ -30,12 +33,14 @@ export function Providers({
       <TooltipProvider delay={200}>
         <UserProvider initialUser={initialUser}>
           <BookmarksProvider initialSlugs={initialBookmarkedSlugs}>
-            <FollowsProvider initialFollowingIds={initialFollowingIds}>
-              <PostsProvider initialPosts={initialCommunityPosts} myProfile={myProfile}>
-                {children}
-                <Toaster position="bottom-center" />
-              </PostsProvider>
-            </FollowsProvider>
+            <DislikesProvider initialSlugs={initialDislikedSlugs}>
+              <FollowsProvider initialFollowingIds={initialFollowingIds}>
+                <PostsProvider initialPosts={initialCommunityPosts} myProfile={myProfile}>
+                  {children}
+                  <Toaster position="bottom-center" />
+                </PostsProvider>
+              </FollowsProvider>
+            </DislikesProvider>
           </BookmarksProvider>
         </UserProvider>
       </TooltipProvider>
