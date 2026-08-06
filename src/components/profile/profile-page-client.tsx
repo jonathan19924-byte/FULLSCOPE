@@ -3,7 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Bookmark, ChevronDown, LogOut, MessageSquareText, Pencil, Settings, TrendingUp } from "lucide-react";
+import {
+  Bookmark,
+  ChevronDown,
+  LogOut,
+  MessageSquare,
+  MessageSquareText,
+  Pencil,
+  Settings,
+  TrendingUp,
+} from "lucide-react";
 import { CATEGORY_META } from "@/lib/category";
 import { CATEGORIES } from "@/types/domain";
 import { cn } from "@/lib/utils";
@@ -12,11 +21,19 @@ import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
 import { signOutAction } from "@/lib/auth/actions";
 import { initials } from "@/lib/format";
+import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
+import { EmptyState } from "@/components/shared/empty-state";
 import { t } from "@/lib/i18n";
 
 const VISIBLE_PREFERENCE_CATEGORY_COUNT = 5;
 
-export function ProfilePageClient() {
+export function ProfilePageClient({
+  followerCount,
+  followingCount,
+}: {
+  followerCount: number;
+  followingCount: number;
+}) {
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   const { bookmarkedSlugs, isReady: bookmarksReady } = useBookmarks();
   const { communityPosts, isReady: postsReady } = usePosts();
@@ -25,11 +42,36 @@ export function ProfilePageClient() {
   const email = user?.email ?? "";
   const displayName = email ? email.split("@")[0] : t.profile.guestReader;
 
-  const myPostCount = communityPosts.filter((p) => p.userId === user?.id).length;
-  const myContributions = communityPosts.filter((p) => p.userId === user?.id && p.contributionTheme);
+  const myPosts = communityPosts.filter((p) => p.userId === user?.id);
+  const myContributions = myPosts.filter((p) => p.contributionTheme);
+  const myLikesReceived = myPosts.reduce((sum, p) => sum + p.likeCount, 0);
+
+  const myFeedPosts: FeedPost[] = myPosts.map((p) => ({
+    id: p.id,
+    displayName: p.displayName,
+    authorUsername: p.username,
+    content: p.content,
+    createdAt: p.createdAt,
+    likeCount: p.likeCount,
+    replyCount: p.commentCount,
+    story:
+      p.relatedStorySlug && p.relatedStoryTitle && p.relatedStoryCategory
+        ? { slug: p.relatedStorySlug, title: p.relatedStoryTitle, category: p.relatedStoryCategory }
+        : undefined,
+    contributionTheme: p.contributionTheme,
+    communityPostId: p.id,
+    likedByMe: p.likedByMe,
+    mediaUrl: p.mediaUrl,
+  }));
+
+  const followStats = [
+    { label: t.profile.followers, value: followerCount },
+    { label: t.profile.followingCount, value: followingCount },
+  ];
 
   const stats = [
-    { label: t.profile.statPosts, value: isReady ? myPostCount : 0 },
+    { label: t.profile.statPosts, value: isReady ? myPosts.length : 0 },
+    { label: t.profile.statLikes, value: isReady ? myLikesReceived : 0 },
     { label: t.profile.statBookmarks, value: isReady ? bookmarkedSlugs.length : 0 },
   ];
 
@@ -83,7 +125,7 @@ export function ProfilePageClient() {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        {stats.map((stat) => (
+        {followStats.map((stat) => (
           <div
             key={stat.label}
             className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card py-3"
@@ -95,6 +137,33 @@ export function ProfilePageClient() {
           </div>
         ))}
       </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card py-3"
+          >
+            <span className="text-lg font-semibold text-foreground">{stat.value}</span>
+            <span className="text-center text-[11px] uppercase tracking-wide text-muted-foreground">
+              {stat.label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium text-foreground">{t.profile.postsSectionTitle}</h2>
+        {isReady && myFeedPosts.length === 0 ? (
+          <EmptyState icon={MessageSquare} title={t.posts.emptyTitle} description={t.posts.emptyDescription} />
+        ) : (
+          <ul className="flex flex-col divide-y divide-border/60 border-t border-border/60">
+            {myFeedPosts.map((post) => (
+              <PostFeedCard key={post.id} post={post} />
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="flex items-center gap-1.5 text-sm font-medium text-foreground">

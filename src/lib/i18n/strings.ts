@@ -175,7 +175,8 @@ export const strings = {
     profile: {
       guestReader: "Guest Reader",
       statPosts: "Posts",
-      statBookmarks: "Liked",
+      statLikes: "Likes received",
+      statBookmarks: "Liked stories",
       title: "Profile",
       settingsAria: "Settings",
       editComingSoon: "Profile editing is coming in a future version",
@@ -530,7 +531,8 @@ export const strings = {
     profile: {
       guestReader: "קורא אורח",
       statPosts: "פוסטים",
-      statBookmarks: "לייקים",
+      statLikes: "לייקים שקיבלתם",
+      statBookmarks: "כתבות שאהבתם",
       title: "פרופיל",
       settingsAria: "הגדרות",
       editComingSoon: "עריכת פרופיל תגיע בגרסה עתידית",

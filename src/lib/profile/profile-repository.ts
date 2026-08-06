@@ -11,6 +11,8 @@ export async function getMyProfile(): Promise<{
   displayName: string | null;
   bio: string | null;
   approvalStatus: "pending" | "approved" | "rejected";
+  followerCount: number;
+  followingCount: number;
 } | null> {
   const supabase = await createClient();
   const {
@@ -18,11 +20,15 @@ export async function getMyProfile(): Promise<{
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("user_id, username, display_name, bio, approval_status")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const [{ data }, { count: followerCount }, { count: followingCount }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("user_id, username, display_name, bio, approval_status")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase.from("follows").select("id", { count: "exact", head: true }).eq("followee_id", user.id),
+    supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
+  ]);
 
   if (!data) return null;
 
@@ -32,6 +38,8 @@ export async function getMyProfile(): Promise<{
     displayName: data.display_name,
     bio: data.bio,
     approvalStatus: data.approval_status as "pending" | "approved" | "rejected",
+    followerCount: followerCount ?? 0,
+    followingCount: followingCount ?? 0,
   };
 }
 
