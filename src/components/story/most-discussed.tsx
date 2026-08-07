@@ -66,32 +66,32 @@ export function MostDiscussed({ stories }: { stories: StorySummary[] }) {
             <Link
               key={story.id}
               href={`/story/${story.slug}`}
-              className="flex items-center gap-3 rounded-xl p-3.5 transition-colors hover:bg-muted/60"
+              className="flex items-center gap-3.5 rounded-xl p-4 transition-colors hover:bg-muted/60"
               style={{
                 background: "color-mix(in oklch, var(--brand-gold) 4%, var(--card))",
                 border: "1px solid color-mix(in oklch, var(--brand-gold) 22%, var(--border))",
               }}
             >
               {story.imageUrl ? (
-                <div className="relative size-[72px] shrink-0 overflow-hidden rounded-lg bg-muted">
-                  <Image src={story.imageUrl} alt="" fill sizes="72px" className="object-cover" />
+                <div className="relative size-[92px] shrink-0 overflow-hidden rounded-lg bg-muted">
+                  <Image src={story.imageUrl} alt="" fill sizes="92px" className="object-cover" />
                 </div>
               ) : (
                 <div
                   className={cn(
-                    "flex size-[72px] shrink-0 items-center justify-center rounded-lg",
+                    "flex size-[92px] shrink-0 items-center justify-center rounded-lg",
                     meta.bg,
                   )}
                 >
-                  <Icon className={cn("size-7", meta.text)} strokeWidth={1.75} />
+                  <Icon className={cn("size-8", meta.text)} strokeWidth={1.75} />
                 </div>
               )}
               <div className="min-w-0 flex-1">
                 <p className={cn("text-xs font-medium", meta.text)}>{meta.label}</p>
-                <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
+                <p className="line-clamp-2 text-[15px] font-medium leading-snug text-foreground">
                   {story.title}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">{formatUpdatedAt(story.publishedAt)}</p>
+                <p className="mt-1.5 text-xs text-muted-foreground">{formatUpdatedAt(story.publishedAt)}</p>
               </div>
               <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                 <MessageSquare className="size-3.5" strokeWidth={1.75} />
