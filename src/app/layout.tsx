@@ -11,6 +11,7 @@ import { getDislikedSlugs } from "@/lib/dislikes/get-dislikes";
 import { getCommunityPosts } from "@/lib/posts/get-community-posts";
 import { getFollowingIds } from "@/lib/follows/get-following";
 import { getMyProfile } from "@/lib/profile/profile-repository";
+import { getNotifications, getUnreadNotificationCount } from "@/lib/notifications/get-notifications";
 import { DIR, LOCALE } from "@/lib/locale";
 import { t } from "@/lib/i18n";
 
@@ -78,14 +79,23 @@ export default async function RootLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const [initialBookmarkedSlugs, initialDislikedSlugs, initialCommunityPosts, initialFollowingIds, myProfile] =
-    await Promise.all([
-      user ? getBookmarkedSlugs() : Promise.resolve([]),
-      user ? getDislikedSlugs() : Promise.resolve([]),
-      getCommunityPosts(),
-      user ? getFollowingIds() : Promise.resolve([]),
-      user ? getMyProfile() : Promise.resolve(null),
-    ]);
+  const [
+    initialBookmarkedSlugs,
+    initialDislikedSlugs,
+    initialCommunityPosts,
+    initialFollowingIds,
+    myProfile,
+    initialNotifications,
+    initialUnreadCount,
+  ] = await Promise.all([
+    user ? getBookmarkedSlugs() : Promise.resolve([]),
+    user ? getDislikedSlugs() : Promise.resolve([]),
+    getCommunityPosts(),
+    user ? getFollowingIds() : Promise.resolve([]),
+    user ? getMyProfile() : Promise.resolve(null),
+    user ? getNotifications() : Promise.resolve([]),
+    user ? getUnreadNotificationCount() : Promise.resolve(0),
+  ]);
   const isBlocked = myProfile != null && myProfile.approvalStatus !== "approved";
 
   return (
@@ -110,6 +120,9 @@ export default async function RootLayout({
           initialCommunityPosts={initialCommunityPosts}
           initialFollowingIds={initialFollowingIds}
           myProfile={myProfile}
+          initialNotifications={initialNotifications}
+          initialUnreadCount={initialUnreadCount}
+          signedIn={Boolean(user)}
         >
           {isBlocked ? (
             <PendingApprovalScreen

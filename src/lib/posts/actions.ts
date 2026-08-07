@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isPostPhotoClean } from "./media-moderation";
 import { getPostComments } from "./get-post-comments";
 import { getProfilesByUserIds } from "@/lib/profile/profile-repository";
+import { createNotification } from "@/lib/notifications/create-notification";
 import { t } from "@/lib/i18n";
 
 export async function createCommunityPostAction(input: {
@@ -118,6 +119,20 @@ export async function toggleCommunityPostLikeAction(
       .insert({ post_id: postId, user_id: user.id });
     if (error) return { error: error.message };
     liked = true;
+
+    const { data: post } = await supabase
+      .from("community_posts")
+      .select("user_id")
+      .eq("id", postId)
+      .maybeSingle();
+    if (post) {
+      await createNotification(supabase, {
+        userId: post.user_id,
+        type: "post_liked",
+        actorUserId: user.id,
+        relatedPostId: postId,
+      });
+    }
   }
 
   const { count, error: countError } = await supabase
@@ -188,6 +203,20 @@ export async function addCommentAction(
 
   const profilesByUserId = await getProfilesByUserIds([user.id], supabase);
   const profile = profilesByUserId.get(user.id);
+
+  const { data: parentPost } = await supabase
+    .from("community_posts")
+    .select("user_id")
+    .eq("id", postId)
+    .maybeSingle();
+  if (parentPost) {
+    await createNotification(supabase, {
+      userId: parentPost.user_id,
+      type: "post_commented",
+      actorUserId: user.id,
+      relatedPostId: postId,
+    });
+  }
 
   revalidatePath("/posts");
   revalidatePath("/story/[slug]", "page");

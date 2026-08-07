@@ -188,9 +188,10 @@ export const strings = {
       yourPostShaped: "Your post shaped ",
       thisStory: "this story",
       aStory: "a story",
-      impactEmptyTitle: "Your activity hasn't shaped any stories yet",
+      impactEmptyTitle: "No impact yet",
       impactEmptyDescription:
-        "When several readers make the same point, we fold it into the story — add posts to have a chance at shaping the narrative.",
+        "Post your take on a story — well-received posts show up here, and when several readers make the same point, we fold it into the story itself.",
+      wellReceivedTitle: "Well-received posts",
       contentPreferences: "Content preferences",
       contentPreferencesDescription:
         "Personalized recommendations are planned for a future version. For now, every category is shown to every reader.",
@@ -224,6 +225,17 @@ export const strings = {
       bioPlaceholder: "A little about you",
       saving: "Saving…",
       save: "Save",
+    },
+    notifications: {
+      title: "Notifications",
+      emptyTitle: "No notifications yet",
+      emptyDescription: "Likes, comments, new followers, and story credits will show up here.",
+      markAllRead: "Mark all as read",
+      someone: "Someone",
+      postLiked: (name: string) => `${name} liked your post`,
+      postCommented: (name: string) => `${name} commented on your post`,
+      newFollower: (name: string) => `${name} started following you`,
+      postCredited: "Your post shaped a story",
     },
     settings: {
       title: "Settings",
@@ -551,9 +563,10 @@ export const strings = {
       yourPostShaped: "הפוסט שלכם השפיע על ",
       thisStory: "הכתבה הזו",
       aStory: "כתבה",
-      impactEmptyTitle: "הפעילות שלכם עדיין לא השפיעה על אף כתבה",
+      impactEmptyTitle: "אין עדיין השפעה",
       impactEmptyDescription:
-        "כשכמה קוראים מעלים את אותה נקודה, אנחנו משלבים אותה בכתבה — הוסיפו פוסטים כדי שיהיה לכם סיכוי להשפיע על הסיפור.",
+        "פרסמו את דעתכם על כתבה — פוסטים שזוכים להדים יופיעו כאן, וכשכמה קוראים מעלים את אותה נקודה, אנחנו משלבים אותה בכתבה עצמה.",
+      wellReceivedTitle: "פוסטים שזכו להדים",
       contentPreferences: "העדפות תוכן",
       contentPreferencesDescription:
         "המלצות מותאמות אישית מתוכננות לגרסה עתידית. לעת עתה, כל קטגוריה מוצגת לכל קורא.",
@@ -587,6 +600,17 @@ export const strings = {
       bioPlaceholder: "כמה מילים עליכם",
       saving: "שומר...",
       save: "שמירה",
+    },
+    notifications: {
+      title: "התראות",
+      emptyTitle: "אין עדיין התראות",
+      emptyDescription: "לייקים, תגובות, עוקבים חדשים וזיכויי כתבות יופיעו כאן.",
+      markAllRead: "סמנו הכול כנקרא",
+      someone: "מישהו",
+      postLiked: (name: string) => `${name} אהב/ה את הפוסט שלכם`,
+      postCommented: (name: string) => `${name} הגיב/ה לפוסט שלכם`,
+      newFollower: (name: string) => `${name} התחיל/ה לעקוב אחריכם`,
+      postCredited: "הפוסט שלכם השפיע על כתבה",
     },
     settings: {
       title: "הגדרות",

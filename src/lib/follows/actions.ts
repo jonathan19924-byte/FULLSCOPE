@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createNotification } from "@/lib/notifications/create-notification";
 import { t } from "@/lib/i18n";
 
 /** Toggles the current user's follow of `followeeId` — same
@@ -39,6 +40,12 @@ export async function toggleFollowAction(
 
   const { error } = await supabase.from("follows").insert({ follower_id: user.id, followee_id: followeeId });
   if (error) return { error: error.message };
+
+  await createNotification(supabase, {
+    userId: followeeId,
+    type: "new_follower",
+    actorUserId: user.id,
+  });
 
   revalidatePath("/posts");
   revalidatePath("/profile/[username]", "page");

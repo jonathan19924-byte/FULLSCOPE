@@ -210,6 +210,22 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["story_updates"]["Row"]>;
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: "post_liked" | "post_commented" | "new_follower" | "post_credited";
+          actor_user_id: string | null;
+          related_post_id: string | null;
+          related_story_slug: string | null;
+          created_at: string;
+          read_at: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["notifications"]["Row"]> &
+          Pick<Database["public"]["Tables"]["notifications"]["Row"], "user_id" | "type">;
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

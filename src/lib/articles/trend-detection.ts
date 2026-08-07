@@ -1,6 +1,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { callClaude, parseClaudeJson } from "./claude";
 import { logStoryUpdate } from "./story-updates";
+import { createNotification } from "@/lib/notifications/create-notification";
 
 function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -210,6 +211,23 @@ async function applyTrend(
     .update({ credited_at: new Date().toISOString() })
     .in("id", postIds);
   if (creditError) throw new Error(`Error crediting posts: ${creditError.message}`);
+
+  const { data: creditedPosts } = await supabase
+    .from("community_posts")
+    .select("id, user_id")
+    .in("id", postIds);
+  const firstPostIdByUser = new Map<string, string>();
+  for (const p of creditedPosts ?? []) {
+    if (!firstPostIdByUser.has(p.user_id)) firstPostIdByUser.set(p.user_id, p.id);
+  }
+  for (const [userId, postId] of firstPostIdByUser) {
+    await createNotification(supabase, {
+      userId,
+      type: "post_credited",
+      relatedPostId: postId,
+      relatedStorySlug: story.slug,
+    });
+  }
 
   await logStoryUpdate(supabase, {
     storyId: story.id,

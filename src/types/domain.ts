@@ -221,3 +221,23 @@ export interface PublicProfile {
   followerCount: number;
   followingCount: number;
 }
+
+export type NotificationType = "post_liked" | "post_commented" | "new_follower" | "post_credited";
+
+/** An in-app notification for the signed-in reader. `actorUserId`/
+ * `actorDisplayName` are undefined for system-generated events
+ * (post_credited comes from the trend-detection cron, not one specific
+ * user). `relatedPostId` links to a community post, `relatedStorySlug` to a
+ * story — a given type populates whichever one is relevant. */
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  actorUserId?: string;
+  actorDisplayName?: string;
+  actorUsername?: string;
+  relatedPostId?: string;
+  relatedStorySlug?: string;
+  relatedStoryTitle?: string;
+  createdAt: string;
+  readAt?: string;
+}

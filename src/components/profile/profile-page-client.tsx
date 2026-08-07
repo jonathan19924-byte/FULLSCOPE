@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import {
   Bookmark,
   ChevronDown,
+  Heart,
   LogOut,
+  MessageCircle,
   MessageSquare,
   MessageSquareText,
   Pencil,
@@ -42,9 +44,21 @@ export function ProfilePageClient({
   const email = user?.email ?? "";
   const displayName = email ? email.split("@")[0] : t.profile.guestReader;
 
+  const WELL_RECEIVED_THRESHOLD = 3;
+  const WELL_RECEIVED_MAX = 5;
+
   const myPosts = communityPosts.filter((p) => p.userId === user?.id);
   const myContributions = myPosts.filter((p) => p.contributionTheme);
   const myLikesReceived = myPosts.reduce((sum, p) => sum + p.likeCount, 0);
+  // "Impact" isn't only the rare trend-detection credit (needs 2+ readers
+  // making the same point, confirmed by Claude) — most active users would
+  // otherwise always see the empty state. Surface everyday well-received
+  // posts too, using engagement data already loaded client-side.
+  const myWellReceived = myPosts
+    .filter((p) => !p.contributionTheme && p.likeCount + p.commentCount >= WELL_RECEIVED_THRESHOLD)
+    .sort((a, b) => b.likeCount + b.commentCount - (a.likeCount + a.commentCount))
+    .slice(0, WELL_RECEIVED_MAX);
+  const hasAnyImpact = myContributions.length > 0 || myWellReceived.length > 0;
 
   const myFeedPosts: FeedPost[] = myPosts.map((p) => ({
     id: p.id,
@@ -171,7 +185,7 @@ export function ProfilePageClient({
           <TrendingUp className="size-4" strokeWidth={1.75} />
           {t.profile.yourImpact}
         </h2>
-        {myContributions.length > 0 ? (
+        {hasAnyImpact ? (
           <ul className="flex flex-col gap-2">
             {myContributions.map((post) => (
               <li
@@ -191,6 +205,31 @@ export function ProfilePageClient({
                 </p>
               </li>
             ))}
+            {myWellReceived.length > 0 && (
+              <>
+                <p className="mt-1 text-xs font-medium text-muted-foreground">
+                  {t.profile.wellReceivedTitle}
+                </p>
+                {myWellReceived.map((post) => (
+                  <li
+                    key={post.id}
+                    className="flex flex-col gap-1.5 rounded-2xl border border-border/60 bg-card p-4"
+                  >
+                    <p className="line-clamp-2 text-sm text-foreground">{post.content}</p>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Heart className="size-3.5" strokeWidth={1.75} />
+                        {post.likeCount}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageCircle className="size-3.5" strokeWidth={1.75} />
+                        {post.commentCount}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </>
+            )}
           </ul>
         ) : (
           <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border px-6 py-8 text-center">

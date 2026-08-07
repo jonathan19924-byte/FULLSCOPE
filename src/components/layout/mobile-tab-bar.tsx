@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn, scrollToTop } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
+import { NotificationBadge } from "./notification-badge";
 import { t } from "@/lib/i18n";
 
 export function MobileTabBar() {
@@ -38,10 +39,13 @@ export function MobileTabBar() {
                   isActive ? "text-foreground" : "text-muted-foreground",
                 )}
               >
-                <Icon
-                  className={cn("size-5", isActive && "fill-foreground/10")}
-                  strokeWidth={isActive ? 2.25 : 1.75}
-                />
+                <span className="relative">
+                  <Icon
+                    className={cn("size-5", isActive && "fill-foreground/10")}
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                  />
+                  {item.href === "/notifications" && <NotificationBadge />}
+                </span>
                 {item.label}
               </Link>
             </li>
