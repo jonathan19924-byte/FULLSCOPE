@@ -28,14 +28,20 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
           className,
         )}
       >
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-lg",
-            meta.bg,
-          )}
-        >
-          <Icon className={cn("size-5", meta.text)} strokeWidth={1.75} />
-        </div>
+        {story.imageUrl ? (
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
+            <Image src={story.imageUrl} alt="" fill sizes="56px" className="object-cover" />
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "flex size-14 shrink-0 items-center justify-center rounded-lg",
+              meta.bg,
+            )}
+          >
+            <Icon className={cn("size-6", meta.text)} strokeWidth={1.75} />
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <p className={cn("text-xs font-medium", meta.text)}>{meta.label}</p>
           <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
