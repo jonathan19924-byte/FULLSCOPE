@@ -7,6 +7,7 @@ import { MessageSquare, TrendingUp } from "lucide-react";
 import type { StorySummary } from "@/types/domain";
 import { usePosts } from "@/lib/posts/posts-context";
 import { CATEGORY_META } from "@/lib/category";
+import { formatUpdatedAt } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 
@@ -42,8 +43,18 @@ export function MostDiscussed({ stories }: { stories: StorySummary[] }) {
   if (top.length === 0) return null;
 
   return (
-    <section aria-label={t.story.trendingAria} className="flex flex-col gap-3">
-      <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+    <section
+      aria-label={t.story.trendingAria}
+      className="flex flex-col gap-2 rounded-2xl p-2.5"
+      style={{
+        background: "color-mix(in oklch, var(--brand-gold) 7%, var(--card))",
+        border: "1px solid color-mix(in oklch, var(--brand-gold) 35%, var(--border))",
+      }}
+    >
+      <h2
+        className="flex items-center gap-1.5 px-1 text-sm font-medium"
+        style={{ color: "var(--brand-gold)" }}
+      >
         <TrendingUp className="size-4" strokeWidth={1.75} />
         {t.story.trendingNow}
       </h2>
@@ -55,20 +66,24 @@ export function MostDiscussed({ stories }: { stories: StorySummary[] }) {
             <Link
               key={story.id}
               href={`/story/${story.slug}`}
-              className="flex items-center gap-3 rounded-xl border border-border/60 p-3 transition-colors hover:bg-muted/60"
+              className="flex items-center gap-3 rounded-xl p-3.5 transition-colors hover:bg-muted/60"
+              style={{
+                background: "color-mix(in oklch, var(--brand-gold) 4%, var(--card))",
+                border: "1px solid color-mix(in oklch, var(--brand-gold) 22%, var(--border))",
+              }}
             >
               {story.imageUrl ? (
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  <Image src={story.imageUrl} alt="" fill sizes="56px" className="object-cover" />
+                <div className="relative size-[72px] shrink-0 overflow-hidden rounded-lg bg-muted">
+                  <Image src={story.imageUrl} alt="" fill sizes="72px" className="object-cover" />
                 </div>
               ) : (
                 <div
                   className={cn(
-                    "flex size-14 shrink-0 items-center justify-center rounded-lg",
+                    "flex size-[72px] shrink-0 items-center justify-center rounded-lg",
                     meta.bg,
                   )}
                 >
-                  <Icon className={cn("size-6", meta.text)} strokeWidth={1.75} />
+                  <Icon className={cn("size-7", meta.text)} strokeWidth={1.75} />
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -76,6 +91,7 @@ export function MostDiscussed({ stories }: { stories: StorySummary[] }) {
                 <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
                   {story.title}
                 </p>
+                <p className="mt-1 text-xs text-muted-foreground">{formatUpdatedAt(story.publishedAt)}</p>
               </div>
               <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                 <MessageSquare className="size-3.5" strokeWidth={1.75} />

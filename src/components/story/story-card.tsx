@@ -24,22 +24,22 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
       <Link
         href={`/story/${story.slug}`}
         className={cn(
-          "flex items-center gap-3 rounded-xl border border-border/60 p-3 transition-colors hover:bg-muted/60",
+          "flex items-center gap-3 rounded-xl border border-border/60 p-3.5 transition-colors hover:bg-muted/60",
           className,
         )}
       >
         {story.imageUrl ? (
-          <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted">
-            <Image src={story.imageUrl} alt="" fill sizes="56px" className="object-cover" />
+          <div className="relative size-[72px] shrink-0 overflow-hidden rounded-lg bg-muted">
+            <Image src={story.imageUrl} alt="" fill sizes="72px" className="object-cover" />
           </div>
         ) : (
           <div
             className={cn(
-              "flex size-14 shrink-0 items-center justify-center rounded-lg",
+              "flex size-[72px] shrink-0 items-center justify-center rounded-lg",
               meta.bg,
             )}
           >
-            <Icon className={cn("size-6", meta.text)} strokeWidth={1.75} />
+            <Icon className={cn("size-7", meta.text)} strokeWidth={1.75} />
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -47,6 +47,7 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
           <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
             {story.title}
           </p>
+          <p className="mt-1 text-xs text-muted-foreground">{formatUpdatedAt(story.publishedAt)}</p>
         </div>
       </Link>
     );
