@@ -10,6 +10,7 @@ import {
 import { CategoryFilter } from "@/components/story/category-filter";
 import { FeedTabs } from "@/components/story/feed-tabs";
 import { StoryCard } from "@/components/story/story-card";
+import { PaginatedStoryList } from "@/components/story/paginated-story-list";
 import { MostDiscussed } from "@/components/story/most-discussed";
 import { BookmarksPageClient } from "@/components/bookmarks/bookmarks-page-client";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -120,11 +121,7 @@ export default async function HomePage({
                     {category === "All" ? t.home.latest : t.home.categoryStories(t.category[category])}
                   </h2>
                 )}
-                <div className="flex flex-col gap-4">
-                  {latest.map((story) => (
-                    <StoryCard key={story.id} story={story} variant="standard" />
-                  ))}
-                </div>
+                <PaginatedStoryList key={`feed-${category}`} stories={latest} />
               </section>
             </div>
           )}
@@ -141,11 +138,7 @@ export default async function HomePage({
                 description={t.home.historyEmptyDescription}
               />
             ) : (
-              <div className="flex flex-col gap-4">
-                {archivedStories.map((story) => (
-                  <StoryCard key={story.id} story={story} variant="standard" />
-                ))}
-              </div>
+              <PaginatedStoryList key={`history-${category}`} stories={archivedStories} />
             )}
           </section>
         </>

@@ -3,7 +3,7 @@
 import { Bookmark } from "lucide-react";
 import type { StorySummary } from "@/types/domain";
 import { useBookmarks } from "@/lib/bookmarks/bookmarks-context";
-import { StoryCard } from "@/components/story/story-card";
+import { PaginatedStoryList } from "@/components/story/paginated-story-list";
 import { EmptyState } from "@/components/shared/empty-state";
 import { t } from "@/lib/i18n";
 
@@ -26,11 +26,7 @@ export function BookmarksPageClient({ stories, hideHeading }: BookmarksPageClien
       description={t.bookmarks.emptyDescription}
     />
   ) : (
-    <div className="flex flex-col gap-4">
-      {bookmarked.map((story) => (
-        <StoryCard key={story.id} story={story} variant="standard" />
-      ))}
-    </div>
+    <PaginatedStoryList stories={bookmarked} />
   );
 
   if (hideHeading) return content;
