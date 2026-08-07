@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { cn, scrollToTop } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
 import { ThemeToggle } from "./theme-toggle";
-import { NotificationBadge } from "./notification-badge";
 import { t } from "@/lib/i18n";
 
 export function NavBar() {
@@ -39,12 +38,11 @@ export function NavBar() {
                   }
                 }}
                 className={cn(
-                  "relative rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-foreground",
+                  "rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-foreground",
                   isActive ? "text-foreground" : "text-muted-foreground",
                 )}
               >
                 {item.label}
-                {item.href === "/notifications" && <NotificationBadge />}
               </Link>
             );
           })}

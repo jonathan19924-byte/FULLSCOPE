@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
+  Bell,
   Bookmark,
   ChevronDown,
   Heart,
@@ -20,6 +21,7 @@ import { CATEGORIES } from "@/types/domain";
 import { cn } from "@/lib/utils";
 import { useBookmarks } from "@/lib/bookmarks/bookmarks-context";
 import { usePosts } from "@/lib/posts/posts-context";
+import { useNotifications } from "@/lib/notifications/notifications-context";
 import { useUser } from "@/components/auth/user-provider";
 import { signOutAction } from "@/lib/auth/actions";
 import { initials } from "@/lib/format";
@@ -39,6 +41,7 @@ export function ProfilePageClient({
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   const { bookmarkedSlugs, isReady: bookmarksReady } = useBookmarks();
   const { communityPosts, isReady: postsReady } = usePosts();
+  const { unreadCount } = useNotifications();
   const { user } = useUser();
   const isReady = bookmarksReady && postsReady;
   const email = user?.email ?? "";
@@ -285,6 +288,26 @@ export function ProfilePageClient({
       </section>
 
       <div className="flex flex-col gap-2.5">
+        <Link
+          href="/notifications"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-border"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
+              <Bell className="size-5 text-muted-foreground" strokeWidth={1.75} />
+            </div>
+            <div>
+              <p className="font-medium text-foreground">{t.profile.notificationsRowTitle}</p>
+              <p className="text-sm text-muted-foreground">{t.profile.notificationsRowDescription}</p>
+            </div>
+          </div>
+          {unreadCount > 0 && (
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive text-xs font-semibold text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Link>
+
         <Link
           href="/bookmarks"
           className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card p-4 transition-colors hover:border-border"

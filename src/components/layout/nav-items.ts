@@ -1,4 +1,4 @@
-import { Home, Search, CirclePlus, MessageSquare, Bell, User } from "lucide-react";
+import { Home, Search, CirclePlus, MessageSquare, User } from "lucide-react";
 
 // Kept in English per explicit request — an exception to the rest of the
 // Hebrew UI translation. Shared by both the desktop top nav and the mobile
@@ -9,6 +9,5 @@ export const NAV_ITEMS = [
   { href: "/search", label: "Search", icon: Search },
   { href: "/create", label: "Create", icon: CirclePlus },
   { href: "/posts", label: "Posts", icon: MessageSquare },
-  { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/profile", label: "Profile", icon: User },
 ] as const;

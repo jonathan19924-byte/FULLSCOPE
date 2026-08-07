@@ -195,6 +195,8 @@ export const strings = {
       contentPreferences: "Content preferences",
       contentPreferencesDescription:
         "Personalized recommendations are planned for a future version. For now, every category is shown to every reader.",
+      notificationsRowTitle: "Notifications",
+      notificationsRowDescription: "Likes, comments, follows, and story credits",
       bookmarksRowTitle: "Liked",
       bookmarksRowDescription: "Stories you've liked",
       sendFeedbackTitle: "Send Feedback",
@@ -570,6 +572,8 @@ export const strings = {
       contentPreferences: "העדפות תוכן",
       contentPreferencesDescription:
         "המלצות מותאמות אישית מתוכננות לגרסה עתידית. לעת עתה, כל קטגוריה מוצגת לכל קורא.",
+      notificationsRowTitle: "התראות",
+      notificationsRowDescription: "לייקים, תגובות, עוקבים חדשים וזיכויי כתבות",
       bookmarksRowTitle: "לייקים",
       bookmarksRowDescription: "כתבות שסימנתם לייק",
       sendFeedbackTitle: "שליחת משוב",
