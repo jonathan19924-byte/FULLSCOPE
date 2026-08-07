@@ -15,11 +15,16 @@ import { t } from "@/lib/i18n";
 interface CategoryFilterProps {
   selected: Category | "All";
   counts: Record<Category | "All", number>;
+  /** Which tab this filter applies to — appended to every option's href so
+   * switching category stays on the same tab instead of bouncing back to
+   * the feed (the default, since feed is the common case). */
+  view?: "feed" | "history";
 }
 
-export function CategoryFilter({ selected, counts }: CategoryFilterProps) {
+export function CategoryFilter({ selected, counts, view = "feed" }: CategoryFilterProps) {
   const options: (Category | "All")[] = ["All", ...CATEGORIES];
   const selectedLabel = selected === "All" ? t.common.all : t.category[selected];
+  const viewParam = view === "history" ? "view=history" : undefined;
 
   return (
     <DropdownMenu>
@@ -39,7 +44,9 @@ export function CategoryFilter({ selected, counts }: CategoryFilterProps) {
       <DropdownMenuContent align="start">
         {options.map((option) => {
           const isActive = option === selected;
-          const href = option === "All" ? "/" : `/?category=${encodeURIComponent(option)}`;
+          const categoryParam = option === "All" ? undefined : `category=${encodeURIComponent(option)}`;
+          const query = [viewParam, categoryParam].filter(Boolean).join("&");
+          const href = query ? `/?${query}` : "/";
           return (
             <DropdownMenuItem
               key={option}

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { CATEGORIES, type Category } from "@/types/domain";
+import { CATEGORIES, type Category, type StorySummary } from "@/types/domain";
 import {
   getFeaturedStory,
   getStoriesByCategory,
@@ -36,19 +36,24 @@ export default async function HomePage({
   const stories = view === "feed" ? getStoriesByCategory(allStories, category) : [];
   const featured = view === "feed" && category === "All" ? getFeaturedStory(allStories) : undefined;
   const latest = featured ? stories.filter((s) => s.slug !== featured.slug) : stories;
-  const archivedStories = view === "history" ? await listArchivedStorySummaries() : [];
+  const allArchivedStories = view === "history" ? await listArchivedStorySummaries() : [];
+  const archivedStories = getStoriesByCategory(allArchivedStories, category);
 
   // Derived generically from CATEGORIES rather than one hardcoded line per
   // category — the old hand-enumerated version silently produced
   // `undefined` counts for any category not individually listed, which the
   // `as` cast let through undetected until the 5-category expansion would
   // have broken it at runtime.
-  const counts = {
-    All: allStories.length,
-    ...Object.fromEntries(
-      CATEGORIES.map((cat) => [cat, allStories.filter((s) => s.category === cat).length]),
-    ),
-  } as Record<Category | "All", number>;
+  function countsFor(summaries: StorySummary[]): Record<Category | "All", number> {
+    return {
+      All: summaries.length,
+      ...Object.fromEntries(
+        CATEGORIES.map((cat) => [cat, summaries.filter((s) => s.category === cat).length]),
+      ),
+    } as Record<Category | "All", number>;
+  }
+  const counts = countsFor(allStories);
+  const historyCounts = countsFor(allArchivedStories);
 
   return (
     <PullToRefresh>
@@ -125,21 +130,25 @@ export default async function HomePage({
           )}
         </>
       ) : view === "history" ? (
-        <section aria-label={t.home.historyStoriesAria} className="flex flex-col gap-4">
-          {archivedStories.length === 0 ? (
-            <EmptyState
-              icon={Archive}
-              title={t.home.historyEmptyTitle}
-              description={t.home.historyEmptyDescription}
-            />
-          ) : (
-            <div className="flex flex-col gap-4">
-              {archivedStories.map((story) => (
-                <StoryCard key={story.id} story={story} variant="standard" />
-              ))}
-            </div>
-          )}
-        </section>
+        <>
+          <CategoryFilter selected={category} counts={historyCounts} view="history" />
+
+          <section aria-label={t.home.historyStoriesAria} className="flex flex-col gap-4">
+            {archivedStories.length === 0 ? (
+              <EmptyState
+                icon={Archive}
+                title={t.home.historyEmptyTitle}
+                description={t.home.historyEmptyDescription}
+              />
+            ) : (
+              <div className="flex flex-col gap-4">
+                {archivedStories.map((story) => (
+                  <StoryCard key={story.id} story={story} variant="standard" />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
       ) : (
         <BookmarksPageClient stories={allStories} hideHeading />
       )}
