@@ -6,6 +6,11 @@ import { t } from "@/lib/i18n";
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
 
+// These are real routes under /profile/[username] — a matching username
+// would be unreachable (the static route always wins) and would shadow the
+// followers/following list pages.
+const RESERVED_USERNAMES = new Set(["followers", "following"]);
+
 export async function updateProfileAction(input: {
   username: string;
   displayName: string;
@@ -21,7 +26,7 @@ export async function updateProfileAction(input: {
   }
 
   const username = input.username.trim().toLowerCase();
-  if (!USERNAME_PATTERN.test(username)) {
+  if (!USERNAME_PATTERN.test(username) || RESERVED_USERNAMES.has(username)) {
     return { error: t.profile.usernameInvalid };
   }
 

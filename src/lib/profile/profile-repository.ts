@@ -102,6 +102,41 @@ export async function getProfilesByUserIds(
   return map;
 }
 
+/** Identities of everyone who follows `userId` — the same shape as
+ * `getAllPublicProfiles`, minus the username filter, since a follower who
+ * hasn't claimed a username yet should still show up in the list (just
+ * without a link to their profile). */
+export async function getFollowers(
+  userId: string,
+): Promise<{ userId: string; username: string | null; displayName: string | null }[]> {
+  const supabase = await createClient();
+  const { data: rows } = await supabase.from("follows").select("follower_id").eq("followee_id", userId);
+  const followerIds = (rows ?? []).map((r) => r.follower_id);
+  const profiles = await getProfilesByUserIds(followerIds, supabase);
+
+  return followerIds.map((id) => ({
+    userId: id,
+    username: profiles.get(id)?.username ?? null,
+    displayName: profiles.get(id)?.displayName ?? null,
+  }));
+}
+
+/** Identities of everyone `userId` follows — see getFollowers. */
+export async function getFollowingList(
+  userId: string,
+): Promise<{ userId: string; username: string | null; displayName: string | null }[]> {
+  const supabase = await createClient();
+  const { data: rows } = await supabase.from("follows").select("followee_id").eq("follower_id", userId);
+  const followeeIds = (rows ?? []).map((r) => r.followee_id);
+  const profiles = await getProfilesByUserIds(followeeIds, supabase);
+
+  return followeeIds.map((id) => ({
+    userId: id,
+    username: profiles.get(id)?.username ?? null,
+    displayName: profiles.get(id)?.displayName ?? null,
+  }));
+}
+
 /** Every profile that's claimed a username — the pool the People search
  * filters client-side, same "fetch it all upfront, filter in the browser"
  * pattern getAllStories() already uses for story search. Accounts that

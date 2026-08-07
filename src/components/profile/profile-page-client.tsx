@@ -65,8 +65,8 @@ export function ProfilePageClient({
   }));
 
   const followStats = [
-    { label: t.profile.followers, value: followerCount },
-    { label: t.profile.followingCount, value: followingCount },
+    { label: t.profile.followers, value: followerCount, href: "/profile/followers" },
+    { label: t.profile.followingCount, value: followingCount, href: "/profile/following" },
   ];
 
   const stats = [
@@ -126,15 +126,16 @@ export function ProfilePageClient({
 
       <div className="grid grid-cols-2 gap-2">
         {followStats.map((stat) => (
-          <div
+          <Link
             key={stat.label}
-            className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card py-3"
+            href={stat.href}
+            className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card py-3 transition-colors hover:border-border"
           >
             <span className="text-lg font-semibold text-foreground">{stat.value}</span>
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
               {stat.label}
             </span>
-          </div>
+          </Link>
         ))}
       </div>
 

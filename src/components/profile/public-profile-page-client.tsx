@@ -76,18 +76,24 @@ export function PublicProfilePageClient({ profile }: { profile: PublicProfile })
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <div className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card py-3">
+        <Link
+          href={`/profile/${profile.username}/followers`}
+          className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card py-3 transition-colors hover:border-border"
+        >
           <span className="text-lg font-semibold text-foreground">{profile.followerCount}</span>
           <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
             {t.profile.followers}
           </span>
-        </div>
-        <div className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card py-3">
+        </Link>
+        <Link
+          href={`/profile/${profile.username}/following`}
+          className="flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card py-3 transition-colors hover:border-border"
+        >
           <span className="text-lg font-semibold text-foreground">{profile.followingCount}</span>
           <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
             {t.profile.followingCount}
           </span>
-        </div>
+        </Link>
       </div>
 
       <section className="flex flex-col gap-3">
