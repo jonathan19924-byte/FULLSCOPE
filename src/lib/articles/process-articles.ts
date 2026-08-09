@@ -1,6 +1,7 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { callClaude, parseClaudeJson } from "./claude";
 import { findStoryImage } from "./pexels";
+import { fetchEntityContext, type EntitySummary } from "./wikipedia";
 import { sendPipelineSummaryEmail } from "../notifications/email";
 import { recordPipelineHeartbeat } from "./pipeline-health";
 import { logStoryUpdate } from "./story-updates";
@@ -123,6 +124,7 @@ interface StoryGenerationResponse {
   key_differences_impact: string;
   sources: string;
   image_keywords: string;
+  entities: { people: string[]; companies: string[]; countries: string[] };
 }
 
 interface PostGenerationResponse {
@@ -363,6 +365,11 @@ Return ONLY valid JSON with this exact structure:
   "title": "Engaging, objective headline under 15 words, no question mark at end",
   "summary": "2 sentence neutral statement of why this matters and what it affects — no mechanical facts, those belong in what_happened",
   "category": "${CATEGORY_ENUM}",
+  "entities": {
+    "people": ["real full names of individuals actually central to this story — not everyone mentioned in passing; empty array is correct if none qualify"],
+    "companies": ["named organizations/companies/institutions central to this story; empty array is correct if none qualify"],
+    "countries": ["countries central to this story; empty array is correct if none qualify"]
+  },
   "perspective_a_name": "string",
   "perspective_a": "3-4 sentence summary of this perspective's take on the story",
   "perspective_a_claims": ["claim 1", "claim 2", "claim 3"],
@@ -375,6 +382,32 @@ Return ONLY valid JSON with this exact structure:
   "key_differences_impact": "One sentence explaining why people disagree on the impact",
   "sources": "comma separated list of source names used",
   "image_keywords": "2-5 word phrase in ENGLISH (regardless of what language the rest of this response is in) describing a concrete, photographable visual scene for this story — e.g. 'soldier military funeral', 'wildfire forest smoke', 'stock market trading floor'. This is used to search a stock photo library, which only understands English, so it must always be English even when everything else is Hebrew."
+}${LOCALE === "he" ? HEBREW_OUTPUT_INSTRUCTION : ""}`;
+}
+
+/** Only called when at least one Wikipedia entity match came back (see
+ * fetchEntityContext) — most stories never reach this, so most generations
+ * cost nothing extra. Deliberately conservative: the instruction is to
+ * change nothing unless a reader would genuinely be missing something,
+ * not to pad "what_happened" with trivia just because background exists. */
+function buildBackgroundRevisionPrompt(whatHappened: string, context: EntitySummary[]): string {
+  const contextList = context.map((c) => `${c.entity}: ${c.extract}`).join("\n\n");
+
+  return `You are refining the "what happened" section of a news story. Below is the current text, followed by background information from Wikipedia about entities mentioned in the story.
+
+Current text:
+"${whatHappened}"
+
+Wikipedia background on entities mentioned:
+${contextList}
+
+Task: weave in a fact from the background ONLY if a reader would genuinely be missing something necessary to understand the story without it — for example, clarifying who an unfamiliar organization or person is, or essential factual context a general reader wouldn't already have. Do not add background just because it's available; in most cases no change is needed at all. If you do add something, keep it brief (a clause or short sentence, not a paragraph), strictly factual and neutral — never editorialize, speculate, or add opinion. This must still read as the same story, not a Wikipedia summary.
+
+If no change is needed, return the text exactly as given, unchanged.
+
+Return ONLY valid JSON with this exact structure:
+{
+  "what_happened": "the revised (or unchanged) text"
 }${LOCALE === "he" ? HEBREW_OUTPUT_INSTRUCTION : ""}`;
 }
 
@@ -1064,12 +1097,38 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
           const imageUrl = await findStoryImage(story.image_keywords || story.title, story.category, usedImageUrls);
           if (imageUrl) usedImageUrls.add(imageUrl);
 
+          // Best-effort background context (see wikipedia.ts): only touches
+          // what_happened, and only when a Wikipedia match actually came
+          // back — most stories never reach the revision call at all, so
+          // this costs nothing extra for them. Any failure here just keeps
+          // the original text; it should never lose or block the story.
+          let finalWhatHappened = story.what_happened;
+          try {
+            const entityContext = await fetchEntityContext(
+              story.entities ?? { people: [], companies: [], countries: [] },
+            );
+            if (entityContext.length > 0) {
+              const revisionRaw = await callClaude(
+                buildBackgroundRevisionPrompt(story.what_happened, entityContext),
+                600,
+              );
+              const revision = parseClaudeJson<{ what_happened: string }>(revisionRaw);
+              if (revision.what_happened) finalWhatHappened = revision.what_happened;
+            }
+          } catch (err) {
+            console.error(
+              `Error adding Wikipedia background for "${story.title}":`,
+              describeError(err),
+            );
+          }
+
           const storyRow = {
             slug: slugify(story.title),
             title: story.title,
             category: story.category,
             summary: story.summary,
-            what_happened: story.what_happened,
+            what_happened: finalWhatHappened,
+            entities: story.entities ?? { people: [], companies: [], countries: [] },
             timeline: story.what_happened_timeline,
             perspective_a: {
               name: story.perspective_a_name,
