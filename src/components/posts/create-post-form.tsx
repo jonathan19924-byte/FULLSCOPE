@@ -138,7 +138,7 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
           placeholder={t.posts.shareReactionPlaceholder}
           rows={5}
           autoFocus
-          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-[15px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
+          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
         />
         <span
           className={`self-end text-xs ${remaining < 0 ? "text-destructive" : "text-muted-foreground"}`}
@@ -191,7 +191,7 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
         <select
           value={relatedSlug}
           onChange={(e) => setRelatedSlug(e.target.value)}
-          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[15px] text-foreground outline-none focus-visible:border-foreground/40"
+          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[16px] text-foreground outline-none focus-visible:border-foreground/40"
         >
           <option value="">{t.posts.noneStandalone}</option>
           {stories.map((story) => (

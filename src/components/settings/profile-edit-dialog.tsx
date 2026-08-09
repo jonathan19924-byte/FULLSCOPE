@@ -95,7 +95,7 @@ export function ProfileEditDialog({
               onChange={(e) => setBio(e.target.value.slice(0, MAX_BIO_LENGTH))}
               placeholder={t.profile.bioPlaceholder}
               rows={3}
-              className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-2 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
             <span className="self-end text-xs text-muted-foreground">
               {MAX_BIO_LENGTH - bio.length}

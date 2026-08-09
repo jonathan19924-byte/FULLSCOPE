@@ -57,7 +57,7 @@ function TextField({
   multiline?: boolean;
 }) {
   const sharedClassName =
-    "w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-[15px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40";
+    "w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40";
   return (
     <label className="flex flex-col gap-2">
       <span className="text-sm font-medium text-foreground">{label}</span>

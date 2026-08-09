@@ -132,7 +132,7 @@ export function SignUpForm() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[15px] text-foreground outline-none focus-visible:border-foreground/40"
+          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[16px] text-foreground outline-none focus-visible:border-foreground/40"
         />
       </label>
 
@@ -148,7 +148,7 @@ export function SignUpForm() {
             onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
             placeholder={t.profile.usernamePlaceholder}
             maxLength={20}
-            className="h-full w-full bg-transparent text-[15px] text-foreground outline-none"
+            className="h-full w-full bg-transparent text-[16px] text-foreground outline-none"
           />
         </div>
         {username && usernameFormatValid && usernameAvailable === false ? (
@@ -167,7 +167,7 @@ export function SignUpForm() {
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[15px] text-foreground outline-none focus-visible:border-foreground/40"
+          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[16px] text-foreground outline-none focus-visible:border-foreground/40"
         />
       </label>
 
