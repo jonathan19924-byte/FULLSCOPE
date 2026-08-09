@@ -22,6 +22,7 @@ export interface Database {
           key_differences_impact: string;
           sources: unknown;
           entities: unknown;
+          location_name: string | null;
           published_at: string;
           reading_time_minutes: number;
           created_at: string;

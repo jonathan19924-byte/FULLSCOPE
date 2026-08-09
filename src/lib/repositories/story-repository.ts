@@ -46,6 +46,7 @@ interface GeneratedStoryRow {
   key_differences_impact: string;
   sources: unknown;
   entities: unknown;
+  location_name: string | null;
   published_at: string;
   reading_time_minutes: number;
   image_url: string | null;
@@ -108,6 +109,7 @@ function mapStoryRow(row: GeneratedStoryRow, postRows: GeneratedPostRow[]): Stor
     keyDifferencesImpact: row.key_differences_impact,
     sources: row.sources as Source[],
     entities: row.entities as Entities,
+    locationName: row.location_name ?? undefined,
     publishedAt: row.published_at,
     readingTimeMinutes: row.reading_time_minutes,
     imageUrl: row.image_url ?? undefined,

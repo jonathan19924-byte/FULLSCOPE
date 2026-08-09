@@ -90,6 +90,10 @@ export interface Story {
   keyDifferencesImpact: string;
   sources: Source[];
   entities: Entities;
+  /** The single real-world place this story is centered on, if any — used
+   * to show a "view on map" button. Undefined for the (common) case of a
+   * story that isn't tied to one specific place. */
+  locationName?: string;
   publishedAt: string;
   readingTimeMinutes: number;
   imageUrl?: string;

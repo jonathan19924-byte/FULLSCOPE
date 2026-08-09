@@ -365,6 +365,7 @@ export const strings = {
       copyFailed: "Couldn't copy the link",
       copyFailedDescription: "Copy it manually from your browser's address bar.",
       shareAria: (title: string) => `Share ${title}`,
+      mapAria: (place: string) => `View ${place} on map`,
     },
     errors: {
       notFoundTitle: "We couldn't find this page",
@@ -741,6 +742,7 @@ export const strings = {
       copyFailed: "לא הצלחנו להעתיק את הקישור",
       copyFailedDescription: "העתיקו אותו ידנית משורת הכתובת של הדפדפן.",
       shareAria: (title: string) => `שיתוף ${title}`,
+      mapAria: (place: string) => `הצגת ${place} על המפה`,
     },
     errors: {
       notFoundTitle: "לא מצאנו את העמוד הזה",

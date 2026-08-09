@@ -125,6 +125,7 @@ interface StoryGenerationResponse {
   sources: string;
   image_keywords: string;
   entities: { people: string[]; companies: string[]; countries: string[] };
+  location_name: string;
 }
 
 interface PostGenerationResponse {
@@ -381,7 +382,8 @@ Return ONLY valid JSON with this exact structure:
   "key_differences_cause": "One sentence explaining why people disagree on the cause",
   "key_differences_impact": "One sentence explaining why people disagree on the impact",
   "sources": "comma separated list of source names used",
-  "image_keywords": "2-5 word phrase in ENGLISH (regardless of what language the rest of this response is in) describing a concrete, photographable visual scene for this story — e.g. 'soldier military funeral', 'wildfire forest smoke', 'stock market trading floor'. This is used to search a stock photo library, which only understands English, so it must always be English even when everything else is Hebrew."
+  "image_keywords": "2-5 word phrase in ENGLISH (regardless of what language the rest of this response is in) describing a concrete, photographable visual scene for this story — e.g. 'soldier military funeral', 'wildfire forest smoke', 'stock market trading floor'. This is used to search a stock photo library, which only understands English, so it must always be English even when everything else is Hebrew.",
+  "location_name": "the single most specific real-world place this story is genuinely centered on — a city, town, region, or named landmark (e.g. 'Khan Younis', 'the Knesset', 'Ashkelon'). Empty string if the story isn't tied to one specific place — a story about national policy, an election, or a court ruling with no single physical location does NOT qualify just because a country was mentioned. This is used to link out to a map, so only fill it in when a reader would genuinely want to see where this happened."
 }${LOCALE === "he" ? HEBREW_OUTPUT_INSTRUCTION : ""}`;
 }
 
@@ -1129,6 +1131,7 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
             summary: story.summary,
             what_happened: finalWhatHappened,
             entities: story.entities ?? { people: [], companies: [], countries: [] },
+            location_name: story.location_name || null,
             timeline: story.what_happened_timeline,
             perspective_a: {
               name: story.perspective_a_name,
