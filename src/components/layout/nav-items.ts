@@ -11,3 +11,14 @@ export const NAV_ITEMS = [
   { href: "/posts", label: "Posts", icon: MessageSquare },
   { href: "/profile", label: "Profile", icon: User },
 ] as const;
+
+// Routes a logged-out user lands on mid-auth-flow, where the primary nav
+// points at destinations that aren't really available yet — hidden on both
+// the desktop top nav and the mobile bottom tab bar.
+export const AUTH_ROUTE_PREFIXES = [
+  "/sign-in",
+  "/sign-up",
+  "/forgot-password",
+  "/reset-password",
+  "/auth/callback",
+] as const;

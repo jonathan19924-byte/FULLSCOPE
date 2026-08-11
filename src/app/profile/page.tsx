@@ -9,6 +9,7 @@ export default async function ProfilePage() {
   const myProfile = await getMyProfile();
   return (
     <ProfilePageClient
+      myProfile={myProfile}
       followerCount={myProfile?.followerCount ?? 0}
       followingCount={myProfile?.followingCount ?? 0}
     />

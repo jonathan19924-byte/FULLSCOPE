@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn, scrollToTop } from "@/lib/utils";
-import { NAV_ITEMS } from "./nav-items";
+import { NAV_ITEMS, AUTH_ROUTE_PREFIXES } from "./nav-items";
 import { ThemeToggle } from "./theme-toggle";
 import { t } from "@/lib/i18n";
 
 export function NavBar() {
   const pathname = usePathname();
+  const isAuthRoute = AUTH_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  if (isAuthRoute) return null;
 
   return (
     <header className="hidden md:block sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">

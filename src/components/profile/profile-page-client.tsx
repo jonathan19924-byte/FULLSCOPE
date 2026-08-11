@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
 import {
   Bell,
   Bookmark,
@@ -27,14 +26,17 @@ import { signOutAction } from "@/lib/auth/actions";
 import { initials } from "@/lib/format";
 import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { ProfileEditDialog } from "@/components/settings/profile-edit-dialog";
 import { t } from "@/lib/i18n";
 
 const VISIBLE_PREFERENCE_CATEGORY_COUNT = 5;
 
 export function ProfilePageClient({
+  myProfile,
   followerCount,
   followingCount,
 }: {
+  myProfile: { username: string | null; displayName: string | null; bio: string | null } | null;
   followerCount: number;
   followingCount: number;
 }) {
@@ -118,18 +120,15 @@ export function ProfilePageClient({
           <p className="truncate text-sm text-muted-foreground">{email}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() =>
-              toast(t.profile.editComingSoon, {
-                description: t.profile.editComingSoonDescription,
-              })
-            }
-            aria-label={t.profile.editProfileAria}
-            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-          >
-            <Pencil className="size-3.5" strokeWidth={1.75} />
-          </button>
+          <ProfileEditDialog myProfile={myProfile}>
+            <button
+              type="button"
+              aria-label={t.profile.editProfileAria}
+              className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Pencil className="size-3.5" strokeWidth={1.75} />
+            </button>
+          </ProfileEditDialog>
           <button
             type="button"
             onClick={() => signOutAction()}
@@ -235,13 +234,11 @@ export function ProfilePageClient({
             )}
           </ul>
         ) : (
-          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-border px-6 py-8 text-center">
-            <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-              <TrendingUp className="size-5 text-muted-foreground" strokeWidth={1.5} />
-            </div>
-            <p className="font-medium text-foreground">{t.profile.impactEmptyTitle}</p>
-            <p className="max-w-xs text-sm text-muted-foreground">{t.profile.impactEmptyDescription}</p>
-          </div>
+          <EmptyState
+            icon={TrendingUp}
+            title={t.profile.impactEmptyTitle}
+            description={t.profile.impactEmptyDescription}
+          />
         )}
       </section>
 
