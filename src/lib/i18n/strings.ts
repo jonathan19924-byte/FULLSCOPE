@@ -245,6 +245,7 @@ export const strings = {
       comingSoonToast: (title: string) => `${title} is coming in a future version`,
       comingSoonDescription: "Full accounts aren't part of this preview yet.",
       comingSoonAria: (title: string) => `${title} — planned for a future version`,
+      comingSoonBadge: "Coming soon",
       backAria: "Back",
       account: "Account",
       profileInfo: "Profile info",
@@ -264,7 +265,6 @@ export const strings = {
       eventUpdatesDescription: "Get alerts when key stories change",
       postInteractions: "Post interactions",
       postInteractionsDescription: "Likes, replies, mentions",
-      plannedForFuture: "Planned for a future version.",
       appearance: "Appearance",
     },
     auth: {
@@ -621,6 +621,7 @@ export const strings = {
       comingSoonToast: (title: string) => `${title} יגיע בגרסה עתידית`,
       comingSoonDescription: "חשבונות מלאים עדיין לא חלק מהתצוגה המקדימה הזו.",
       comingSoonAria: (title: string) => `${title} — מתוכנן לגרסה עתידית`,
+      comingSoonBadge: "בקרוב",
       backAria: "חזרה",
       account: "חשבון",
       profileInfo: "פרטי פרופיל",
@@ -640,7 +641,6 @@ export const strings = {
       eventUpdatesDescription: "קבלת התראות כשכתבות מרכזיות מתעדכנות",
       postInteractions: "אינטראקציות בפוסטים",
       postInteractionsDescription: "לייקים, תגובות, אזכורים",
-      plannedForFuture: "מתוכנן לגרסה עתידית.",
       appearance: "מראה",
     },
     auth: {

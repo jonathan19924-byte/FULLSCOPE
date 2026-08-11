@@ -73,6 +73,7 @@ export default async function StoryPage({
       <Perspectives perspectiveA={story.perspectiveA} perspectiveB={story.perspectiveB} />
       <KeyDifferences cause={story.keyDifferencesCause} impact={story.keyDifferencesImpact} />
       <StoryUpdates updates={updates} />
+      {story.posts.length > 0 && <Separator />}
       <ReactionsFeed
         posts={story.posts}
         perspectiveAName={story.perspectiveA.name}

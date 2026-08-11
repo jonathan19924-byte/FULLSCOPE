@@ -137,8 +137,9 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
           onChange={(e) => setContent(e.target.value.slice(0, MAX_LENGTH))}
           placeholder={t.posts.shareReactionPlaceholder}
           rows={5}
-          autoFocus
-          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
+          autoFocus={!!user}
+          disabled={!user}
+          className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40 disabled:cursor-not-allowed disabled:opacity-60"
         />
         <span
           className={`self-end text-xs ${remaining < 0 ? "text-destructive" : "text-muted-foreground"}`}
@@ -171,7 +172,8 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex w-fit items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+            disabled={!user}
+            className="flex w-fit items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted-foreground"
           >
             <ImagePlus className="size-4" strokeWidth={1.75} />
             {t.posts.addPhoto}
@@ -191,7 +193,8 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
         <select
           value={relatedSlug}
           onChange={(e) => setRelatedSlug(e.target.value)}
-          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[16px] text-foreground outline-none focus-visible:border-foreground/40"
+          disabled={!user}
+          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[16px] text-foreground outline-none focus-visible:border-foreground/40 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <option value="">{t.posts.noneStandalone}</option>
           {stories.map((story) => (

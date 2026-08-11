@@ -80,11 +80,10 @@ function DisabledToggleRow({
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <span
-        aria-disabled="true"
         aria-label={t.settings.comingSoonAria(title)}
-        className="relative inline-flex h-6 w-11 shrink-0 cursor-not-allowed items-center rounded-full bg-muted opacity-60"
+        className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
       >
-        <span className="inline-block size-4.5 translate-x-0.5 rounded-full bg-background shadow-sm" />
+        {t.settings.comingSoonBadge}
       </span>
     </div>
   );
@@ -187,7 +186,6 @@ export function SettingsPageClient({
           <DisabledToggleRow icon={Newspaper} title={t.settings.eventUpdates} description={t.settings.eventUpdatesDescription} />
           <DisabledToggleRow icon={Heart} title={t.settings.postInteractions} description={t.settings.postInteractionsDescription} />
         </div>
-        <p className="px-1 text-xs text-muted-foreground">{t.settings.plannedForFuture}</p>
       </section>
 
       <section className="flex flex-col gap-3">

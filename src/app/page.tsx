@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { CATEGORIES, type Category, type StorySummary } from "@/types/domain";
 import {
   getFeaturedStory,
@@ -106,7 +107,7 @@ export default async function HomePage({
               }
             />
           ) : (
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-8">
               {featured && (
                 <section aria-label={t.home.featuredStoryAria}>
                   <StoryCard story={featured} variant="featured" />
@@ -115,7 +116,13 @@ export default async function HomePage({
 
               {category === "All" && <MostDiscussed stories={allStories} />}
 
-              <section aria-label={t.home.latestStoriesAria} className="flex flex-col gap-4">
+              <section
+                aria-label={t.home.latestStoriesAria}
+                className={cn(
+                  "flex flex-col gap-4",
+                  category === "All" && "border-t border-border/60 pt-6",
+                )}
+              >
                 {latest.length > 0 && (
                   <h2 className="text-sm font-medium text-muted-foreground">
                     {category === "All" ? t.home.latest : t.home.categoryStories(t.category[category])}

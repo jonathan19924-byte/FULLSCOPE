@@ -77,6 +77,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
 
   const liked = isCommunityPost ? (post.likedByMe ?? false) : localLiked;
   const likeCount = isCommunityPost ? post.likeCount : localLikeCount;
+  const visibleCommentCount = isCommunityPost ? commentCount : post.replyCount;
 
   function toggleLike() {
     if (isCommunityPost) {
@@ -320,11 +321,11 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
               className={cn("size-3.5", liked && "fill-destructive text-destructive")}
               strokeWidth={1.75}
             />
-            {likeCount}
+            {likeCount > 0 && likeCount}
           </button>
           <span className="flex items-center gap-1">
             <MessageCircle className="size-3.5" strokeWidth={1.75} />
-            {isCommunityPost ? commentCount : post.replyCount}
+            {visibleCommentCount > 0 && visibleCommentCount}
           </span>
         </div>
       </div>
