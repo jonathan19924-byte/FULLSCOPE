@@ -37,11 +37,11 @@ export function MobileTabBar() {
                 }}
                 className={cn(
                   "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
-                  isActive ? "text-foreground" : "text-muted-foreground",
+                  isActive ? "text-brand-gold" : "text-muted-foreground",
                 )}
               >
                 <Icon
-                  className={cn("size-5", isActive && "fill-foreground/10")}
+                  className={cn("size-5", isActive && "fill-brand-gold/10")}
                   strokeWidth={isActive ? 2.25 : 1.75}
                 />
                 {item.label}

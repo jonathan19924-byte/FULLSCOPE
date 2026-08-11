@@ -7,6 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-gold: var(--brand-gold);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
@@ -152,7 +153,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: var(--brand-gold);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -196,6 +197,14 @@
   }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+  }
+  /* Subtle depth instead of a flat fill — avoids the "OLED smear" a pure
+     flat near-black reads as on real devices. Kept to the body only (not
+     the --background token itself) so bg-background stays a plain solid
+     color for the ~24 other things that rely on it being one. */
+  .dark body {
+    background-image: linear-gradient(to bottom, oklch(0.145 0 0), oklch(0.09 0 0));
+    background-attachment: fixed;
   }
   html {
     @apply font-sans overflow-x-hidden;
