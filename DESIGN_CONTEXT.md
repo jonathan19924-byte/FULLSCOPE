@@ -71,7 +71,7 @@ supabase/migrations/         # Numbered SQL migrations (schema history)
 CONTENT_PIPELINE.md          # Design notes for the content-generation pipeline (separate concern, see §6)
 ```
 
-**Navigation**: a single `NAV_ITEMS` array (`src/components/layout/nav-items.ts`) drives both the desktop top nav and the mobile bottom tab bar — five items: Home, Search, Create, Posts, Profile. Editing one editor updates both.
+**Navigation**: a single `NAV_ITEMS` array (`src/components/layout/nav-items.ts`) drives both the desktop top nav and the mobile bottom tab bar — five items: Home, Search, Create, Posts, Profile. Editing one editor updates both. The same file also exports `AUTH_ROUTE_PREFIXES`; both nav components hide themselves entirely on sign-in, sign-up, forgot-password, reset-password, and the auth callback route, since none of the five destinations are meaningful for a logged-out user mid-flow.
 
 ---
 
@@ -87,6 +87,13 @@ CONTENT_PIPELINE.md          # Design notes for the content-generation pipeline 
 - **Bottom tab bar (mobile) / top nav (desktop) is a fixed 5-item set.** There's no overflow menu or secondary nav; adding a 6th destination means either replacing one of the five or rethinking the nav shape entirely.
 - **Dark mode exists via `next-themes`** (a toggle is present in the nav), but in practice the app has essentially only been reviewed and iterated on in dark mode — treat light mode as present but unverified.
 - **Story cards are intentionally information-dense**: hero image, up to three overlapping badge pills (bookmark, "added today"/"updated," category), title, and a summary excerpt, all before the two-perspective breakdown further down the story page. This was not a deliberate minimalism choice — it grew feature-by-feature — so there's real room to reconsider density here specifically.
+- **Home/History/Bookmarks lists are compact rows, not full cards.** `PaginatedStoryList` renders 92px-thumbnail rows, 10 at a time with a "show more" control, rather than the full-size `StoryCard` used at the top of the home page for the "Trending" module. The Trending module itself is wrapped in a gold-tinted bordered "card" (`color-mix()` against `--brand-gold`) purely to visually separate it from the plain "Latest" list below — deliberately without rank-number badges.
+- **Engagement is split into two separate, mutually-exclusive signals**: a like (thumbs-up, formerly "bookmark" — same underlying save-for-later mechanic, relabeled) and a dislike (thumbs-down, `DislikeButton`), each clearing the other when toggled. Dislikes are intentionally never surfaced anywhere in the UI (no count, no list) — they're a private signal only, unlike likes which count toward a user's public "likes received" stat.
+- **Community posts support threaded comments** (`community_post_comments`), rendered inline under each post in the Posts feed via `post-feed-card.tsx`, alongside the existing like count.
+- **In-app notifications live inside the Profile page, not the primary nav.** A dedicated "Notifications" row in Profile links to `/notifications`; there's no bell icon or badge in the 5-item nav bar — this was a deliberate choice to keep the nav's fixed 5-item set intact (see above) rather than adding a 6th destination or replacing one of the five.
+- **Followers/following are tappable, listing pages**, not static counts — profile stat tiles for "Followers" and "Following" link to a shared `FollowListPageClient`, reused for both the viewer's own lists and any public profile's lists.
+- **Stories tied to a specific place get a map-pin icon button** in the story hero (next to like/dislike/share) that deep-links to a Google Maps search for that place name — only rendered when the pipeline has extracted a `locationName` for that story, so most stories don't show it.
+- **All text inputs/textareas are held to a 16px minimum font-size**, even where the visual design calls for something smaller (several forms use `text-[15px]` elsewhere in the type scale) — anything under 16px triggers iOS Safari's automatic (and not easily reversible) zoom-on-focus, which was shipped as a real bug before this rule was established. Any new input, anywhere, should default to 16px on mobile regardless of what the surrounding text scale suggests.
 
 ---
 
@@ -100,6 +107,7 @@ CONTENT_PIPELINE.md          # Design notes for the content-generation pipeline 
 - **Light mode is unverified** — exists mechanically, hasn't been reviewed.
 - **Profile avatars are text-initials only** — no image upload exists yet, so every user-facing avatar is a colored circle with initials. Any redesign of profile/post UI should assume this stays true for the foreseeable future, not design around real avatar photos.
 - **The home page "Trending now" module and story cards both render several category-colored icon badges in close proximity** — this hasn't been specifically checked for visual noise now that there are 9 category colors instead of 4.
+- **The 16px-minimum-input-font rule (§4) is enforced ad hoc, not structurally.** It's applied per-input via literal `text-[16px]` classes; there's no shared input primitive that guarantees it, so a new form built by copying an older pattern (or by a future redesign that reintroduces a `text-sm`/`text-[15px]` input) can silently reintroduce the iOS auto-zoom bug. Worth consolidating into a base `Input`/`Textarea` component that owns this instead of leaving it to convention.
 
 ---
 
