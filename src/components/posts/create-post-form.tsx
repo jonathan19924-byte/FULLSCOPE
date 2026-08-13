@@ -17,13 +17,28 @@ const MAX_LENGTH = 280;
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
+export function CreatePostForm({
+  stories,
+  lockedStorySlug,
+  onPosted,
+}: {
+  stories: Pick<StorySummary, "slug" | "title" | "category">[];
+  /** When set, the story is pre-selected and the "tag a related story"
+   * picker is replaced with a static label — used when this form is opened
+   * from a specific story's page, where the story is already implied by
+   * context rather than something the user should have to re-pick. */
+  lockedStorySlug?: string;
+  /** Called after a successful post instead of the default redirect to
+   * /posts — used when this form is embedded in a dialog (e.g. on a story
+   * page) so posting closes the dialog and stays on the current page. */
+  onPosted?: () => void;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useUser();
   const { addPost } = usePosts();
   const [content, setContent] = useState("");
-  const [relatedSlug, setRelatedSlug] = useState("");
+  const [relatedSlug, setRelatedSlug] = useState(lockedStorySlug ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -105,7 +120,14 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
     } else {
       toast(t.posts.posted, { description: t.posts.postedDescription });
     }
-    router.push("/posts");
+
+    if (onPosted) {
+      setContent("");
+      removePhoto();
+      onPosted();
+    } else {
+      router.push("/posts");
+    }
   }
 
   return (
@@ -188,22 +210,31 @@ export function CreatePostForm({ stories }: { stories: StorySummary[] }) {
         />
       </div>
 
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">{t.posts.tagRelatedStory}</span>
-        <select
-          value={relatedSlug}
-          onChange={(e) => setRelatedSlug(e.target.value)}
-          disabled={!user}
-          className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[16px] text-foreground outline-none focus-visible:border-foreground/40 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <option value="">{t.posts.noneStandalone}</option>
-          {stories.map((story) => (
-            <option key={story.slug} value={story.slug}>
-              {story.title}
-            </option>
-          ))}
-        </select>
-      </label>
+      {lockedStorySlug ? (
+        <p className="text-sm text-muted-foreground">
+          {t.story.postingAboutPrefix}
+          <span className="font-medium text-foreground">
+            {stories.find((s) => s.slug === lockedStorySlug)?.title}
+          </span>
+        </p>
+      ) : (
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-medium text-foreground">{t.posts.tagRelatedStory}</span>
+          <select
+            value={relatedSlug}
+            onChange={(e) => setRelatedSlug(e.target.value)}
+            disabled={!user}
+            className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[16px] text-foreground outline-none focus-visible:border-foreground/40 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="">{t.posts.noneStandalone}</option>
+            {stories.map((story) => (
+              <option key={story.slug} value={story.slug}>
+                {story.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <Button
         type="submit"

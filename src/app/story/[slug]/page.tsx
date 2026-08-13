@@ -80,7 +80,7 @@ export default async function StoryPage({
         perspectiveBName={story.perspectiveB.name}
         storySlug={story.slug}
       />
-      <CommunityPosts storySlug={story.slug} />
+      <CommunityPosts story={{ slug: story.slug, title: story.title, category: story.category }} />
       <SourcesList sources={story.sources} />
       <Separator />
       <RelatedStories stories={related} />
