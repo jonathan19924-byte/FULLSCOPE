@@ -2,7 +2,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { callClaude, parseClaudeJson } from "./claude";
 import { findStoryImage } from "./pexels";
 import { fetchEntityContext, type EntitySummary } from "./wikipedia";
-import { embedText, embedQuery, toPgVectorLiteral } from "./voyage";
+import { embedText, embedTexts, embedQuery, toPgVectorLiteral } from "./voyage";
 import { sendPipelineSummaryEmail } from "../notifications/email";
 import { recordPipelineHeartbeat } from "./pipeline-health";
 import { logStoryUpdate } from "./story-updates";
@@ -926,11 +926,14 @@ export async function backfillImagesOnly(): Promise<number> {
 /** One-time backfill for stories generated before embeddings existed
  * (2026-08-13) — everything generated after that point already gets
  * embedded inline at insert time (see the main generation loop below).
- * Sequential, not concurrent like backfillMissingImages: this only ever
- * runs once over a small, fixed set (the ~60 live + however many archived
- * stories existed at the time embeddings shipped), so the extra runtime of
- * going one at a time doesn't matter, and it keeps the Voyage API call
- * volume gentle rather than firing dozens at once. */
+ * Archived stories are never pruned (see enforceStoryCap), so this set
+ * turned out to be much larger in practice than the live-story count alone
+ * suggests (297 in production, not ~60) — embedding one row per Voyage API
+ * call blew through the free tier's 3-requests-per-minute limit almost
+ * immediately (291 of 297 failed on the first real run). Uses the batched
+ * embedTexts (up to 128 per call) instead, turning this into 1-3 Voyage
+ * calls total regardless of story count. DB writes stay per-row (Postgres
+ * has no equivalent rate limit to worry about here). */
 async function backfillMissingEmbeddings(supabase: SupabaseAdmin): Promise<number> {
   const { data: rows, error } = await supabase
     .from("stories")
@@ -943,23 +946,27 @@ async function backfillMissingEmbeddings(supabase: SupabaseAdmin): Promise<numbe
   }
   if (!rows || rows.length === 0) return 0;
 
-  let backfilled = 0;
-  for (const row of rows) {
-    try {
-      const vector = await embedText(`${row.title}\n\n${row.summary}`);
-      const { error: updateError } = await supabase
-        .from("stories")
-        .update({ embedding: toPgVectorLiteral(vector) })
-        .eq("id", row.id);
+  let vectors: number[][];
+  try {
+    vectors = await embedTexts(rows.map((row) => `${row.title}\n\n${row.summary}`));
+  } catch (err) {
+    console.error("Error batch-embedding stories during backfill:", describeError(err));
+    return 0;
+  }
 
-      if (updateError) {
-        console.error(`Error saving backfilled embedding for "${row.title}":`, updateError.message);
-        continue;
-      }
-      backfilled += 1;
-    } catch (err) {
-      console.error(`Error embedding "${row.title}" during backfill:`, describeError(err));
+  let backfilled = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const { error: updateError } = await supabase
+      .from("stories")
+      .update({ embedding: toPgVectorLiteral(vectors[i]) })
+      .eq("id", row.id);
+
+    if (updateError) {
+      console.error(`Error saving backfilled embedding for "${row.title}":`, updateError.message);
+      continue;
     }
+    backfilled += 1;
   }
 
   if (backfilled > 0) console.log(`Backfilled embeddings for ${backfilled} existing stories`);
