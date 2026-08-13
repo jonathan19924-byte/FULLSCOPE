@@ -2,6 +2,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { callClaude, parseClaudeJson } from "./claude";
 import { findStoryImage } from "./pexels";
 import { fetchEntityContext, type EntitySummary } from "./wikipedia";
+import { embedText, embedQuery, toPgVectorLiteral } from "./voyage";
 import { sendPipelineSummaryEmail } from "../notifications/email";
 import { recordPipelineHeartbeat } from "./pipeline-health";
 import { logStoryUpdate } from "./story-updates";
@@ -508,7 +509,7 @@ function buildRelatedStoryPrompt(
   return `You are a news editor. New coverage was just found about "${clusterTopic}":
 ${articleList}
 
-Below are existing stories already on FullScope in the same category (some may be archived — no longer on the main feed, but still real stories):
+Below are the existing FullScope stories most similar to this new coverage (some may be archived — no longer on the main feed, but still real stories):
 ${candidateList}
 
 Decide: is this new coverage a DEVELOPMENT of one of these SAME ongoing real-world stories or situations (continuing over time), or is it a genuinely NEW, distinct story or incident?
@@ -542,24 +543,28 @@ async function archiveStory(supabase: SupabaseAdmin, id: string): Promise<{ erro
   return { error };
 }
 
-/** Checks whether a new cluster is really a development of an existing story
- * (live or archived) rather than a distinct new one. Candidates are scoped
- * to the same category and capped at 15 (10 live + 5 archived, live
- * prioritized as more likely relevant) to keep the prompt small. Returns
- * null — meaning "treat as new" — whenever there's nothing to compare
- * against or the check itself fails; this is a best-effort optimization,
- * never something that should block story generation. */
-async function findRelatedStory(
+/** How many candidate stories the similarity search returns for the
+ * related-story judgment call — same order of magnitude as the old
+ * recency-window's 15 (10 live + 5 archived), kept small so
+ * buildRelatedStoryPrompt's prompt stays cheap. */
+const RELATED_STORY_CANDIDATE_COUNT = 8;
+
+const RELATED_STORY_CANDIDATE_FIELDS = "id, slug, title, summary, archived_at, timeline, sources, published_at";
+
+/** Original candidate source, kept as a fallback for when the embedding
+ * call or the similarity RPC fails — scoped to the same category and capped
+ * at 15 (10 live + 5 archived, live prioritized as more likely relevant).
+ * This was the ONLY candidate source before embeddings were added
+ * (2026-08-13); see 0025_story_embeddings.sql for why it was replaced as
+ * the primary path — blind to continuations older than this window, and to
+ * any story whose category drifted between the original and new coverage. */
+async function findRelatedStoryCandidatesByRecency(
   supabase: SupabaseAdmin,
   category: string,
-  clusterTopic: string,
-  clusterArticles: RawArticleRow[],
-): Promise<{ candidate: RelatedStoryCandidate; newDevelopment: string } | null> {
-  const candidateFields = "id, slug, title, summary, archived_at, timeline, sources, published_at";
-
+): Promise<RelatedStoryCandidate[]> {
   const { data: live } = await supabase
     .from("stories")
-    .select(candidateFields)
+    .select(RELATED_STORY_CANDIDATE_FIELDS)
     .eq("category", category)
     .is("archived_at", null)
     .order("generated_at", { ascending: false })
@@ -567,13 +572,63 @@ async function findRelatedStory(
 
   const { data: archived } = await supabase
     .from("stories")
-    .select(candidateFields)
+    .select(RELATED_STORY_CANDIDATE_FIELDS)
     .eq("category", category)
     .not("archived_at", "is", null)
     .order("archived_at", { ascending: false })
     .limit(5);
 
-  const candidates = [...(live ?? []), ...(archived ?? [])] as unknown as RelatedStoryCandidate[];
+  return [...(live ?? []), ...(archived ?? [])] as unknown as RelatedStoryCandidate[];
+}
+
+/** Primary candidate source: embeds the new cluster's topic + article
+ * titles as a search query, then a pgvector cosine-similarity search
+ * (match_stories, see 0025_story_embeddings.sql) across ALL live + archived
+ * stories — deliberately no category filter, since similarity is a better
+ * narrowing signal than category ever was. Falls back to the old
+ * recency-windowed, category-scoped query on any failure (missing/invalid
+ * API key, network error, RPC error) — this check is a best-effort
+ * optimization, never something that should block story generation over an
+ * external embedding API hiccup. */
+async function findRelatedStoryCandidates(
+  supabase: SupabaseAdmin,
+  category: string,
+  clusterTopic: string,
+  clusterArticles: RawArticleRow[],
+): Promise<RelatedStoryCandidate[]> {
+  try {
+    const queryText = `${clusterTopic}\n${clusterArticles.map((a) => a.title).join("\n")}`;
+    const embedding = await embedQuery(queryText);
+    const { data, error } = await supabase.rpc("match_stories", {
+      query_embedding: toPgVectorLiteral(embedding),
+      match_count: RELATED_STORY_CANDIDATE_COUNT,
+    });
+    if (error) throw error;
+    if (Array.isArray(data) && data.length > 0) {
+      return data as unknown as RelatedStoryCandidate[];
+    }
+  } catch (err) {
+    console.error(
+      `Embedding-based related-story search failed for "${clusterTopic}", falling back to recency query:`,
+      describeError(err),
+    );
+  }
+
+  return findRelatedStoryCandidatesByRecency(supabase, category);
+}
+
+/** Checks whether a new cluster is really a development of an existing story
+ * (live or archived) rather than a distinct new one. Returns null — meaning
+ * "treat as new" — whenever there's nothing to compare against or the check
+ * itself fails; this is a best-effort optimization, never something that
+ * should block story generation. */
+async function findRelatedStory(
+  supabase: SupabaseAdmin,
+  category: string,
+  clusterTopic: string,
+  clusterArticles: RawArticleRow[],
+): Promise<{ candidate: RelatedStoryCandidate; newDevelopment: string } | null> {
+  const candidates = await findRelatedStoryCandidates(supabase, category, clusterTopic, clusterArticles);
   if (candidates.length === 0) return null;
 
   try {
@@ -868,6 +923,56 @@ export async function backfillImagesOnly(): Promise<number> {
   return backfillMissingImages(supabase);
 }
 
+/** One-time backfill for stories generated before embeddings existed
+ * (2026-08-13) — everything generated after that point already gets
+ * embedded inline at insert time (see the main generation loop below).
+ * Sequential, not concurrent like backfillMissingImages: this only ever
+ * runs once over a small, fixed set (the ~60 live + however many archived
+ * stories existed at the time embeddings shipped), so the extra runtime of
+ * going one at a time doesn't matter, and it keeps the Voyage API call
+ * volume gentle rather than firing dozens at once. */
+async function backfillMissingEmbeddings(supabase: SupabaseAdmin): Promise<number> {
+  const { data: rows, error } = await supabase
+    .from("stories")
+    .select("id, title, summary")
+    .is("embedding", null);
+
+  if (error) {
+    console.error("Error fetching stories missing embeddings:", error.message);
+    return 0;
+  }
+  if (!rows || rows.length === 0) return 0;
+
+  let backfilled = 0;
+  for (const row of rows) {
+    try {
+      const vector = await embedText(`${row.title}\n\n${row.summary}`);
+      const { error: updateError } = await supabase
+        .from("stories")
+        .update({ embedding: toPgVectorLiteral(vector) })
+        .eq("id", row.id);
+
+      if (updateError) {
+        console.error(`Error saving backfilled embedding for "${row.title}":`, updateError.message);
+        continue;
+      }
+      backfilled += 1;
+    } catch (err) {
+      console.error(`Error embedding "${row.title}" during backfill:`, describeError(err));
+    }
+  }
+
+  if (backfilled > 0) console.log(`Backfilled embeddings for ${backfilled} existing stories`);
+  return backfilled;
+}
+
+/** Standalone entry point for the one-time embedding backfill — run once
+ * after 0025_story_embeddings.sql is applied and VOYAGE_API_KEY is set. */
+export async function backfillEmbeddingsOnly(): Promise<number> {
+  const supabase = createProcessingClient();
+  return backfillMissingEmbeddings(supabase);
+}
+
 export async function processArticles(): Promise<ProcessArticlesResult> {
   try {
     const result = await runProcessArticles();
@@ -1124,6 +1229,23 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
             );
           }
 
+          // Best-effort embedding for the related-story similarity search
+          // (see findRelatedStoryCandidates / 0025_story_embeddings.sql).
+          // Embedded from title + summary rather than what_happened — the
+          // Wikipedia background revision above can change what_happened's
+          // exact wording, and summary is otherwise the more stable field.
+          // A failed embed leaves this story simply unmatchable by
+          // similarity (findRelatedStoryCandidates falls back to the
+          // recency query, and this story just won't surface there either)
+          // — never something that should block story creation itself.
+          let embedding: string | null = null;
+          try {
+            const vector = await embedText(`${story.title}\n\n${story.summary}`);
+            embedding = toPgVectorLiteral(vector);
+          } catch (err) {
+            console.error(`Error embedding "${story.title}":`, describeError(err));
+          }
+
           const storyRow = {
             slug: slugify(story.title),
             title: story.title,
@@ -1132,6 +1254,7 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
             what_happened: finalWhatHappened,
             entities: story.entities ?? { people: [], companies: [], countries: [] },
             location_name: story.location_name || null,
+            embedding,
             timeline: story.what_happened_timeline,
             perspective_a: {
               name: story.perspective_a_name,
