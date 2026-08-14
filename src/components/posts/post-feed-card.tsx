@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Heart, MessageCircle, Newspaper, Sparkles, Trash2 } from "lucide-react";
+import { Flag, Heart, MessageCircle, MoreHorizontal, Newspaper, Sparkles, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,14 +14,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { ReportDialog } from "@/components/safety/report-dialog";
 import { formatUpdatedAt, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Category, PostComment } from "@/types/domain";
 import { t } from "@/lib/i18n";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
+import { useBlocks } from "@/lib/safety/blocks-context";
 import { addCommentAction, deleteCommentAction, getPostCommentsAction } from "@/lib/posts/actions";
+import type { ReportTargetType } from "@/lib/safety/actions";
 
 function username(name: string) {
   return `@${name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "")}`;
@@ -59,6 +68,7 @@ export interface FeedPost {
 export function PostFeedCard({ post }: { post: FeedPost }) {
   const { toggleLike: toggleCommunityLike } = usePosts();
   const { user } = useUser();
+  const { toggleBlock } = useBlocks();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -66,6 +76,32 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
   const [localLiked, setLocalLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(post.likeCount);
   const [reply, setReply] = useState("");
+  const [reportTarget, setReportTarget] = useState<{ type: ReportTargetType; id: string } | null>(null);
+
+  function requireSignIn(message: string) {
+    toast(message);
+    router.push(`/sign-in?next=${encodeURIComponent(pathname)}`);
+  }
+
+  function handleReport(type: ReportTargetType, id: string) {
+    if (!user) {
+      requireSignIn(t.safety.signInToReport);
+      return;
+    }
+    setReportTarget({ type, id });
+  }
+
+  function handleBlock() {
+    if (!user) {
+      requireSignIn(t.safety.signInToBlock);
+      return;
+    }
+    if (!post.authorUserId) return;
+    toggleBlock(post.authorUserId);
+    toast(t.safety.blockedToast(post.authorUsername ?? post.displayName), {
+      description: t.safety.blockedToastDescription,
+    });
+  }
 
   // Comments are fetched on demand (first time the dialog opens) rather
   // than bundled into the main feed payload — see getPostComments.
@@ -160,9 +196,10 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
         avatarEl
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <Dialog onOpenChange={handleDialogOpenChange}>
+        <div className="flex items-start gap-1">
+          <Dialog onOpenChange={handleDialogOpenChange}>
           <DialogTrigger
-            render={<div className="cursor-pointer text-start" />}
+            render={<div className="min-w-0 flex-1 cursor-pointer text-start" />}
           >
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
               {post.authorUsername ? (
@@ -269,7 +306,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
                             <span className="text-[11px] text-muted-foreground">
                               · {formatUpdatedAt(comment.createdAt)}
                             </span>
-                            {user?.id === comment.userId && (
+                            {user?.id === comment.userId ? (
                               <button
                                 type="button"
                                 onClick={() => handleDeleteComment(comment.id)}
@@ -277,6 +314,15 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
                                 className="ms-auto text-muted-foreground hover:text-destructive"
                               >
                                 <Trash2 className="size-3" strokeWidth={1.75} />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleReport("comment", comment.id)}
+                                aria-label={t.safety.reportComment}
+                                className="ms-auto text-muted-foreground hover:text-foreground"
+                              >
+                                <Flag className="size-3" strokeWidth={1.75} />
                               </button>
                             )}
                           </div>
@@ -309,6 +355,33 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
           </DialogContent>
         </Dialog>
 
+        {isCommunityPost && post.authorUserId && post.authorUserId !== user?.id && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={t.safety.moreOptionsAria}
+              render={
+                <button
+                  type="button"
+                  className="shrink-0 rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                />
+              }
+            >
+              <MoreHorizontal className="size-4" strokeWidth={1.75} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleReport("post", post.communityPostId!)}>
+                <Flag className="size-3.5" strokeWidth={1.75} />
+                {t.safety.reportPost}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleBlock}>
+                <UserX className="size-3.5" strokeWidth={1.75} />
+                {t.safety.blockUser(post.authorUsername ?? post.displayName)}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        </div>
+
         <div className="flex items-center gap-4 pt-0.5 text-xs text-muted-foreground">
           <button
             type="button"
@@ -329,6 +402,15 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
           </span>
         </div>
       </div>
+
+      {reportTarget && (
+        <ReportDialog
+          open={reportTarget !== null}
+          onOpenChange={(open) => !open && setReportTarget(null)}
+          targetType={reportTarget.type}
+          targetId={reportTarget.id}
+        />
+      )}
     </li>
   );
 }

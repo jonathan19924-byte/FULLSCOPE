@@ -119,6 +119,36 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["bookmarks"]["Row"]>;
         Relationships: [];
       };
+      content_reports: {
+        Row: {
+          id: string;
+          reporter_id: string;
+          target_type: string;
+          target_id: string;
+          reason: string;
+          details: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["content_reports"]["Row"]> &
+          Pick<
+            Database["public"]["Tables"]["content_reports"]["Row"],
+            "reporter_id" | "target_type" | "target_id" | "reason"
+          >;
+        Update: Partial<Database["public"]["Tables"]["content_reports"]["Row"]>;
+        Relationships: [];
+      };
+      user_blocks: {
+        Row: {
+          id: string;
+          blocker_id: string;
+          blocked_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["user_blocks"]["Row"]> &
+          Pick<Database["public"]["Tables"]["user_blocks"]["Row"], "blocker_id" | "blocked_id">;
+        Update: Partial<Database["public"]["Tables"]["user_blocks"]["Row"]>;
+        Relationships: [];
+      };
       story_dislikes: {
         Row: {
           id: string;

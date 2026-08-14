@@ -10,6 +10,7 @@ import { getBookmarkedSlugs } from "@/lib/bookmarks/get-bookmarks";
 import { getDislikedSlugs } from "@/lib/dislikes/get-dislikes";
 import { getCommunityPosts } from "@/lib/posts/get-community-posts";
 import { getFollowingIds } from "@/lib/follows/get-following";
+import { getBlockedUserIds } from "@/lib/safety/get-blocked";
 import { getMyProfile } from "@/lib/profile/profile-repository";
 import { getNotifications, getUnreadNotificationCount } from "@/lib/notifications/get-notifications";
 import { DIR, LOCALE } from "@/lib/locale";
@@ -84,6 +85,7 @@ export default async function RootLayout({
     initialDislikedSlugs,
     initialCommunityPosts,
     initialFollowingIds,
+    initialBlockedIds,
     myProfile,
     initialNotifications,
     initialUnreadCount,
@@ -92,6 +94,7 @@ export default async function RootLayout({
     user ? getDislikedSlugs() : Promise.resolve([]),
     getCommunityPosts(),
     user ? getFollowingIds() : Promise.resolve([]),
+    user ? getBlockedUserIds() : Promise.resolve([]),
     user ? getMyProfile() : Promise.resolve(null),
     user ? getNotifications() : Promise.resolve([]),
     user ? getUnreadNotificationCount() : Promise.resolve(0),
@@ -119,6 +122,7 @@ export default async function RootLayout({
           initialDislikedSlugs={initialDislikedSlugs}
           initialCommunityPosts={initialCommunityPosts}
           initialFollowingIds={initialFollowingIds}
+          initialBlockedIds={initialBlockedIds}
           myProfile={myProfile}
           initialNotifications={initialNotifications}
           initialUnreadCount={initialUnreadCount}

@@ -35,6 +35,12 @@ export function Footer() {
           >
             {t.nav.feedback}
           </Link>
+          <Link
+            href="/privacy"
+            className="hover:text-foreground transition-colors"
+          >
+            {t.privacy.title}
+          </Link>
         </nav>
       </div>
     </footer>

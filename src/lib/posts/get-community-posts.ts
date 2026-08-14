@@ -4,6 +4,7 @@ import type { CommunityPost } from "@/types/domain";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getProfilesByUserIds } from "@/lib/profile/profile-repository";
+import { getBlockedUserIds } from "@/lib/safety/get-blocked";
 import { t } from "@/lib/i18n";
 
 type CommunityPostBase = Omit<CommunityPost, "likedByMe">;
@@ -94,11 +95,14 @@ export async function getCommunityPosts(): Promise<CommunityPost[]> {
   const base = await getCommunityPostsBase();
   if (!user) return base.map((post) => ({ ...post, likedByMe: undefined }));
 
-  const { data: myLikes } = await supabase
-    .from("community_post_likes")
-    .select("post_id")
-    .eq("user_id", user.id);
+  const [{ data: myLikes }, blockedUserIds] = await Promise.all([
+    supabase.from("community_post_likes").select("post_id").eq("user_id", user.id),
+    getBlockedUserIds(),
+  ]);
   const likedPostIds = new Set((myLikes ?? []).map((like) => like.post_id));
+  const blockedSet = new Set(blockedUserIds);
 
-  return base.map((post) => ({ ...post, likedByMe: likedPostIds.has(post.id) }));
+  return base
+    .filter((post) => !blockedSet.has(post.userId))
+    .map((post) => ({ ...post, likedByMe: likedPostIds.has(post.id) }));
 }

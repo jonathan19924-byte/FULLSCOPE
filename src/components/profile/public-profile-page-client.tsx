@@ -1,24 +1,67 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { toast } from "sonner";
 import type { PublicProfile } from "@/types/domain";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
+import { useBlocks } from "@/lib/safety/blocks-context";
 import { PostFeedCard, type FeedPost } from "@/components/posts/post-feed-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FollowButton } from "@/components/profile/follow-button";
 import { BackButton } from "@/components/shared/back-button";
 import { buttonVariants } from "@/components/ui/button";
-import { MessageSquare, Settings } from "lucide-react";
+import { ReportDialog } from "@/components/safety/report-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Flag, MessageSquare, MoreHorizontal, Settings, UserX } from "lucide-react";
 import { initials } from "@/lib/format";
 import { t } from "@/lib/i18n";
 
 export function PublicProfilePageClient({ profile }: { profile: PublicProfile }) {
   const { user } = useUser();
   const { communityPosts } = usePosts();
+  const { isBlocked, toggleBlock } = useBlocks();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [reportOpen, setReportOpen] = useState(false);
 
   const isOwnProfile = user?.id === profile.userId;
   const displayName = profile.displayName || profile.username;
+  const blocked = isBlocked(profile.userId);
+
+  function requireSignIn(message: string) {
+    toast(message);
+    router.push(`/sign-in?next=${encodeURIComponent(pathname)}`);
+  }
+
+  function handleReport() {
+    if (!user) {
+      requireSignIn(t.safety.signInToReport);
+      return;
+    }
+    setReportOpen(true);
+  }
+
+  function handleBlock() {
+    if (!user) {
+      requireSignIn(t.safety.signInToBlock);
+      return;
+    }
+    toggleBlock(profile.userId);
+    toast(
+      blocked
+        ? t.safety.unblockedToast(profile.username ?? displayName)
+        : t.safety.blockedToast(profile.username ?? displayName),
+      blocked ? undefined : { description: t.safety.blockedToastDescription },
+    );
+  }
 
   const theirPosts: FeedPost[] = communityPosts
     .filter((p) => p.userId === profile.userId)
@@ -71,9 +114,43 @@ export function PublicProfilePageClient({ profile }: { profile: PublicProfile })
             {t.profile.editProfileAria}
           </Link>
         ) : (
-          <FollowButton userId={profile.userId} />
+          <div className="flex shrink-0 items-center gap-1">
+            <FollowButton userId={profile.userId} />
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label={t.safety.moreOptionsAria}
+                render={
+                  <button
+                    type="button"
+                    className="rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  />
+                }
+              >
+                <MoreHorizontal className="size-4" strokeWidth={1.75} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleReport}>
+                  <Flag className="size-3.5" strokeWidth={1.75} />
+                  {t.safety.reportUser}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleBlock}>
+                  <UserX className="size-3.5" strokeWidth={1.75} />
+                  {blocked ? t.safety.unblock : t.safety.blockUser(profile.username ?? displayName)}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
       </div>
+
+      {reportOpen && (
+        <ReportDialog
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          targetType="user"
+          targetId={profile.userId}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <Link
