@@ -7,12 +7,15 @@ import { toast } from "sonner";
 import {
   Bell,
   ChevronRight,
+  Lock,
   LogOut,
   Mail,
   Monitor,
   Moon,
   Newspaper,
+  ShieldOff,
   Sun,
+  Trash2,
   User,
   Heart,
 } from "lucide-react";
@@ -22,6 +25,7 @@ import { signOutAction } from "@/lib/auth/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { BackButton } from "@/components/shared/back-button";
 import { ProfileEditDialog } from "@/components/settings/profile-edit-dialog";
+import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
 import { t } from "@/lib/i18n";
 
 const THEME_OPTIONS = [
@@ -157,7 +161,24 @@ export function SettingsPageClient({
                 {t.settings.signOut}
               </button>
             </div>
-          ) : (
+          ) : null}
+          {user && (
+            <DeleteAccountDialog>
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-muted/50"
+              >
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                  <Trash2 className="size-4.5 text-destructive" strokeWidth={1.75} />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-destructive">{t.settings.deleteAccount}</p>
+                  <p className="text-sm text-muted-foreground">{t.settings.deleteAccountDescription}</p>
+                </div>
+              </button>
+            </DeleteAccountDialog>
+          )}
+          {!user && (
             <div className="flex w-full items-center gap-3 p-4">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
                 <Mail className="size-4.5 text-muted-foreground" strokeWidth={1.75} />
@@ -185,6 +206,41 @@ export function SettingsPageClient({
           <DisabledToggleRow icon={Bell} title={t.settings.pushNotifications} description={t.settings.pushNotificationsDescription} />
           <DisabledToggleRow icon={Newspaper} title={t.settings.eventUpdates} description={t.settings.eventUpdatesDescription} />
           <DisabledToggleRow icon={Heart} title={t.settings.postInteractions} description={t.settings.postInteractionsDescription} />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t.settings.privacySafety}
+        </h2>
+        <div className="divide-y divide-border/60 rounded-2xl border border-border/60 bg-card">
+          {user && (
+            <Link
+              href="/settings/blocked"
+              className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-muted/50"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
+                <ShieldOff className="size-4.5 text-muted-foreground" strokeWidth={1.75} />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-foreground">{t.settings.blockedAccounts}</p>
+                <p className="text-sm text-muted-foreground">{t.settings.blockedAccountsDescription}</p>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" strokeWidth={1.75} />
+            </Link>
+          )}
+          <Link
+            href="/privacy"
+            className="flex w-full items-center gap-3 p-4 text-start transition-colors hover:bg-muted/50"
+          >
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
+              <Lock className="size-4.5 text-muted-foreground" strokeWidth={1.75} />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-foreground">{t.privacy.title}</p>
+            </div>
+            <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" strokeWidth={1.75} />
+          </Link>
         </div>
       </section>
 
