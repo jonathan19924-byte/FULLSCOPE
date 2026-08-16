@@ -51,6 +51,11 @@ export function toSummary(story: StorySummaryRow): StorySummary {
       postCount: story.posts.filter((p) => p.perspective === "B").length,
     },
     addedToday: story.generatedAt ? isSameCalendarDay(story.generatedAt, Date.now()) : false,
+    // Overridden by listStorySummaries with the real value from
+    // getRecentStoryUpdateTypes — this is just the base default for any
+    // caller of toSummary() that doesn't merge that in (e.g. a single
+    // story fetched via getStoryBySlug).
+    isDeveloping: false,
   };
 }
 

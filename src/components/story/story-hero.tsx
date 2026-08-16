@@ -11,7 +11,7 @@ import { ShareButton } from "@/components/shared/share-button";
 import { MapButton } from "@/components/shared/map-button";
 import { t } from "@/lib/i18n";
 
-export function StoryHero({ story }: { story: Story }) {
+export function StoryHero({ story, isDeveloping }: { story: Story; isDeveloping?: boolean }) {
   const meta = CATEGORY_META[story.category];
   const Icon = meta.icon;
 
@@ -39,14 +39,25 @@ export function StoryHero({ story }: { story: Story }) {
           ) : (
             <Icon className={cn("size-14", meta.text)} strokeWidth={1.25} />
           )}
-          <span
-            className={cn(
-              "absolute start-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
-              meta.text,
+          <div className="absolute start-3 top-3 flex items-center gap-1.5">
+            <span
+              className={cn(
+                "rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium backdrop-blur-sm",
+                meta.text,
+              )}
+            >
+              {meta.label}
+            </span>
+            {isDeveloping && (
+              <span className="flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+                <span className="relative flex size-1.5">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-red-500" />
+                </span>
+                {t.story.developingBadge}
+              </span>
             )}
-          >
-            {meta.label}
-          </span>
+          </div>
           <BackButton
             ariaLabel={t.story.backAria}
             className="absolute end-2.5 top-2.5 bg-background/80 backdrop-blur-sm hover:bg-background/90"

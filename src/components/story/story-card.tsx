@@ -47,7 +47,15 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
           <p className="line-clamp-2 text-[15px] font-medium leading-snug text-foreground">
             {story.title}
           </p>
-          <p className="mt-1.5 text-xs text-muted-foreground">{formatUpdatedAt(story.publishedAt)}</p>
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            {story.isDeveloping && (
+              <span className="relative flex size-1.5 shrink-0" aria-label={t.story.developingBadge}>
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-red-500" />
+              </span>
+            )}
+            {formatUpdatedAt(story.publishedAt)}
+          </p>
         </div>
       </Link>
     );
@@ -108,6 +116,14 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
             <span className="flex items-center gap-1 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
               <Sparkles className="size-3" strokeWidth={2} />
               {t.story.addedTodayBadge}
+            </span>
+          ) : story.isDeveloping ? (
+            <span className="flex items-center gap-1.5 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-red-500" />
+              </span>
+              {t.story.developingBadge}
             </span>
           ) : (
             story.recentUpdateType && (

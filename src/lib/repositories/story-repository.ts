@@ -324,14 +324,30 @@ export async function getAllStories(): Promise<StoryWithPosts[]> {
  * background noise. */
 const RECENT_UPDATE_WINDOW_HOURS = 48;
 
-/** Maps storyId -> the most recent qualifying update type, for stories
- * updated within the window above. Deliberately excludes "merge" (dedup
+/** Tighter window for the stronger "Developing" signal — distinct from
+ * "Updated" (which just means "touched at some point in the last two days")
+ * because a reader trying to follow something actively unfolding needs to
+ * know it's still moving right now, not that it moved at some point
+ * yesterday. Both badges read off the same story_updates rows/query — this
+ * is purely a second, stricter cutoff on data already being fetched. */
+const DEVELOPING_WINDOW_HOURS = 6;
+
+export interface RecentStoryUpdate {
+  type: "trend" | "coverage";
+  /** True when the most recent qualifying update landed within
+   * DEVELOPING_WINDOW_HOURS, not just RECENT_UPDATE_WINDOW_HOURS. */
+  isDeveloping: boolean;
+}
+
+/** Maps storyId -> its most recent qualifying update, for stories updated
+ * within the window above. Deliberately excludes "merge" (dedup
  * consolidating a duplicate) — that's bookkeeping, not new context added to
  * the story the way a reader trend or fresh coverage is. */
-export async function getRecentStoryUpdateTypes(): Promise<Map<string, "trend" | "coverage">> {
+export async function getRecentStoryUpdateTypes(): Promise<Map<string, RecentStoryUpdate>> {
   try {
     const supabase = await createClient();
     const since = new Date(Date.now() - RECENT_UPDATE_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
+    const developingSince = Date.now() - DEVELOPING_WINDOW_HOURS * 60 * 60 * 1000;
     const { data, error } = await supabase
       .from("story_updates")
       .select("story_id, update_type, created_at")
@@ -344,9 +360,18 @@ export async function getRecentStoryUpdateTypes(): Promise<Map<string, "trend" |
       return new Map();
     }
 
-    const map = new Map<string, "trend" | "coverage">();
-    for (const row of (data ?? []) as { story_id: string; update_type: "trend" | "coverage" }[]) {
-      if (!map.has(row.story_id)) map.set(row.story_id, row.update_type);
+    const map = new Map<string, RecentStoryUpdate>();
+    for (const row of (data ?? []) as {
+      story_id: string;
+      update_type: "trend" | "coverage";
+      created_at: string;
+    }[]) {
+      if (!map.has(row.story_id)) {
+        map.set(row.story_id, {
+          type: row.update_type,
+          isDeveloping: new Date(row.created_at).getTime() >= developingSince,
+        });
+      }
     }
     return map;
   } catch (err) {

@@ -142,6 +142,11 @@ export interface StorySummary
    * last 48h — drives the "Updated" marker on story cards. Undefined for a
    * story with no recent qualifying update. */
   recentUpdateType?: "trend" | "coverage";
+  /** True when the most recent qualifying update landed within the last 6h
+   * (a tighter window than recentUpdateType's 48h) — drives the stronger
+   * "Developing" marker for a story that's actively unfolding right now,
+   * not just one that was touched at some point in the last two days. */
+  isDeveloping: boolean;
   /** True when the story was generated on the same calendar day (Israel
    * time) as now — drives the "Added today" marker. Always false for the
    * static seed set. */

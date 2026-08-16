@@ -15,6 +15,7 @@ import { PerspectiveBar } from "@/components/story/perspective-bar";
 import { KeyDifferences } from "@/components/story/key-differences";
 import { StoryUpdates } from "@/components/story/story-updates";
 import { getStoryUpdates } from "@/lib/services/get-story-updates";
+import { getLastViewedAt } from "@/lib/analytics/get-last-viewed";
 import { ReactionsFeed } from "@/components/story/reactions-feed";
 import { CommunityPosts } from "@/components/story/community-posts";
 import { SourcesList } from "@/components/story/sources-list";
@@ -59,20 +60,24 @@ export default async function StoryPage({
 
   const allStories = await listStorySummaries();
   const related = getRelatedStories(allStories, story);
-  const updates = await getStoryUpdates(story.id);
+  const [updates, lastViewedAt] = await Promise.all([
+    getStoryUpdates(story.id),
+    getLastViewedAt(story.slug),
+  ]);
   const summary = toSummary(story);
+  const isDeveloping = allStories.find((s) => s.id === story.id)?.isDeveloping ?? false;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-4 pt-6 pb-10">
       <ReadingProgress />
-      <StoryHero story={story} />
+      <StoryHero story={story} isDeveloping={isDeveloping} />
       <Separator />
       <WhatHappened text={story.whatHappened} />
       <Timeline facts={story.timeline} />
       <PerspectiveBar perspectiveA={summary.perspectiveA} perspectiveB={summary.perspectiveB} />
       <Perspectives perspectiveA={story.perspectiveA} perspectiveB={story.perspectiveB} />
       <KeyDifferences cause={story.keyDifferencesCause} impact={story.keyDifferencesImpact} />
-      <StoryUpdates updates={updates} />
+      <StoryUpdates updates={updates} lastViewedAt={lastViewedAt} />
       {story.posts.length > 0 && <Separator />}
       <ReactionsFeed
         posts={story.posts}

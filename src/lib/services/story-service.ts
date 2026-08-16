@@ -24,7 +24,10 @@ export async function listStorySummaries(): Promise<StorySummary[]> {
   ]);
   return stories
     .map(toSummary)
-    .map((summary) => ({ ...summary, recentUpdateType: recentUpdates.get(summary.id) }))
+    .map((summary) => {
+      const recent = recentUpdates.get(summary.id);
+      return { ...summary, recentUpdateType: recent?.type, isDeveloping: recent?.isDeveloping ?? false };
+    })
     .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
 }
 
