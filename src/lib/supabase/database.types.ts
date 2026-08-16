@@ -259,6 +259,20 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
         Relationships: [];
       };
+      device_tokens: {
+        Row: {
+          id: string;
+          user_id: string;
+          token: string;
+          platform: "ios";
+          created_at: string;
+          last_seen_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["device_tokens"]["Row"]> &
+          Pick<Database["public"]["Tables"]["device_tokens"]["Row"], "user_id" | "token" | "platform">;
+        Update: Partial<Database["public"]["Tables"]["device_tokens"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

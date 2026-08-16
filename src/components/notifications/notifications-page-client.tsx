@@ -4,11 +4,12 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { Bell, Heart, MessageCircle, TrendingUp, UserPlus } from "lucide-react";
 import { useNotifications } from "@/lib/notifications/notifications-context";
+import { messageFor, linkFor } from "@/lib/notifications/message-for";
 import { EmptyState } from "@/components/shared/empty-state";
 import { BackButton } from "@/components/shared/back-button";
 import { formatUpdatedAt } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Notification, NotificationType } from "@/types/domain";
+import type { NotificationType } from "@/types/domain";
 import { t } from "@/lib/i18n";
 
 const ICON_BY_TYPE: Record<NotificationType, typeof Heart> = {
@@ -17,32 +18,6 @@ const ICON_BY_TYPE: Record<NotificationType, typeof Heart> = {
   new_follower: UserPlus,
   post_credited: TrendingUp,
 };
-
-function messageFor(n: Notification): string {
-  const name = n.actorDisplayName || n.actorUsername || t.notifications.someone;
-  switch (n.type) {
-    case "post_liked":
-      return t.notifications.postLiked(name);
-    case "post_commented":
-      return t.notifications.postCommented(name);
-    case "new_follower":
-      return t.notifications.newFollower(name);
-    case "post_credited":
-      return t.notifications.postCredited;
-  }
-}
-
-function linkFor(n: Notification): string | undefined {
-  switch (n.type) {
-    case "post_liked":
-    case "post_commented":
-      return n.relatedStorySlug ? `/story/${n.relatedStorySlug}` : "/posts";
-    case "post_credited":
-      return n.relatedStorySlug ? `/story/${n.relatedStorySlug}` : undefined;
-    case "new_follower":
-      return n.actorUsername ? `/profile/${n.actorUsername}` : undefined;
-  }
-}
 
 export function NotificationsPageClient() {
   const { notifications, refresh, markAllRead } = useNotifications();

@@ -11,6 +11,7 @@ import { PostsProvider } from "@/lib/posts/posts-context";
 import { FollowsProvider } from "@/lib/follows/follows-context";
 import { BlocksProvider } from "@/lib/safety/blocks-context";
 import { NotificationsProvider } from "@/lib/notifications/notifications-context";
+import { PushRegistration } from "@/components/push/push-registration";
 import type { CommunityPost, Notification } from "@/types/domain";
 
 export function Providers({
@@ -52,6 +53,7 @@ export function Providers({
                       initialUnreadCount={initialUnreadCount}
                       signedIn={signedIn}
                     >
+                      <PushRegistration signedIn={signedIn} />
                       {children}
                       <Toaster position="bottom-center" />
                     </NotificationsProvider>
