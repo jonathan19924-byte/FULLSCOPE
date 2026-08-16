@@ -12,6 +12,8 @@ Beyond reading, there's a lightweight community layer: readers can bookmark stor
 
 The content pipeline (RSS + Telegram ingestion → Claude-based clustering, dispute detection, and story generation) runs on a schedule and is out of scope for design work — see §6.
 
+**Distribution**: the web app (Next.js, deployed on Vercel) is also shipped as a native iOS app via Capacitor — the native shell is a thin WebView pointed at the live production URL (no bundled/offline build), so almost every web change is live in the native app immediately with no App Store resubmission needed. Only genuinely native-code changes (a new Capacitor plugin, an Xcode capability/entitlement) require a new build and review. As of this writing the app is submitted to the App Store and awaiting approval.
+
 **Locale**: the app currently runs in Hebrew (RTL) for an Israeli audience, via a `LOCALE` environment toggle that can flip the whole app (content sources, UI strings, layout direction, fonts) back to English/LTR. Every screen you review will be in Hebrew, right-to-left, unless that toggle is changed.
 
 ---
@@ -94,6 +96,11 @@ CONTENT_PIPELINE.md          # Design notes for the content-generation pipeline 
 - **Followers/following are tappable, listing pages**, not static counts — profile stat tiles for "Followers" and "Following" link to a shared `FollowListPageClient`, reused for both the viewer's own lists and any public profile's lists.
 - **Stories tied to a specific place get a map-pin icon button** in the story hero (next to like/dislike/share) that deep-links to a Google Maps search for that place name — only rendered when the pipeline has extracted a `locationName` for that story, so most stories don't show it.
 - **All text inputs/textareas are held to a 16px minimum font-size**, even where the visual design calls for something smaller (several forms use `text-[15px]` elsewhere in the type scale) — anything under 16px triggers iOS Safari's automatic (and not easily reversible) zoom-on-focus, which was shipped as a real bug before this rule was established. Any new input, anywhere, should default to 16px on mobile regardless of what the surrounding text scale suggests.
+- **A reader can write a post directly from the story they're reading**, not only from the standalone Create tab. The "From readers" section on every story page (even with zero posts yet) has a "Write a post" button that opens the same composer in a dialog, with that story pre-tagged and locked — posting closes the dialog and stays on the page rather than navigating away.
+- **Account deletion, blocking, and reporting exist** (Settings → Delete Account; a "⋯" menu on posts/comments/profiles → Report/Block; Settings → Blocked Accounts) — built primarily for App Store compliance (Guideline 5.1.1(v) account deletion, Guideline 1.2 UGC safety), but they're real, working, self-service flows, not stubs. Blocking actually filters that user's posts/comments out of feeds server-side, not just client-side hiding.
+- **A privacy policy page exists** (`/privacy`), linked from Settings and the footer.
+- **Two badges signal a story's "liveness"**, both derived from the same `story_updates` log with different time windows: a stronger "Developing" badge (pulsing dot, ~6h window) for a story actively unfolding right now, versus the older/softer "Updated" badge (~48h window) for one that was merely touched recently. Full badge+label on story cards/hero; dot-only on the compact list rows to avoid adding text bulk to an already-dense layout.
+- **Returning readers see which "How this story developed" entries are new since their last visit** — a small gold "New" chip, computed by comparing the story's update timestamps against the reader's own page-view history (signed-in only; a first-time visitor sees nothing highlighted, correctly, since everything is new to them).
 
 ---
 
