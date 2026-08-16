@@ -21,10 +21,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/components/auth/user-provider";
 import { initials } from "@/lib/format";
 import { t } from "@/lib/i18n";
+import {
+  ALLOWED_PHOTO_TYPES,
+  MAX_PHOTO_BYTES,
+  isNativePlatform,
+  pickPhotoNative,
+} from "@/lib/media/pick-photo";
 
 const MAX_BIO_LENGTH = 160;
-const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
-const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function ProfileEditDialog({
   myProfile,
@@ -58,6 +62,13 @@ export function ProfileEditDialog({
 
   const displayedAvatarUrl = avatarRemoved ? null : (avatarPreviewUrl ?? myProfile?.avatarUrl ?? null);
 
+  function applyAvatarFile(file: File) {
+    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    setAvatarFile(file);
+    setAvatarPreviewUrl(URL.createObjectURL(file));
+    setAvatarRemoved(false);
+  }
+
   function handlePhotoPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -72,10 +83,22 @@ export function ProfileEditDialog({
       return;
     }
 
-    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
-    setAvatarFile(file);
-    setAvatarPreviewUrl(URL.createObjectURL(file));
-    setAvatarRemoved(false);
+    applyAvatarFile(file);
+  }
+
+  async function handlePhotoButtonClick() {
+    if (!isNativePlatform()) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    const result = await pickPhotoNative();
+    if ("file" in result) {
+      applyAvatarFile(result.file);
+      return;
+    }
+    if (result.error === "wrong-type") toast(t.posts.photoWrongType);
+    if (result.error === "too-large") toast(t.posts.photoTooLarge);
   }
 
   function removePhoto() {
@@ -159,7 +182,7 @@ export function ProfileEditDialog({
               )}
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handlePhotoButtonClick}
                 aria-label={t.profile.changeAvatarAria}
                 className="absolute end-0 bottom-0 flex size-7 items-center justify-center rounded-full border-2 border-popover bg-foreground text-background transition-colors hover:bg-foreground/90"
               >

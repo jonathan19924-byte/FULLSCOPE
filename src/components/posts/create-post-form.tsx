@@ -12,10 +12,14 @@ import { useUser } from "@/components/auth/user-provider";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
+import {
+  ALLOWED_PHOTO_TYPES,
+  MAX_PHOTO_BYTES,
+  isNativePlatform,
+  pickPhotoNative,
+} from "@/lib/media/pick-photo";
 
 const MAX_LENGTH = 280;
-const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
-const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function CreatePostForm({
   stories,
@@ -48,6 +52,12 @@ export function CreatePostForm({
   const remaining = MAX_LENGTH - content.length;
   const trimmed = content.trim();
 
+  function applyPhoto(file: File) {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoFile(file);
+    setPhotoPreviewUrl(URL.createObjectURL(file));
+  }
+
   function handlePhotoPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -62,9 +72,22 @@ export function CreatePostForm({
       return;
     }
 
-    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
-    setPhotoFile(file);
-    setPhotoPreviewUrl(URL.createObjectURL(file));
+    applyPhoto(file);
+  }
+
+  async function handlePhotoButtonClick() {
+    if (!isNativePlatform()) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    const result = await pickPhotoNative();
+    if ("file" in result) {
+      applyPhoto(result.file);
+      return;
+    }
+    if (result.error === "wrong-type") toast(t.posts.photoWrongType);
+    if (result.error === "too-large") toast(t.posts.photoTooLarge);
   }
 
   function removePhoto() {
@@ -193,7 +216,7 @@ export function CreatePostForm({
         ) : (
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handlePhotoButtonClick}
             disabled={!user}
             className="flex w-fit items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-border disabled:hover:text-muted-foreground"
           >
