@@ -36,6 +36,7 @@ export async function getPostComments(postId: string): Promise<PostComment[]> {
       userId: row.user_id,
       displayName: profile?.displayName || profile?.username || t.profile.guestReader,
       username: profile?.username ?? undefined,
+      avatarUrl: profile?.avatarUrl ?? undefined,
       content: row.content,
       createdAt: row.created_at,
     };

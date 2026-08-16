@@ -22,6 +22,9 @@ export function CommunityPosts({
   const feed: FeedPost[] = matches.map((p) => ({
     id: p.id,
     displayName: p.displayName,
+    authorUsername: p.username,
+    authorUserId: p.userId,
+    authorAvatarUrl: p.authorAvatarUrl,
     content: p.content,
     createdAt: p.createdAt,
     likeCount: p.likeCount,

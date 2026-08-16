@@ -96,7 +96,12 @@ function DisabledToggleRow({
 export function SettingsPageClient({
   myProfile,
 }: {
-  myProfile: { username: string | null; displayName: string | null; bio: string | null } | null;
+  myProfile: {
+    username: string | null;
+    displayName: string | null;
+    bio: string | null;
+    avatarUrl: string | null;
+  } | null;
 }) {
   const { theme, setTheme } = useTheme();
   const { user } = useUser();

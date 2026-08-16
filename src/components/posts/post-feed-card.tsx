@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Flag, Heart, MessageCircle, MoreHorizontal, Newspaper, Sparkles, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +63,9 @@ export interface FeedPost {
   /** A publicly-readable photo URL — present only for real community posts
    * whose attached photo passed the moderation check run at creation time. */
   mediaUrl?: string;
+  /** The author's profile photo — present only once it's passed
+   * moderation; undefined falls back to the colored-initials circle. */
+  authorAvatarUrl?: string;
 }
 
 export function PostFeedCard({ post }: { post: FeedPost }) {
@@ -139,16 +142,13 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
     setCommentsLoading(false);
   }
 
+  // Only rendered/reachable for real community posts (see the form's
+  // isCommunityPost guard below) — a seeded/AI post has no real thread to
+  // reply into, so there's nothing to reply to there.
   async function handleReply(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = reply.trim();
     if (!trimmed) return;
-
-    if (!isCommunityPost) {
-      toast(t.posts.repliesComingSoon);
-      setReply("");
-      return;
-    }
 
     if (!user) {
       toast(t.shared.signInToComment);
@@ -259,6 +259,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
             </DialogHeader>
             <div className="flex gap-3">
               <Avatar size="sm">
+                {post.authorAvatarUrl && <AvatarImage src={post.authorAvatarUrl} alt="" />}
                 <AvatarFallback>{initials(post.displayName)}</AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -296,6 +297,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
                     {comments.map((comment) => (
                       <li key={comment.id} className="flex gap-2">
                         <Avatar size="sm">
+                          {comment.avatarUrl && <AvatarImage src={comment.avatarUrl} alt="" />}
                           <AvatarFallback>{initials(comment.displayName)}</AvatarFallback>
                         </Avatar>
                         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -335,23 +337,25 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
               </div>
             )}
 
-            <form onSubmit={handleReply} className="flex flex-col gap-2 border-t border-border/60 pt-3">
-              <textarea
-                value={reply}
-                onChange={(e) => setReply(e.target.value)}
-                placeholder={t.posts.replyPlaceholder}
-                rows={3}
-                className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
-              />
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isSubmittingComment || !reply.trim()}
-                className="self-end rounded-full"
-              >
-                {isSubmittingComment ? t.posts.commenting : t.posts.reply}
-              </Button>
-            </form>
+            {isCommunityPost && (
+              <form onSubmit={handleReply} className="flex flex-col gap-2 border-t border-border/60 pt-3">
+                <textarea
+                  value={reply}
+                  onChange={(e) => setReply(e.target.value)}
+                  placeholder={t.posts.replyPlaceholder}
+                  rows={3}
+                  className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSubmittingComment || !reply.trim()}
+                  className="self-end rounded-full"
+                >
+                  {isSubmittingComment ? t.posts.commenting : t.posts.reply}
+                </Button>
+              </form>
+            )}
           </DialogContent>
         </Dialog>
 

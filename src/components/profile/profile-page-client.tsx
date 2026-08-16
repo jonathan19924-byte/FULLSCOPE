@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Bell,
   Bookmark,
@@ -36,7 +37,12 @@ export function ProfilePageClient({
   followerCount,
   followingCount,
 }: {
-  myProfile: { username: string | null; displayName: string | null; bio: string | null } | null;
+  myProfile: {
+    username: string | null;
+    displayName: string | null;
+    bio: string | null;
+    avatarUrl: string | null;
+  } | null;
   followerCount: number;
   followingCount: number;
 }) {
@@ -69,6 +75,7 @@ export function ProfilePageClient({
     id: p.id,
     displayName: p.displayName,
     authorUsername: p.username,
+    authorAvatarUrl: p.authorAvatarUrl,
     content: p.content,
     createdAt: p.createdAt,
     likeCount: p.likeCount,
@@ -110,11 +117,17 @@ export function ProfilePageClient({
       </div>
 
       <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4">
-        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
-          <span className="text-lg font-medium text-muted-foreground">
-            {initials(displayName)}
-          </span>
-        </div>
+        {myProfile?.avatarUrl ? (
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-muted">
+            <Image src={myProfile.avatarUrl} alt="" fill sizes="56px" className="object-cover" />
+          </div>
+        ) : (
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
+            <span className="text-lg font-medium text-muted-foreground">
+              {initials(displayName)}
+            </span>
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-foreground">{displayName}</p>
           <p className="truncate text-sm text-muted-foreground">{email}</p>

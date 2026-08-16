@@ -184,6 +184,11 @@ export interface CommunityPost {
    * profile — undefined if they haven't claimed a username yet, in which
    * case the post shows a name but isn't a clickable profile link. */
   username?: string;
+  /** A publicly-readable URL for the author's profile photo — present only
+   * once it's passed moderation, same gating as mediaUrl below. Undefined
+   * for an author with no photo (or a rejected/pending one), meaning the UI
+   * falls back to the colored-initials circle. */
+  authorAvatarUrl?: string;
   content: string;
   createdAt: string;
   relatedStorySlug?: string;
@@ -215,6 +220,7 @@ export interface PostComment {
   userId: string;
   displayName: string;
   username?: string;
+  avatarUrl?: string;
   content: string;
   createdAt: string;
 }
@@ -227,6 +233,7 @@ export interface PublicProfile {
   username: string;
   displayName: string | null;
   bio: string | null;
+  avatarUrl: string | null;
   followerCount: number;
   followingCount: number;
 }

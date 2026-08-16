@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { UserRound } from "lucide-react";
 import { useUser } from "@/components/auth/user-provider";
 import { FollowButton } from "@/components/profile/follow-button";
@@ -12,6 +13,7 @@ export interface FollowListItem {
   userId: string;
   username: string | null;
   displayName: string | null;
+  avatarUrl: string | null;
 }
 
 export function FollowListPageClient({
@@ -44,17 +46,24 @@ export function FollowListPageClient({
 
             return (
               <li key={person.userId} className="flex items-center gap-3 py-3">
-                {href ? (
-                  <Link href={href} className="shrink-0">
+                {(() => {
+                  const avatar = person.avatarUrl ? (
+                    <div className="relative size-10 overflow-hidden rounded-full bg-muted">
+                      <Image src={person.avatarUrl} alt="" fill sizes="40px" className="object-cover" />
+                    </div>
+                  ) : (
                     <div className="flex size-10 items-center justify-center rounded-full bg-muted">
                       <UserRound className="size-5 text-muted-foreground" strokeWidth={1.5} />
                     </div>
-                  </Link>
-                ) : (
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                    <UserRound className="size-5 text-muted-foreground" strokeWidth={1.5} />
-                  </div>
-                )}
+                  );
+                  return href ? (
+                    <Link href={href} className="shrink-0">
+                      {avatar}
+                    </Link>
+                  ) : (
+                    <div className="shrink-0">{avatar}</div>
+                  );
+                })()}
                 <div className="min-w-0 flex-1">
                   {href ? (
                     <Link href={href} className="block min-w-0">

@@ -32,7 +32,7 @@ export function Providers({
   initialCommunityPosts: CommunityPost[];
   initialFollowingIds: string[];
   initialBlockedIds: string[];
-  myProfile: { username: string | null; displayName: string | null } | null;
+  myProfile: { username: string | null; displayName: string | null; avatarUrl: string | null } | null;
   initialNotifications: Notification[];
   initialUnreadCount: number;
   signedIn: boolean;

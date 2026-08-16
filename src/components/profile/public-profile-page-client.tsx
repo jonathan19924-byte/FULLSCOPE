@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import type { PublicProfile } from "@/types/domain";
@@ -69,6 +70,7 @@ export function PublicProfilePageClient({ profile }: { profile: PublicProfile })
       id: p.id,
       displayName: p.displayName,
       authorUsername: p.username,
+      authorAvatarUrl: p.authorAvatarUrl,
       content: p.content,
       createdAt: p.createdAt,
       likeCount: p.likeCount,
@@ -93,11 +95,17 @@ export function PublicProfilePageClient({ profile }: { profile: PublicProfile })
       </div>
 
       <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-4">
-        <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
-          <span className="text-lg font-medium text-muted-foreground">
-            {initials(displayName)}
-          </span>
-        </div>
+        {profile.avatarUrl ? (
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-muted">
+            <Image src={profile.avatarUrl} alt="" fill sizes="56px" className="object-cover" />
+          </div>
+        ) : (
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
+            <span className="text-lg font-medium text-muted-foreground">
+              {initials(displayName)}
+            </span>
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-foreground">{displayName}</p>
           <p className="truncate text-sm text-muted-foreground">

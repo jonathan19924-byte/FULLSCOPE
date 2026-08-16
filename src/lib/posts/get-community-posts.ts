@@ -70,6 +70,7 @@ const getCommunityPostsBase = unstable_cache(
         userId: row.user_id,
         displayName: profile?.displayName || profile?.username || t.profile.guestReader,
         username: profile?.username ?? undefined,
+        authorAvatarUrl: profile?.avatarUrl ?? undefined,
         content: row.content,
         createdAt: row.created_at,
         relatedStorySlug: row.related_story_slug ?? undefined,

@@ -71,6 +71,8 @@ export interface Database {
           display_name: string | null;
           username: string | null;
           bio: string | null;
+          avatar_url: string | null;
+          avatar_status: string | null;
           preferences: unknown;
           approval_status: string;
           created_at: string;

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Search as SearchIcon, X, UserRound } from "lucide-react";
 import type { StoryWithPosts } from "@/types/domain";
 import { matchesQuery, toSummary } from "@/lib/services/story-summary";
@@ -17,6 +18,7 @@ interface SearchableProfile {
   userId: string;
   username: string;
   displayName: string | null;
+  avatarUrl: string | null;
 }
 
 export function SearchPageClient({
@@ -133,9 +135,15 @@ export function SearchPageClient({
           {peopleResults.map((profile) => (
             <li key={profile.userId} className="flex items-center gap-3 py-3">
               <Link href={`/profile/${profile.username}`} className="shrink-0">
-                <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-                  <UserRound className="size-5 text-muted-foreground" strokeWidth={1.5} />
-                </div>
+                {profile.avatarUrl ? (
+                  <div className="relative size-10 overflow-hidden rounded-full bg-muted">
+                    <Image src={profile.avatarUrl} alt="" fill sizes="40px" className="object-cover" />
+                  </div>
+                ) : (
+                  <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+                    <UserRound className="size-5 text-muted-foreground" strokeWidth={1.5} />
+                  </div>
+                )}
               </Link>
               <Link href={`/profile/${profile.username}`} className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">{profile.displayName || profile.username}</p>
