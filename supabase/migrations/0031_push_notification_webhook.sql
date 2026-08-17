@@ -5,22 +5,28 @@
 -- push stays wired to the single place notifications are actually created
 -- (create-notification.ts's insert), not duplicated across call sites.
 --
--- The webhook secret is read from a Postgres setting (app.settings.push_webhook_secret)
--- rather than hardcoded here, so it never ends up in git history. Set it
--- once via the Supabase SQL editor (not saved to a migration file):
---   alter database postgres set app.settings.push_webhook_secret = '<value>';
+-- The webhook secret is read from Supabase Vault (not hardcoded here, so it
+-- never ends up in git history). Store it once via the Supabase SQL editor
+-- (not saved to a migration file):
+--   select vault.create_secret('<value>', 'push_webhook_secret');
 create or replace function public.handle_new_notification()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
+declare
+  webhook_secret text;
 begin
+  select decrypted_secret into webhook_secret
+  from vault.decrypted_secrets
+  where name = 'push_webhook_secret';
+
   perform net.http_post(
     url := 'https://fullscope-eight.vercel.app/api/webhooks/send-push',
     body := jsonb_build_object('notificationId', new.id::text),
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.settings.push_webhook_secret', true)
+      'Authorization', 'Bearer ' || webhook_secret
     )
   );
 
