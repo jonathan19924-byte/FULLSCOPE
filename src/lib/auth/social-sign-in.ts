@@ -29,12 +29,11 @@ function ensureInitialized(): Promise<void> {
 
 type SignInResult = { success: true } | { error: string };
 
-/** Reads the `nonce` claim actually embedded in a JWT's payload, if any —
- * rather than trying to predict what nonce the native SDK ends up using
- * (Google's plugin accepts a requested nonce but doesn't reliably honor it
- * as-given), this reads back the real value from the token itself so
- * whatever we pass to Supabase is guaranteed to match. */
-function decodeJwtNonce(jwt: string): string | undefined {
+/** Reads a claim out of a JWT's payload segment — used here only for the
+ * temporary diagnostic log, not to decide what to send Supabase (Supabase
+ * hashes whatever nonce it's given and compares that to the token's own
+ * claim, so echoing the claim itself back can never match). */
+function decodeJwtClaims(jwt: string): Record<string, unknown> {
   try {
     const payloadSegment = jwt.split(".")[1];
     const base64 = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
@@ -44,17 +43,26 @@ function decodeJwtNonce(jwt: string): string | undefined {
         .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
         .join(""),
     );
-    const claims = JSON.parse(json) as { nonce?: string };
-    return claims.nonce;
+    return JSON.parse(json) as Record<string, unknown>;
   } catch {
-    return undefined;
+    return {};
   }
 }
 
-async function signInWithIdToken(provider: "apple" | "google", idToken: string): Promise<SignInResult> {
+async function sha256Base64Url(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  let binary = "";
+  new Uint8Array(digest).forEach((b) => (binary += String.fromCharCode(b)));
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function signInWithIdToken(
+  provider: "apple" | "google",
+  idToken: string,
+  nonce?: string,
+): Promise<SignInResult> {
   const supabase = createClient();
-  const nonce = decodeJwtNonce(idToken);
-  console.debug("[social-sign-in]", { provider, nonce, idTokenPayload: idToken.split(".")[1] });
+  console.debug("[social-sign-in]", { provider, sentNonce: nonce, tokenClaims: decodeJwtClaims(idToken) });
   const { error } = await supabase.auth.signInWithIdToken({ provider, token: idToken, nonce });
   if (error) return { error: error.message };
   return { success: true };
@@ -73,11 +81,20 @@ export async function signInWithApple(): Promise<SignInResult> {
 
 export async function signInWithGoogle(): Promise<SignInResult> {
   await ensureInitialized();
+  // Google's servers embed base64url(SHA256(nonce)) as the ID token's nonce
+  // claim (standard OIDC behavior) — Supabase separately hashes whatever
+  // raw nonce we give signInWithIdToken and compares it to that claim. So
+  // we generate our own raw value, request it as-is from Google, and pass
+  // that same raw value (not a hash of it) on to Supabase.
+  const rawNonce = crypto.randomUUID();
   const res = await SocialLogin.login({
     provider: "google",
-    options: { scopes: ["email", "profile"] },
+    options: { scopes: ["email", "profile"], nonce: rawNonce },
   });
   const idToken = res.result.responseType === "online" ? res.result.idToken : null;
   if (!idToken) return { error: "Google didn't return an identity token." };
-  return signInWithIdToken("google", idToken);
+  // Diagnostic only — confirms whether Google actually honored our
+  // requested nonce (claim should equal sha256Base64Url(rawNonce)).
+  console.debug("[social-sign-in] expected claim", await sha256Base64Url(rawNonce));
+  return signInWithIdToken("google", idToken, rawNonce);
 }
