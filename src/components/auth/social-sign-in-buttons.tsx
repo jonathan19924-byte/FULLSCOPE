@@ -17,7 +17,20 @@ export function SocialSignInButtons({ next }: { next: string }) {
 
   async function handleSignIn(provider: "apple" | "google") {
     setPendingProvider(provider);
-    const result = provider === "apple" ? await signInWithApple() : await signInWithGoogle();
+
+    // The native plugin rejects (rather than resolving with an error) when
+    // the user cancels the system sign-in sheet — without this catch, that
+    // rejection would leave pendingProvider stuck forever, permanently
+    // disabling both buttons.
+    let result: Awaited<ReturnType<typeof signInWithApple>>;
+    try {
+      result = provider === "apple" ? await signInWithApple() : await signInWithGoogle();
+    } catch (err) {
+      setPendingProvider(null);
+      toast(t.auth.socialSignInFailed, { description: err instanceof Error ? err.message : String(err) });
+      return;
+    }
+
     setPendingProvider(null);
 
     if ("error" in result) {
