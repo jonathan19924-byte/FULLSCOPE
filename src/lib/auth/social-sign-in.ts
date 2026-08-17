@@ -29,6 +29,13 @@ function ensureInitialized(): Promise<void> {
 
 type SignInResult = { success: true } | { error: string };
 
+async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 async function signInWithIdToken(
   provider: "apple" | "google",
   idToken: string,
@@ -53,16 +60,18 @@ export async function signInWithApple(): Promise<SignInResult> {
 
 export async function signInWithGoogle(): Promise<SignInResult> {
   await ensureInitialized();
-  // Google's native SDK embeds its own nonce in the ID token regardless of
-  // whether we ask for one, so we must generate one and pass it through
-  // both calls — Supabase rejects a token whose nonce claim doesn't match
-  // what signInWithIdToken was given (or is present when none was passed).
-  const nonce = crypto.randomUUID();
+  // Google (like Apple) expects the SHA-256 hash of the nonce in the
+  // sign-in request — the ID token's nonce claim ends up holding that same
+  // hash — while Supabase's signInWithIdToken wants the raw, pre-hash
+  // value so it can hash it itself and compare. Sending the raw value to
+  // both sides (as with a provider that doesn't hash) produces a mismatch.
+  const rawNonce = crypto.randomUUID();
+  const hashedNonce = await sha256Hex(rawNonce);
   const res = await SocialLogin.login({
     provider: "google",
-    options: { scopes: ["email", "profile"], nonce },
+    options: { scopes: ["email", "profile"], nonce: hashedNonce },
   });
   const idToken = res.result.responseType === "online" ? res.result.idToken : null;
   if (!idToken) return { error: "Google didn't return an identity token." };
-  return signInWithIdToken("google", idToken, nonce);
+  return signInWithIdToken("google", idToken, rawNonce);
 }
