@@ -86,10 +86,14 @@ export async function signInWithGoogle(): Promise<SignInResult> {
   // raw nonce we give signInWithIdToken and compares it to that claim. So
   // we generate our own raw value, request it as-is from Google, and pass
   // that same raw value (not a hash of it) on to Supabase.
+  // forcePrompt is required here — without it, iOS's Credential Manager
+  // silently returns a cached ID token from an earlier sign-in (same nonce
+  // claim every time, regardless of what we request), instead of running a
+  // fresh interactive sign-in that would actually embed our nonce.
   const rawNonce = crypto.randomUUID();
   const res = await SocialLogin.login({
     provider: "google",
-    options: { scopes: ["email", "profile"], nonce: rawNonce },
+    options: { scopes: ["email", "profile"], nonce: rawNonce, forcePrompt: true },
   });
   const idToken = res.result.responseType === "online" ? res.result.idToken : null;
   if (!idToken) return { error: "Google didn't return an identity token." };
