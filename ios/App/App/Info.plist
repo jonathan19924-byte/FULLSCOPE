@@ -30,6 +30,15 @@
 	<string>FullScope needs camera access so you can take a photo to attach to your post.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>FullScope needs photo library access so you can attach an existing photo to your post.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.630338883088-h2iveva720mu0t99thli0vcr9rhg0j2a</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
