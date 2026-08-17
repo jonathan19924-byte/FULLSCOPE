@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
 import { isNativeApp } from "@/lib/capacitor";
 import { nativeSignUpAction } from "@/lib/auth/actions";
+import { SocialSignInButtons } from "@/components/auth/social-sign-in-buttons";
 import { t } from "@/lib/i18n";
 
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
@@ -124,6 +125,8 @@ export function SignUpForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <SocialSignInButtons next={next} />
+
       <label className="flex flex-col gap-2">
         <span className="text-sm font-medium text-foreground">{t.auth.email}</span>
         <input

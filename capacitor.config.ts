@@ -14,6 +14,16 @@ const config: CapacitorConfig = {
     url: "https://fullscope-eight.vercel.app",
     cleartext: false,
   },
+  plugins: {
+    SocialLogin: {
+      providers: {
+        google: true,
+        apple: true,
+        facebook: false,
+        twitter: false,
+      },
+    },
+  },
 };
 
 export default config;
