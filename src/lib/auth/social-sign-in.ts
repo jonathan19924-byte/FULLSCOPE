@@ -81,24 +81,25 @@ export async function signInWithApple(): Promise<SignInResult> {
 
 export async function signInWithGoogle(): Promise<SignInResult> {
   await ensureInitialized();
-  // Google's servers embed base64url(SHA256(nonce)) as the ID token's nonce
-  // claim (standard OIDC behavior) — Supabase separately hashes whatever
-  // raw nonce we give signInWithIdToken and compares it to that claim. So
-  // we generate our own raw value, request it as-is from Google, and pass
-  // that same raw value (not a hash of it) on to Supabase.
-  // forcePrompt is required here — without it, iOS's Credential Manager
+  // Confirmed via live device logging: unlike Apple, Google's SDK does NOT
+  // hash the nonce we request — the ID token's nonce claim ends up holding
+  // our raw value verbatim. Supabase's signInWithIdToken, on the other
+  // hand, hashes whatever nonce it's given (base64url SHA-256) before
+  // comparing to the token's claim. So we must hash *before* sending to
+  // Google (so the claim ends up holding the hash), and send the original
+  // raw value to Supabase (so its own hash matches that claim).
+  //
+  // forcePrompt is also required — without it, iOS's Credential Manager
   // silently returns a cached ID token from an earlier sign-in (same nonce
-  // claim every time, regardless of what we request), instead of running a
-  // fresh interactive sign-in that would actually embed our nonce.
+  // claim every time, regardless of what's requested) instead of running a
+  // fresh interactive sign-in.
   const rawNonce = crypto.randomUUID();
+  const hashedNonce = await sha256Base64Url(rawNonce);
   const res = await SocialLogin.login({
     provider: "google",
-    options: { scopes: ["email", "profile"], nonce: rawNonce, forcePrompt: true },
+    options: { scopes: ["email", "profile"], nonce: hashedNonce, forcePrompt: true },
   });
   const idToken = res.result.responseType === "online" ? res.result.idToken : null;
   if (!idToken) return { error: "Google didn't return an identity token." };
-  // Diagnostic only — confirms whether Google actually honored our
-  // requested nonce (claim should equal sha256Base64Url(rawNonce)).
-  console.debug("[social-sign-in] expected claim", await sha256Base64Url(rawNonce));
   return signInWithIdToken("google", idToken, rawNonce);
 }
