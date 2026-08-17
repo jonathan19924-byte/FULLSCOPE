@@ -29,9 +29,13 @@ function ensureInitialized(): Promise<void> {
 
 type SignInResult = { success: true } | { error: string };
 
-async function signInWithIdToken(provider: "apple" | "google", idToken: string): Promise<SignInResult> {
+async function signInWithIdToken(
+  provider: "apple" | "google",
+  idToken: string,
+  nonce?: string,
+): Promise<SignInResult> {
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithIdToken({ provider, token: idToken });
+  const { error } = await supabase.auth.signInWithIdToken({ provider, token: idToken, nonce });
   if (error) return { error: error.message };
   return { success: true };
 }
@@ -49,11 +53,16 @@ export async function signInWithApple(): Promise<SignInResult> {
 
 export async function signInWithGoogle(): Promise<SignInResult> {
   await ensureInitialized();
+  // Google's native SDK embeds its own nonce in the ID token regardless of
+  // whether we ask for one, so we must generate one and pass it through
+  // both calls — Supabase rejects a token whose nonce claim doesn't match
+  // what signInWithIdToken was given (or is present when none was passed).
+  const nonce = crypto.randomUUID();
   const res = await SocialLogin.login({
     provider: "google",
-    options: { scopes: ["email", "profile"] },
+    options: { scopes: ["email", "profile"], nonce },
   });
   const idToken = res.result.responseType === "online" ? res.result.idToken : null;
   if (!idToken) return { error: "Google didn't return an identity token." };
-  return signInWithIdToken("google", idToken);
+  return signInWithIdToken("google", idToken, nonce);
 }
