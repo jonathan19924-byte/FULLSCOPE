@@ -54,6 +54,7 @@ function decodeJwtNonce(jwt: string): string | undefined {
 async function signInWithIdToken(provider: "apple" | "google", idToken: string): Promise<SignInResult> {
   const supabase = createClient();
   const nonce = decodeJwtNonce(idToken);
+  console.debug("[social-sign-in]", { provider, nonce, idTokenPayload: idToken.split(".")[1] });
   const { error } = await supabase.auth.signInWithIdToken({ provider, token: idToken, nonce });
   if (error) return { error: error.message };
   return { success: true };
