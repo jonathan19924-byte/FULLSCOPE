@@ -235,4 +235,20 @@ async function applyTrend(
     updateType: "trend",
     summary: result.theme,
   });
+
+  // Notify everyone who liked (bookmarked) this story that it changed.
+  // Bulk insert (one statement, many rows) rather than looping
+  // createNotification calls — a popular story's bookmark list can run into
+  // the hundreds, and this is a single fan-out point rather than a
+  // per-user interactive action.
+  const { data: likers } = await supabase.from("bookmarks").select("user_id").eq("story_slug", story.slug);
+  if (likers && likers.length > 0) {
+    const rows = likers.map((l) => ({
+      user_id: l.user_id,
+      type: "story_updated",
+      related_story_slug: story.slug,
+    }));
+    const { error: notifyError } = await supabase.from("notifications").insert(rows);
+    if (notifyError) console.error(`Error notifying likers of "${story.slug}":`, notifyError.message);
+  }
 }

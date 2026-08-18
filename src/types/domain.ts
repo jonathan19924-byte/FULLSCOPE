@@ -238,7 +238,12 @@ export interface PublicProfile {
   followingCount: number;
 }
 
-export type NotificationType = "post_liked" | "post_commented" | "new_follower" | "post_credited";
+export type NotificationType =
+  | "post_liked"
+  | "post_commented"
+  | "new_follower"
+  | "post_credited"
+  | "story_updated";
 
 /** An in-app notification for the signed-in reader. `actorUserId`/
  * `actorDisplayName` are undefined for system-generated events

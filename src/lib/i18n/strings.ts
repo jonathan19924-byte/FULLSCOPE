@@ -278,6 +278,7 @@ export const strings = {
       postCommented: (name: string) => `${name} commented on your post`,
       newFollower: (name: string) => `${name} started following you`,
       postCredited: "Your post shaped a story",
+      storyUpdated: "A story you liked was updated",
     },
     settings: {
       title: "Settings",
@@ -760,6 +761,7 @@ export const strings = {
       postCommented: (name: string) => `${name} הגיב/ה לפוסט שלכם`,
       newFollower: (name: string) => `${name} התחיל/ה לעקוב אחריכם`,
       postCredited: "הפוסט שלכם השפיע על כתבה",
+      storyUpdated: "כתבה שאהבתם עודכנה",
     },
     settings: {
       title: "הגדרות",
