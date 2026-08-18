@@ -6,8 +6,10 @@ import type { Notification } from "@/types/domain";
 import { t } from "@/lib/i18n";
 
 /** Re-fetches the signed-in reader's notifications — used by the client
- * context to refresh the bell (periodic poll, or when the dropdown opens),
- * since there's no realtime/push infra to push updates instead. */
+ * context to refresh the bell (periodic poll, or when the dropdown opens).
+ * APNs pushes reach the device when it's backgrounded, but there's no
+ * realtime channel (e.g. websocket) to live-update this in-app bell while
+ * the app is open, hence the poll. */
 export async function fetchNotificationsAction(): Promise<{
   notifications: Notification[];
   unreadCount: number;
