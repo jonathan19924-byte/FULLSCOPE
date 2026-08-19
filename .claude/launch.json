@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "fullscope-dev",
+      "name": "fullscope-prod",
       "runtimeExecutable": "/bin/zsh",
       "runtimeArgs": [
         "-c",
@@ -12,7 +12,7 @@
       "autoPort": true
     },
     {
-      "name": "fullscope-live",
+      "name": "fullscope-dev",
       "runtimeExecutable": "/bin/zsh",
       "runtimeArgs": [
         "-c",
