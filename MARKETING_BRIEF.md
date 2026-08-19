@@ -2,7 +2,7 @@
 
 *A plain-language briefing document for marketing/strategy work — not a technical spec. Written to be handed to a person or another AI assistant with zero prior context on the product. Reflects the app as it actually exists today, verified against the live codebase and production app, not aspirational copy.*
 
-*Last verified: 2026-08-16. Status: submitted to the App Store, awaiting approval.*
+*Last verified: 2026-08-19. Status: version 1.1 submitted to the App Store, awaiting approval — version 1.0 is already live/approved.*
 
 ---
 
@@ -32,6 +32,7 @@ Everything below exists and works in the current app — useful for knowing what
 - **"Developing" and "Updated" indicators** — a story actively unfolding right now (updated within the last ~6 hours) is visually flagged differently from one that was merely touched at some point in the last two days, so a reader following breaking news can tell the difference at a glance.
 - **"How this story developed"** — a visible, timestamped history of every real update to a story (new coverage folded in, or a reader-driven point credited), including highlighting for a returning reader of what's new since their last visit.
 - **A community layer**: real reader posts (with optional photos), likes, threaded comments, following other readers, a personal "Your Impact" record of posts that actually shaped a story.
+- **Push notifications** now exist and reach the lock screen — likes, comments, new followers, a bookmarked story getting a real update, and a twice-daily "trending story" alert. Each reader controls their own push preferences (a master on/off switch, plus separate toggles for social interactions vs. story-update alerts).
 - **Bookmarks, search, category browsing** (9 categories: Politics, Security & Defense, Law & Courts, Crime & Safety, World, Business & Economy, Technology, Science, Society & Religion), a "Trending now" module ranked by real 24h engagement, an archive/History tab for stories that aged out of the live feed.
 - **Post directly from a story you're reading** — not just from a separate "Create" tab.
 - **Full account safety/compliance layer**: self-service account deletion, blocking, reporting, a privacy policy page.
@@ -40,7 +41,6 @@ Everything below exists and works in the current app — useful for knowing what
 
 ## 5. What's explicitly *not* built yet — don't market these
 
-- **Push notifications don't exist yet** (in-app notifications for likes/comments/follows do exist, but nothing reaches the lock screen). Planned as the next major feature after launch, specifically deferred to avoid complicating the current App Store review.
 - **No Android app.** iOS only.
 - **No profile photo upload** — every avatar is a colored circle with initials.
 - **No formal human editorial staff.** Stories are AI-assembled from real, named news sources via Claude (Anthropic), not written by a newsroom. This is true and should be represented honestly — the credibility claim is "grounded in real, named, multiple sources with a structural neutrality mechanism," not "written by journalists."
@@ -56,11 +56,11 @@ Everything below exists and works in the current app — useful for knowing what
 
 ## 7. Where things stand right now
 
-The app is submitted to the App Store and awaiting approval (one rejection already resolved — missing account deletion, since fixed and resubmitted). No public launch has happened yet. Signups will be auto-approved (no manual review gate) once live, specifically to make onboarding frictionless at launch.
+Version 1.0 is live and approved. Version 1.1 (push notifications, Sign in with Apple/Google, a camera fix, a new app icon) is submitted and awaiting approval. No public launch/marketing push has happened yet. Signups are auto-approved (no manual review gate), specifically to make onboarding frictionless at launch.
 
 ## 8. Open questions for marketing strategy (not answered here — for the strategy conversation itself)
 
 - Primary acquisition channel(s) for a Hebrew-speaking Israeli audience specifically.
 - How explicitly to lead with the "two-sided/neutral" positioning vs. a softer "understand the full picture" framing — the two-sided format is the real differentiator but could also read as "about politics" to someone skimming, when it's explicitly topic-agnostic.
 - Whether/how to address the "AI-generated" nature of stories proactively in messaging, versus letting the sourcing-transparency (real named sources, visible confidence ratings) speak for itself.
-- Timing: launch messaging now (pre-approval) vs. holding until approved and push notifications are ready.
+- Timing: launch messaging now (pre-1.1-approval) vs. holding until 1.1 (push notifications, social sign-in) is approved and live.

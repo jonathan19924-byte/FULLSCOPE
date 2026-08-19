@@ -29,6 +29,8 @@ Copy `.env.local.example` and fill in:
 - `GITHUB_ACTIONS_PAT` — lets the health-check cron re-trigger the GitHub Actions pipeline if it silently misses a run
 - `NEXT_PUBLIC_LOCALE` — `he` for Hebrew/RTL (current live config); anything else falls back to English/LTR
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` — Cloudflare Turnstile site key (optional — sign-up works without a CAPTCHA if unset)
+- `PUSH_WEBHOOK_SECRET` — shared secret authorizing the Postgres trigger that calls `/api/webhooks/send-push`
+- `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`, `APNS_PRIVATE_KEY` — Apple Developer Portal push key, needed to actually send push notifications
 
 ## Data
 
@@ -40,12 +42,13 @@ npm run process-articles   # Stage 2: cluster + generate/update stories
 npm run check-trends       # Stage 3: moderate posts + fold in reader trends
 npm run backfill-images    # maintenance: catch up missing story photos only
 npm run backfill-story-embeddings  # one-time: embed existing stories for similarity search
+npm run notify-trending    # twice-daily: notifies users about the most-discussed story
 ```
 
-In production, `fetch-rss` and a pipeline health-check run on Vercel cron (daily); `process-articles` (every 3h) and `check-trends` (every 2h) run on GitHub Actions, since Vercel's Hobby plan only supports daily cron frequency and a full pipeline run exceeds its serverless timeout.
+In production, `fetch-rss` and a pipeline health-check run on Vercel cron (daily); `process-articles` (every 3h), `check-trends` (every 2h), and `notify-trending` (twice daily) run on GitHub Actions, since Vercel's Hobby plan only supports daily cron frequency and a full pipeline run exceeds its serverless timeout.
 
 A static English seed set (`fullscope-seed-july23.md`, parsed by `scripts/parse-seed.mjs` into `src/lib/data/*.json`) still exists and is merged in — but only when `NEXT_PUBLIC_LOCALE` is *not* `he`. In the current Hebrew configuration, every story on the site is real, pipeline-generated content.
 
 ## Accounts, community, and safety
 
-All real and server-backed via Supabase Auth + Postgres, not local-only: email/password sign-up (Turnstile CAPTCHA), bookmarks/likes/dislikes, real reader posts and threaded comments (rate-limited, moderated by Claude), following other readers, in-app notifications (no push yet), reporting/blocking, and self-service account deletion. See `PRD.md` for the full list.
+All real and server-backed via Supabase Auth + Postgres, not local-only: email/password sign-up (Turnstile CAPTCHA) plus Sign in with Apple/Google, bookmarks/likes/dislikes, real reader posts and threaded comments (rate-limited, moderated by Claude), following other readers, in-app + push notifications (with per-user preference toggles), reporting/blocking, and self-service account deletion. See `PRD.md` for the full list.

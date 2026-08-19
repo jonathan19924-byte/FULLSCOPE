@@ -1,6 +1,6 @@
 # FullScope — Product Requirements Document
 
-*This document describes the app as it actually exists in the codebase today — not the original plan. Verified directly against the code, database migrations, and a live production app. Last verified: 2026-08-16.*
+*This document describes the app as it actually exists in the codebase today — not the original plan. Verified directly against the code, database migrations, and a live production app. Last verified: 2026-08-19.*
 
 ---
 
@@ -12,7 +12,7 @@
 
 **Who it's for:** the product is currently running as a live pilot for **Hebrew-speaking Israeli news readers** — a deliberately narrow, well-defined market chosen because Israeli political and social splits (security vs. rights, religious vs. secular, coalition vs. opposition, hawkish vs. dovish) are a better test of the "genuine multi-perspective" idea than a generic international feed, where the framing tends to collapse into a US-style left/right binary. The pivot is built as a reversible configuration toggle (`NEXT_PUBLIC_LOCALE`), not a rewrite — the original English/international version, English source list, and English perspective-framing logic all still exist in the codebase, gated behind the toggle, so the product can return to an English/international audience later without rebuilding anything. There is no live English deployment today.
 
-**Launch status:** submitted to the App Store; awaiting approval as of this writing (one prior rejection — missing account deletion — has since been fixed and resubmitted). Signups are auto-approved (no manual review gate), a deliberate choice made ahead of launch so onboarding has no friction.
+**Launch status:** version 1.1 (build 2) submitted to the App Store; awaiting approval as of this writing. Version 1.0 was already approved and live — 1.1 adds push notifications, Sign in with Apple/Google, a camera fix, and a new app icon, none of which need to wait on review to reach existing users, since only the native-code pieces (push entitlement, social-login plugin) require the App Store build at all — everything else in this release is a web change that was already live before 1.1 was even submitted. Signups are auto-approved (no manual review gate), a deliberate choice made ahead of launch so onboarding has no friction.
 
 ---
 
@@ -67,7 +67,11 @@ Free-text search across every story's title, summary, category, full body, and s
 A combined feed of AI-seeded reaction posts and real reader posts (optionally with a photo, moderated), optionally filtered to one story or to an "All"/"Following" toggle. Ranked by a time-decayed score so a good post surfaces without stale high-like-count posts burying everything newer. Each real post supports: like (persisted, one-per-user), threaded comments, and a "⋯" menu to report the post/comment or block its author. Replies to individual posts (distinct from comments) are a UI stub only — no backend exists for that specific interaction.
 
 ### 3.5 Create (`/create`, and directly from any story page)
-A signed-in reader can write a post (280-char limit, optional photo) and tag it to a specific story — either from the standalone Create tab (pick any story from a dropdown) or directly from a story page itself, where the composer opens in a dialog with that story already locked in and posting keeps you on the page. Rate-limited server-side (10 posts / rolling 10 minutes).
+A signed-in reader can write a post (280-char limit, optional photo). Two ways a post ends up tagged to a story:
+- **Directly from a story page** — the composer opens in a dialog with that story already locked in (no picker shown), and posting keeps you on the page.
+- **From the standalone Create tab** — no manual story picker exists here anymore. On submit, the post's text is embedded (Voyage AI) and checked for a confident match against existing stories (`match_stories` similarity search, judged by a quick Claude call); if a match is found, the reader is asked to confirm linking it before the post is created. No confident match → posts immediately as standalone, no added friction. Fails open on any error (embedding/API failure just posts as standalone, same as no match found).
+
+Rate-limited server-side (10 posts / rolling 10 minutes).
 
 ### 3.6 Engagement: likes, dislikes, follows, comments
 - **Likes** (public) and **dislikes** (private — never shown anywhere, not even a count) are separate, mutually exclusive signals on every story.
@@ -75,7 +79,13 @@ A signed-in reader can write a post (280-char limit, optional photo) and tag it 
 - **Comments** on community posts are threaded, real, and persisted.
 
 ### 3.7 Notifications (`/notifications`, linked from Profile)
-In-app (polled, not push) notifications for: someone likes your post, comments on it, follows you, or your post gets credited into a story via the trend-detection mechanism. Deliberately excludes dislikes (that signal is private) and self-actions. **No push notifications exist yet** — nothing reaches the lock screen; this is the planned next major feature post-launch.
+Six notification kinds, all sharing one in-app list (polled, not realtime) and one push pipeline (APNs, reaches the lock screen when the app is backgrounded):
+- **Someone likes your post**, **comments on it**, or **follows you** — the three interactive/social kinds.
+- **Your post gets credited into a story** via the trend-detection mechanism.
+- **A story you liked (bookmarked) gets a trend update** — fires only on a genuine content update (not a routine coverage merge), fanned out to everyone who bookmarked that story.
+- **A trending story** — picked automatically twice daily (GitHub Actions, `notify-trending`) from the most-discussed story of the last 24h, with a minimum-activity threshold and a 48h cooldown so the same story isn't repicked every run; sent to every approved user.
+
+Deliberately excludes dislikes (that signal is private) and self-actions. **Real per-user push preferences** exist (`Settings → Notifications`): a master push kill-switch, plus separate toggles for "event updates" (story credited/updated/trending) and "post interactions" (likes/comments/follows) — these only gate the *push* send; the in-app notification row is always created regardless, so nothing is ever silently lost, only the phone alert is suppressed. All defaults are on.
 
 ### 3.8 Safety: reporting & blocking (`src/lib/safety/*`, `/settings/blocked`)
 A "⋯" menu on posts, comments, and public profiles offers Report (spam/harassment/inappropriate/misinformation/other, with optional details) and Block. Blocking is real and server-enforced — a blocked user's posts and comments are filtered out of the blocker's feeds at the query level, not just hidden client-side. `Settings → Blocked Accounts` lists and lets you unblock. Reports aren't surfaced in any admin UI yet — reviewed directly via the Supabase dashboard.
@@ -90,7 +100,7 @@ Every new community post/comment is screened by Claude — genuine policy violat
 Own profile: post count, likes-received, liked-stories, followers/following (tappable lists), a list of the reader's own posts, "Your Impact," a link to Notifications, edit-profile dialog (username/display name/bio), sign-out, delete-account. Public profile (`/profile/[username]`): the same reader-facing info for another user, plus a Follow button and the Report/Block menu.
 
 ### 3.12 Settings (`/settings`)
-Account row (email, sign-out, delete account), profile-edit dialog, a working light/dark/system theme picker, Blocked Accounts, and a link to the Privacy Policy.
+Account row (email, sign-out, delete account), profile-edit dialog, real push-notification-preference toggles (see §3.7 — master push switch, event updates, post interactions), a working light/dark/system theme picker, Blocked Accounts, and a link to the Privacy Policy.
 
 ### 3.13 Privacy Policy (`/privacy`)
 A real privacy policy page, linked from Settings and the site footer.
@@ -99,7 +109,7 @@ A real privacy policy page, linked from Settings and the site footer.
 A segmented-choice + free-text form that opens the reader's own email client via `mailto:` — no backend involved.
 
 ### 3.15 Authentication (`src/components/auth/*`)
-Email + password via Supabase Auth, gated by Cloudflare Turnstile CAPTCHA on sign-up/sign-in/password reset (with an automatic fallback if Turnstile's script fails to load, so a blocked/failed CAPTCHA script never locks a real user out entirely).
+Email + password via Supabase Auth, gated by Cloudflare Turnstile CAPTCHA on sign-up/sign-in/password reset (with an automatic fallback if Turnstile's script fails to load, so a blocked/failed CAPTCHA script never locks a real user out entirely) — CAPTCHA is skipped entirely inside the native app, which uses its own server-side bypass path instead. **Sign in with Apple and Google** are also available (native-only, via `@capgo/capacitor-social-login`) — Apple is present both because it's a good option and because Apple's Guideline 4.8 makes it mandatory the moment any third-party social login exists.
 
 ### 3.16 Native iOS app
 The same Next.js web app, wrapped via Capacitor into a native iOS shell that loads the live production URL directly in a WebView (no bundled/offline build — the app needs a real server for Server Actions, cookie auth, and cron routes). This means almost every web-side change ships to the native app instantly with no App Store resubmission; only genuinely native-code changes (a new Capacitor plugin, a new Xcode capability/entitlement) require a new build and review. Includes: camera/photo-library permission handling, and a native offline/connection-failure screen with a retry button (so a network hiccup shows a proper native fallback instead of a blank WebView or Safari's default error page).
@@ -120,6 +130,8 @@ Full light/dark/system support via `next-themes`. In practice the app has mostly
 | Language | **TypeScript 5** | Whole codebase; path alias `@/* → ./src/*` |
 | UI runtime | **React 19.2.4** | Component rendering |
 | Native shell | **Capacitor 8.5** (iOS) | Wraps the live web app into a native iOS app — see §3.16 |
+| Push notifications | **`@capacitor/push-notifications`** (device registration) + **APNs** (raw `node:http2`, since `fetch` doesn't support the HTTP/2 requirement) | Device token registration, push delivery — see §3.7 |
+| Social sign-in | **`@capgo/capacitor-social-login`** | Native Sign in with Apple + Google — see §3.15 |
 | Styling | **Tailwind CSS v4** + `tailwind-merge`, `tw-animate-css`, `class-variance-authority` | Utility-first styling, RTL logical-property support |
 | UI primitives | Hand-built `src/components/ui/*` on **`@base-ui/react`** (dialogs, dropdowns), plus `sonner` (toasts), `lucide-react` (icons) | shadcn-style component library |
 | Theming | **`next-themes`** | Light/dark/system mode |
@@ -139,14 +151,14 @@ Full light/dark/system support via `next-themes`. In practice the app has mostly
 
 ## 5. Data Model
 
-All tables are Postgres/Supabase with Row Level Security enabled. 27 migrations as of this writing (`supabase/migrations/`). Rather than reproduce every column (see the migrations directly for exact schema), the tables in play by area:
+All tables are Postgres/Supabase with Row Level Security enabled. 36 migrations as of this writing (`supabase/migrations/`). Rather than reproduce every column (see the migrations directly for exact schema), the tables in play by area:
 
 - **Content**: `stories`, `posts` (AI-seeded reactions), `story_updates` (the "How this story developed" log), `raw_articles`/`pipeline_runs` (backend-only pipeline staging/audit, never exposed to clients).
 - **Community**: `community_posts`, `community_post_likes`, `community_post_comments`, `post_contributions` (what a reader-trend update changed and which posts drove it).
 - **Social**: `follows`, `bookmarks`, `story_dislikes`.
 - **Safety/compliance**: `user_blocks`, `content_reports`, `profiles.approval_status` (now always `approved` on signup — see §1).
-- **Notifications & analytics**: `notifications`, `page_views` (insert-only from any client; a narrow policy lets a user read back their *own* rows, used to compute "new since last visit").
-- **Search infra**: `stories.embedding` (pgvector) for similarity-based related-story matching.
+- **Notifications & analytics**: `notifications` (6 types — see §3.7), `device_tokens` (one row per registered device, not per user), `profiles.push_enabled`/`event_updates_enabled`/`post_interactions_enabled` (per-user push preferences, default true), `page_views` (insert-only from any client; a narrow policy lets a user read back their *own* rows, used to compute "new since last visit").
+- **Search infra**: `stories.embedding` (pgvector) for similarity-based related-story matching (also powers the Create composer's auto-detect — see §3.5), `stories.engagement_notified_at` (cooldown tracking for the trending-story broadcast — see §3.7).
 
 `src/lib/supabase/database.types.ts` is a hand-written mirror of the schema (not auto-generated) — kept in sync manually whenever a migration adds/changes a column used by typed queries; a few backend-only tables (`raw_articles`, `pipeline_runs`) are deliberately excluded since they're only ever queried with untyped service-role clients.
 
@@ -162,12 +174,12 @@ All under `src/app/api/`, all gated by `CRON_SECRET` where relevant (cron routes
 - `GET /api/cron/check-pipeline-health` — checks for a stale pipeline heartbeat; re-triggers the GitHub workflow and emails an alert if so. Vercel cron, daily.
 - `POST /api/track-view` — logs a page view (path + optional user id) for analytics.
 - `POST /api/webhooks/new-signup` — called by a Postgres trigger on every new signup; emails the owner.
+- `POST /api/webhooks/send-push` — called by a Postgres trigger (`handle_new_notification`) on every new `notifications` row; looks up the recipient's device tokens and push preferences, sends via APNs. Gated by a shared secret, since the caller is the database itself, not a signed-in user.
 
 ---
 
 ## 7. Known Limitations / Not Yet Built
 
-- **No push notifications.** In-app notifications work; nothing reaches the lock screen. Deliberately deferred to a post-launch update, specifically to avoid complicating the current App Store review with new native capabilities.
 - **No Android app.** iOS only.
 - **Post replies (distinct from comments) are not persisted** — a UI stub shows a "coming soon" toast.
 - **No profile photo upload** — every avatar is a colored-circle initial.
@@ -197,6 +209,8 @@ Copy `.env.local.example` to `.env.local` and fill in:
 | `GITHUB_ACTIONS_PAT` | Fine-grained GitHub PAT (Actions: read-and-write) | Lets the health-check cron re-trigger the pipeline workflow |
 | `NEXT_PUBLIC_LOCALE` | — | `"he"` for Hebrew/RTL (current live config); anything else → English/LTR |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile | Sign-up works without a CAPTCHA if unset |
+| `PUSH_WEBHOOK_SECRET` | `openssl rand -hex 32` | Authorizing the `handle_new_notification` Postgres trigger's call into `/api/webhooks/send-push` |
+| `APNS_KEY_ID` / `APNS_TEAM_ID` / `APNS_BUNDLE_ID` / `APNS_PRIVATE_KEY` | Apple Developer Portal (Certificates, Identifiers & Profiles → Keys) | Signing the JWT provider token APNs requires on every push send |
 
 ### Running it
 
@@ -214,11 +228,12 @@ npm run process-articles             # Stage 2: cluster + generate/update storie
 npm run check-trends                 # Stage 3: moderate posts/comments + fold in reader trends
 npm run backfill-images              # maintenance: catch up missing story photos
 npm run backfill-story-embeddings    # one-time: embed existing stories for similarity search
+npm run notify-trending              # twice-daily: picks + notifies the most-discussed story (see §3.7)
 ```
 
 ### Production deployment topology
 
 - **App + 2 crons** (`fetch-rss`, `check-pipeline-health`, both daily) run on **Vercel**.
-- **2 higher-frequency crons** (`process-articles` every 3h, `check-trends` every 2h) run on **GitHub Actions**, since Vercel Hobby only supports daily cron frequency and a full pipeline run exceeds its serverless timeout.
+- **3 higher-frequency crons** (`process-articles` every 3h, `check-trends` every 2h, `notify-trending` twice daily) run on **GitHub Actions**, since Vercel Hobby only supports daily cron frequency and a full pipeline run exceeds its serverless timeout.
 - The **native iOS app** loads the same Vercel-hosted production URL directly — no separate native deployment pipeline.
 - Both surfaces read from and write to the **same Supabase project** — no separate staging database.
