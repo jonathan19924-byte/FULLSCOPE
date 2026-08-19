@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Bell, Heart, MessageCircle, RefreshCw, TrendingUp, UserPlus } from "lucide-react";
+import { Bell, Flame, Heart, MessageCircle, RefreshCw, TrendingUp, UserPlus } from "lucide-react";
 import { useNotifications } from "@/lib/notifications/notifications-context";
 import { messageFor, linkFor } from "@/lib/notifications/message-for";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -18,6 +18,7 @@ const ICON_BY_TYPE: Record<NotificationType, typeof Heart> = {
   new_follower: UserPlus,
   post_credited: TrendingUp,
   story_updated: RefreshCw,
+  trending_story: Flame,
 };
 
 export function NotificationsPageClient() {

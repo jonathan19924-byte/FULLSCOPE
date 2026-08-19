@@ -16,7 +16,7 @@ export async function createNotification(
   supabase: SupabaseClient,
   params: {
     userId: string;
-    type: "post_liked" | "post_commented" | "new_follower" | "post_credited" | "story_updated";
+    type: "post_liked" | "post_commented" | "new_follower" | "post_credited" | "story_updated" | "trending_story";
     actorUserId?: string;
     relatedPostId?: string;
     relatedStorySlug?: string;

@@ -16,6 +16,8 @@ export function messageFor(n: Pick<Notification, "type" | "actorDisplayName" | "
       return t.notifications.postCredited;
     case "story_updated":
       return t.notifications.storyUpdated;
+    case "trending_story":
+      return t.notifications.trendingStory;
   }
 }
 
@@ -26,6 +28,7 @@ export function linkFor(n: Pick<Notification, "type" | "relatedStorySlug" | "act
       return n.relatedStorySlug ? `/story/${n.relatedStorySlug}` : "/posts";
     case "post_credited":
     case "story_updated":
+    case "trending_story":
       return n.relatedStorySlug ? `/story/${n.relatedStorySlug}` : undefined;
     case "new_follower":
       return n.actorUsername ? `/profile/${n.actorUsername}` : undefined;

@@ -39,6 +39,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: "notification not found" });
   }
 
+  const { data: prefs } = await supabase
+    .from("profiles")
+    .select("push_enabled, event_updates_enabled, post_interactions_enabled")
+    .eq("user_id", notification.user_id)
+    .maybeSingle();
+
+  if (prefs && !prefs.push_enabled) {
+    return NextResponse.json({ ok: true, skipped: "push disabled" });
+  }
+
+  const isPostInteraction = ["post_liked", "post_commented", "new_follower"].includes(notification.type);
+  if (prefs && isPostInteraction && !prefs.post_interactions_enabled) {
+    return NextResponse.json({ ok: true, skipped: "post interactions disabled" });
+  }
+  if (prefs && !isPostInteraction && !prefs.event_updates_enabled) {
+    return NextResponse.json({ ok: true, skipped: "event updates disabled" });
+  }
+
   const { data: tokens } = await supabase
     .from("device_tokens")
     .select("id, token")

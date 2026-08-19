@@ -75,6 +75,9 @@ export interface Database {
           avatar_status: string | null;
           preferences: unknown;
           approval_status: string;
+          push_enabled: boolean;
+          event_updates_enabled: boolean;
+          post_interactions_enabled: boolean;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> &

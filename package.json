@@ -12,7 +12,8 @@
     "process-articles": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/process-articles.ts",
     "check-trends": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/check-trends.ts",
     "backfill-images": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/backfill-images.ts",
-    "backfill-story-embeddings": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/backfill-story-embeddings.ts"
+    "backfill-story-embeddings": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/backfill-story-embeddings.ts",
+    "notify-trending": "npx ts-node --transpile-only --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\",\\\"moduleResolution\\\":\\\"Node10\\\"}\" scripts/notify-trending.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

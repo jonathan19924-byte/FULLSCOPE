@@ -26,6 +26,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { BackButton } from "@/components/shared/back-button";
 import { ProfileEditDialog } from "@/components/settings/profile-edit-dialog";
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
+import { NotificationPreferenceToggle } from "@/components/settings/notification-preference-toggle";
 import { t } from "@/lib/i18n";
 
 const THEME_OPTIONS = [
@@ -101,6 +102,9 @@ export function SettingsPageClient({
     displayName: string | null;
     bio: string | null;
     avatarUrl: string | null;
+    pushEnabled: boolean;
+    eventUpdatesEnabled: boolean;
+    postInteractionsEnabled: boolean;
   } | null;
 }) {
   const { theme, setTheme } = useTheme();
@@ -208,9 +212,37 @@ export function SettingsPageClient({
           {t.settings.notifications}
         </h2>
         <div className="divide-y divide-border/60 rounded-2xl border border-border/60 bg-card">
-          <DisabledToggleRow icon={Bell} title={t.settings.pushNotifications} description={t.settings.pushNotificationsDescription} />
-          <DisabledToggleRow icon={Newspaper} title={t.settings.eventUpdates} description={t.settings.eventUpdatesDescription} />
-          <DisabledToggleRow icon={Heart} title={t.settings.postInteractions} description={t.settings.postInteractionsDescription} />
+          {user && myProfile ? (
+            <>
+              <NotificationPreferenceToggle
+                icon={Bell}
+                title={t.settings.pushNotifications}
+                description={t.settings.pushNotificationsDescription}
+                preferenceKey="push_enabled"
+                defaultChecked={myProfile.pushEnabled}
+              />
+              <NotificationPreferenceToggle
+                icon={Newspaper}
+                title={t.settings.eventUpdates}
+                description={t.settings.eventUpdatesDescription}
+                preferenceKey="event_updates_enabled"
+                defaultChecked={myProfile.eventUpdatesEnabled}
+              />
+              <NotificationPreferenceToggle
+                icon={Heart}
+                title={t.settings.postInteractions}
+                description={t.settings.postInteractionsDescription}
+                preferenceKey="post_interactions_enabled"
+                defaultChecked={myProfile.postInteractionsEnabled}
+              />
+            </>
+          ) : (
+            <>
+              <DisabledToggleRow icon={Bell} title={t.settings.pushNotifications} description={t.settings.pushNotificationsDescription} />
+              <DisabledToggleRow icon={Newspaper} title={t.settings.eventUpdates} description={t.settings.eventUpdatesDescription} />
+              <DisabledToggleRow icon={Heart} title={t.settings.postInteractions} description={t.settings.postInteractionsDescription} />
+            </>
+          )}
         </div>
       </section>
 

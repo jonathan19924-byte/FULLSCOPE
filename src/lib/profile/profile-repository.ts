@@ -21,6 +21,9 @@ export async function getMyProfile(): Promise<{
   approvalStatus: "pending" | "approved" | "rejected";
   followerCount: number;
   followingCount: number;
+  pushEnabled: boolean;
+  eventUpdatesEnabled: boolean;
+  postInteractionsEnabled: boolean;
 } | null> {
   const supabase = await createClient();
   const {
@@ -31,7 +34,9 @@ export async function getMyProfile(): Promise<{
   const [{ data }, { count: followerCount }, { count: followingCount }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("user_id, username, display_name, bio, avatar_url, avatar_status, approval_status")
+      .select(
+        "user_id, username, display_name, bio, avatar_url, avatar_status, approval_status, push_enabled, event_updates_enabled, post_interactions_enabled",
+      )
       .eq("user_id", user.id)
       .maybeSingle(),
     supabase.from("follows").select("id", { count: "exact", head: true }).eq("followee_id", user.id),
@@ -49,6 +54,9 @@ export async function getMyProfile(): Promise<{
     approvalStatus: data.approval_status as "pending" | "approved" | "rejected",
     followerCount: followerCount ?? 0,
     followingCount: followingCount ?? 0,
+    pushEnabled: data.push_enabled,
+    eventUpdatesEnabled: data.event_updates_enabled,
+    postInteractionsEnabled: data.post_interactions_enabled,
   };
 }
 

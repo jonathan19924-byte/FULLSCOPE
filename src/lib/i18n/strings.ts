@@ -279,6 +279,7 @@ export const strings = {
       newFollower: (name: string) => `${name} started following you`,
       postCredited: "Your post shaped a story",
       storyUpdated: "A story you liked was updated",
+      trendingStory: "A story is trending — see what people are saying",
     },
     settings: {
       title: "Settings",
@@ -308,6 +309,7 @@ export const strings = {
       eventUpdatesDescription: "Get alerts when key stories change",
       postInteractions: "Post interactions",
       postInteractionsDescription: "Likes, replies, mentions",
+      couldntUpdatePreference: "Couldn't update setting",
       privacySafety: "Privacy & Safety",
       blockedAccounts: "Blocked accounts",
       blockedAccountsDescription: "Accounts you've blocked",
@@ -762,6 +764,7 @@ export const strings = {
       newFollower: (name: string) => `${name} התחיל/ה לעקוב אחריכם`,
       postCredited: "הפוסט שלכם השפיע על כתבה",
       storyUpdated: "כתבה שאהבתם עודכנה",
+      trendingStory: "כתבה חמה כרגע — ראו מה אומרים עליה",
     },
     settings: {
       title: "הגדרות",
@@ -791,6 +794,7 @@ export const strings = {
       eventUpdatesDescription: "קבלת התראות כשכתבות מרכזיות מתעדכנות",
       postInteractions: "אינטראקציות בפוסטים",
       postInteractionsDescription: "לייקים, תגובות, אזכורים",
+      couldntUpdatePreference: "לא הצלחנו לעדכן את ההגדרה",
       privacySafety: "פרטיות ובטיחות",
       blockedAccounts: "חשבונות חסומים",
       blockedAccountsDescription: "חשבונות שחסמתם",
