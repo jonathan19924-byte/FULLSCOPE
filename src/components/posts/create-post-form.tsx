@@ -6,10 +6,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ImagePlus, X } from "lucide-react";
-import type { StorySummary } from "@/types/domain";
+import type { Category } from "@/types/domain";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
 import { createClient } from "@/lib/supabase/client";
+import { detectRelatedStory } from "@/lib/posts/detect-related-story";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import {
@@ -21,17 +22,17 @@ import {
 
 const MAX_LENGTH = 280;
 
+type RelatedStory = { slug: string; title: string; category: Category };
+
 export function CreatePostForm({
-  stories,
-  lockedStorySlug,
+  lockedStory,
   onPosted,
 }: {
-  stories: Pick<StorySummary, "slug" | "title" | "category">[];
-  /** When set, the story is pre-selected and the "tag a related story"
-   * picker is replaced with a static label — used when this form is opened
-   * from a specific story's page, where the story is already implied by
-   * context rather than something the user should have to re-pick. */
-  lockedStorySlug?: string;
+  /** When set, the story is pre-selected and shown as a static label instead
+   * of running the auto-detect-and-confirm flow below — used when this form
+   * is opened from a specific story's page, where the story is already
+   * implied by context. */
+  lockedStory?: RelatedStory;
   /** Called after a successful post instead of the default redirect to
    * /posts — used when this form is embedded in a dialog (e.g. on a story
    * page) so posting closes the dialog and stays on the current page. */
@@ -42,11 +43,18 @@ export function CreatePostForm({
   const { user } = useUser();
   const { addPost } = usePosts();
   const [content, setContent] = useState("");
-  const [relatedSlug, setRelatedSlug] = useState(lockedStorySlug ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  // Set once a standalone post's content clears the auto-detect check — the
+  // form then shows a confirm step (link it, or keep standalone) instead of
+  // posting immediately. Carries the already-uploaded mediaUrl along so
+  // confirming doesn't re-upload the photo.
+  const [pendingCandidate, setPendingCandidate] = useState<{ candidate: RelatedStory; mediaUrl?: string } | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const remaining = MAX_LENGTH - content.length;
@@ -96,6 +104,38 @@ export function CreatePostForm({
     setPhotoPreviewUrl(null);
   }
 
+  async function finalizePost(relatedStory: RelatedStory | undefined, mediaUrl: string | undefined) {
+    const result = await addPost({
+      content: trimmed,
+      relatedStorySlug: relatedStory?.slug,
+      relatedStoryTitle: relatedStory?.title,
+      relatedStoryCategory: relatedStory?.category,
+      mediaUrl,
+    });
+
+    setIsSubmitting(false);
+    setPendingCandidate(null);
+
+    if ("error" in result) {
+      toast(t.posts.couldntPost, { description: result.error });
+      return;
+    }
+
+    if (result.mediaRejected) {
+      toast(t.posts.photoRejectedToast, { description: t.posts.photoRejectedDescription });
+    } else {
+      toast(t.posts.posted, { description: t.posts.postedDescription });
+    }
+
+    if (onPosted) {
+      setContent("");
+      removePhoto();
+      onPosted();
+    } else {
+      router.push("/posts");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!trimmed || !user) return;
@@ -122,35 +162,26 @@ export function CreatePostForm({
       mediaUrl = supabase.storage.from("post-photos").getPublicUrl(path).data.publicUrl;
     }
 
-    const relatedStory = stories.find((s) => s.slug === relatedSlug);
-    const result = await addPost({
-      content: trimmed,
-      relatedStorySlug: relatedStory?.slug,
-      relatedStoryTitle: relatedStory?.title,
-      relatedStoryCategory: relatedStory?.category,
-      mediaUrl,
-    });
-
-    setIsSubmitting(false);
-
-    if ("error" in result) {
-      toast(t.posts.couldntPost, { description: result.error });
+    if (lockedStory) {
+      await finalizePost(lockedStory, mediaUrl);
       return;
     }
 
-    if (result.mediaRejected) {
-      toast(t.posts.photoRejectedToast, { description: t.posts.photoRejectedDescription });
-    } else {
-      toast(t.posts.posted, { description: t.posts.postedDescription });
+    // Standalone post — check whether it's clearly about a specific story
+    // before posting, so the user can link it instead of it going out
+    // untagged. Best-effort: any failure here just falls through to posting
+    // as standalone, same as if no match were found.
+    setIsDetecting(true);
+    const candidate = await detectRelatedStory(trimmed).catch(() => null);
+    setIsDetecting(false);
+
+    if (candidate) {
+      setPendingCandidate({ candidate, mediaUrl });
+      setIsSubmitting(false);
+      return;
     }
 
-    if (onPosted) {
-      setContent("");
-      removePhoto();
-      onPosted();
-    } else {
-      router.push("/posts");
-    }
+    await finalizePost(undefined, mediaUrl);
   }
 
   return (
@@ -233,40 +264,60 @@ export function CreatePostForm({
         />
       </div>
 
-      {lockedStorySlug ? (
+      {lockedStory ? (
         <p className="text-sm text-muted-foreground">
           {t.story.postingAboutPrefix}
-          <span className="font-medium text-foreground">
-            {stories.find((s) => s.slug === lockedStorySlug)?.title}
-          </span>
+          <span className="font-medium text-foreground">{lockedStory.title}</span>
         </p>
-      ) : (
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-foreground">{t.posts.tagRelatedStory}</span>
-          <select
-            value={relatedSlug}
-            onChange={(e) => setRelatedSlug(e.target.value)}
-            disabled={!user}
-            className="h-12 w-full rounded-xl border border-border bg-background px-3.5 text-[16px] text-foreground outline-none focus-visible:border-foreground/40 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="">{t.posts.noneStandalone}</option>
-            {stories.map((story) => (
-              <option key={story.slug} value={story.slug}>
-                {story.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+      ) : null}
 
-      <Button
-        type="submit"
-        size="lg"
-        disabled={!user || !trimmed || remaining < 0 || isSubmitting}
-        className="h-12 w-full rounded-full"
-      >
-        {isUploadingPhoto ? t.posts.uploadingPhoto : isSubmitting ? t.posts.posting : t.posts.post}
-      </Button>
+      {pendingCandidate ? (
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/40 p-4">
+          <p className="text-sm text-foreground">
+            {t.posts.relatedStorySuggestion(pendingCandidate.candidate.title)}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              className="flex-1 rounded-full"
+              onClick={() => {
+                setIsSubmitting(true);
+                finalizePost(pendingCandidate.candidate, pendingCandidate.mediaUrl);
+              }}
+            >
+              {t.posts.linkToStory}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1 rounded-full"
+              onClick={() => {
+                setIsSubmitting(true);
+                finalizePost(undefined, pendingCandidate.mediaUrl);
+              }}
+            >
+              {t.posts.keepStandalone}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button
+          type="submit"
+          size="lg"
+          disabled={!user || !trimmed || remaining < 0 || isSubmitting || isDetecting}
+          className="h-12 w-full rounded-full"
+        >
+          {isUploadingPhoto
+            ? t.posts.uploadingPhoto
+            : isDetecting
+              ? t.posts.checkingForStory
+              : isSubmitting
+                ? t.posts.posting
+                : t.posts.post}
+        </Button>
+      )}
       <p className="text-center text-xs text-muted-foreground">{t.posts.visibleToEveryone}</p>
     </form>
   );

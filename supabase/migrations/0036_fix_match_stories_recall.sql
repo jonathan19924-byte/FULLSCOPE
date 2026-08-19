@@ -1,0 +1,22 @@
+-- Fixes a recall bug in match_stories (0025_story_embeddings.sql), found
+-- while building the post-composer's auto-detect feature: the ivfflat
+-- index was built with `lists = 100`, appropriate for the "~60 live
+-- stories" scale noted in that migration's own comment, but the corpus
+-- has since grown to ~300+ embedded stories. With pgvector's default
+-- `probes = 1`, a search only scans ~1 of the 100 lists — at ~3 rows/list,
+-- that's only ~3-6 candidates ever considered, regardless of match_count.
+-- This silently degraded the content pipeline's own related-story
+-- detection (findRelatedStory) too — it just always fails open on a weak
+-- candidate set, so nothing ever errored.
+--
+-- Raising ivfflat.probes (the standard fix) turned out to require a
+-- permission Supabase's hosted Postgres doesn't grant here ("permission
+-- denied to set parameter"), same class of restriction as the Vault-vs-
+-- ALTER-DATABASE issue elsewhere in this project. At only ~300-400 rows,
+-- ivfflat's approximation isn't earning its keep anyway — the original
+-- migration's own comment already called this premature. Dropping the
+-- index in favor of an exact sequential scan is simpler, needs no special
+-- permission, and is fully accurate (no approximation at all) up to tens
+-- of thousands of rows, which is where this actually would need to
+-- revisit an ANN index — not a concern at current scale.
+drop index if exists stories_embedding_idx;
