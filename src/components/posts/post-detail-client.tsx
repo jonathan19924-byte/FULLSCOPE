@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronRight, Flag, Heart, MessageCircle, MoreHorizontal, Newspaper, Sparkles, Trash2, UserX } from "lucide-react";
+import { Flag, Heart, MessageCircle, MoreHorizontal, Newspaper, Send, Share2, Sparkles, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,14 +13,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/shared/back-button";
+import { FollowButton } from "@/components/profile/follow-button";
+import { PostBookmarkButton } from "@/components/posts/post-bookmark-button";
 import { ReportDialog } from "@/components/safety/report-dialog";
+import { shareStory } from "@/components/shared/share-button";
 import { formatUpdatedAt, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PostComment } from "@/types/domain";
 import { t } from "@/lib/i18n";
 import { useUser } from "@/components/auth/user-provider";
 import { useBlocks } from "@/lib/safety/blocks-context";
+import { useFollows } from "@/lib/follows/follows-context";
 import { addCommentAction, deleteCommentAction, toggleCommunityPostLikeAction } from "@/lib/posts/actions";
 import type { ReportTargetType } from "@/lib/safety/actions";
 import type { FeedPost } from "@/components/posts/post-feed-card";
@@ -38,6 +42,7 @@ export function PostDetailClient({
 }) {
   const { user } = useUser();
   const { toggleBlock } = useBlocks();
+  const { isFollowing } = useFollows();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -146,13 +151,7 @@ export function PostDetailClient({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pt-6 pb-10">
-      <Link
-        href="/posts"
-        className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ChevronRight className="size-4 rtl:rotate-180" strokeWidth={1.75} />
-        {t.posts.viewAllPosts}
-      </Link>
+      <BackButton ariaLabel={t.posts.viewAllPosts} className="-ms-1.5" />
 
       <div className="flex gap-3">
         {post.authorUsername ? (
@@ -171,25 +170,31 @@ export function PostDetailClient({
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-start gap-1">
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                {post.authorUsername ? (
-                  <Link
-                    href={`/profile/${post.authorUsername}`}
-                    className="text-sm font-medium text-foreground hover:underline"
-                  >
-                    {post.displayName}
-                  </Link>
-                ) : (
-                  <span className="text-sm font-medium text-foreground">{post.displayName}</span>
-                )}
-                {post.authorUsername ? (
-                  <span dir="ltr" className="inline-block text-xs text-muted-foreground">
-                    @{post.authorUsername}
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">{username(post.displayName)}</span>
-                )}
-                <span className="text-xs text-muted-foreground">· {formatUpdatedAt(post.createdAt)}</span>
+              <div className="flex flex-wrap items-center justify-between gap-x-1.5 gap-y-0.5">
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                  {post.authorUsername ? (
+                    <Link
+                      href={`/profile/${post.authorUsername}`}
+                      className="text-sm font-medium text-foreground hover:underline"
+                    >
+                      {post.displayName}
+                    </Link>
+                  ) : (
+                    <span className="text-sm font-medium text-foreground">{post.displayName}</span>
+                  )}
+                  {post.authorUsername ? (
+                    <span dir="ltr" className="inline-block text-xs text-muted-foreground">
+                      @{post.authorUsername}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{username(post.displayName)}</span>
+                  )}
+                  <span className="text-xs text-muted-foreground">· {formatUpdatedAt(post.createdAt)}</span>
+                </div>
+                {isCommunityPost &&
+                  post.authorUserId &&
+                  post.authorUserId !== user?.id &&
+                  !isFollowing(post.authorUserId) && <FollowButton userId={post.authorUserId} />}
               </div>
               <p className="mt-1 text-sm leading-relaxed text-foreground/90">{post.content}</p>
               {post.mediaUrl && (
@@ -249,6 +254,10 @@ export function PostDetailClient({
           </div>
 
           <div className="flex items-center gap-4 pt-0.5 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <MessageCircle className="size-3.5" strokeWidth={1.75} />
+              {commentCount > 0 && commentCount}
+            </span>
             <button
               type="button"
               onClick={toggleLike}
@@ -259,10 +268,15 @@ export function PostDetailClient({
               <Heart className={cn("size-3.5", liked && "fill-destructive text-destructive")} strokeWidth={1.75} />
               {likeCount > 0 && likeCount}
             </button>
-            <span className="flex items-center gap-1">
-              <MessageCircle className="size-3.5" strokeWidth={1.75} />
-              {commentCount > 0 && commentCount}
-            </span>
+            {isCommunityPost && <PostBookmarkButton postId={post.communityPostId!} />}
+            <button
+              type="button"
+              onClick={() => void shareStory({ title: post.displayName, text: post.content, path: `/posts/${post.id}` })}
+              aria-label={t.shared.shareAria(post.displayName)}
+              className="-m-1.5 flex items-center gap-1 rounded-full p-1.5 transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Share2 className="size-3.5" strokeWidth={1.75} />
+            </button>
           </div>
         </div>
       </div>
@@ -312,22 +326,22 @@ export function PostDetailClient({
             </ul>
           )}
 
-          <form onSubmit={handleReply} className="flex flex-col gap-2 border-t border-border/60 pt-3">
-            <textarea
+          <form onSubmit={handleReply} className="flex items-center gap-2 border-t border-border/60 pt-3">
+            <input
+              type="text"
               value={reply}
               onChange={(e) => setReply(e.target.value)}
               placeholder={t.posts.replyPlaceholder}
-              rows={3}
-              className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
+              className="min-w-0 flex-1 rounded-full border border-border bg-background px-3.5 py-2 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
             />
-            <Button
+            <button
               type="submit"
-              size="sm"
               disabled={isSubmittingComment || !reply.trim()}
-              className="self-end rounded-full"
+              aria-label={t.posts.reply}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity disabled:opacity-40"
             >
-              {isSubmittingComment ? t.posts.commenting : t.posts.reply}
-            </Button>
+              <Send className="size-4 rtl:-scale-x-100" strokeWidth={1.75} />
+            </button>
           </form>
         </div>
       )}

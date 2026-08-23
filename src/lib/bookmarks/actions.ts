@@ -37,3 +37,33 @@ export async function toggleBookmarkAction(
   revalidatePath("/profile");
   return { bookmarked: true };
 }
+
+export async function togglePostBookmarkAction(
+  postId: string,
+): Promise<{ bookmarked: boolean } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: t.common.notSignedInError };
+  }
+
+  const { data: existing } = await supabase
+    .from("post_bookmarks")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("post_id", postId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase.from("post_bookmarks").delete().eq("id", existing.id);
+    revalidatePath("/bookmarks");
+    return { bookmarked: false };
+  }
+
+  await supabase.from("post_bookmarks").insert({ user_id: user.id, post_id: postId });
+  revalidatePath("/bookmarks");
+  return { bookmarked: true };
+}

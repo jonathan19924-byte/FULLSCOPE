@@ -7,6 +7,7 @@ import { PendingApprovalScreen } from "@/components/auth/pending-approval-screen
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { createClient } from "@/lib/supabase/server";
 import { getBookmarkedSlugs } from "@/lib/bookmarks/get-bookmarks";
+import { getBookmarkedPostIds } from "@/lib/bookmarks/get-post-bookmarks";
 import { getDislikedSlugs } from "@/lib/dislikes/get-dislikes";
 import { getCommunityPosts } from "@/lib/posts/get-community-posts";
 import { getFollowingIds } from "@/lib/follows/get-following";
@@ -84,6 +85,7 @@ export default async function RootLayout({
   } = await supabase.auth.getUser();
   const [
     initialBookmarkedSlugs,
+    initialBookmarkedPostIds,
     initialDislikedSlugs,
     initialCommunityPosts,
     initialFollowingIds,
@@ -93,6 +95,7 @@ export default async function RootLayout({
     initialUnreadCount,
   ] = await Promise.all([
     user ? getBookmarkedSlugs() : Promise.resolve([]),
+    user ? getBookmarkedPostIds() : Promise.resolve([]),
     user ? getDislikedSlugs() : Promise.resolve([]),
     getCommunityPosts(),
     user ? getFollowingIds() : Promise.resolve([]),
@@ -121,6 +124,7 @@ export default async function RootLayout({
         <Providers
           initialUser={user}
           initialBookmarkedSlugs={initialBookmarkedSlugs}
+          initialBookmarkedPostIds={initialBookmarkedPostIds}
           initialDislikedSlugs={initialDislikedSlugs}
           initialCommunityPosts={initialCommunityPosts}
           initialFollowingIds={initialFollowingIds}

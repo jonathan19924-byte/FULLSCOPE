@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "@/components/auth/user-provider";
 import { BookmarksProvider } from "@/lib/bookmarks/bookmarks-context";
+import { PostBookmarksProvider } from "@/lib/bookmarks/post-bookmarks-context";
 import { DislikesProvider } from "@/lib/dislikes/dislikes-context";
 import { PostsProvider } from "@/lib/posts/posts-context";
 import { FollowsProvider } from "@/lib/follows/follows-context";
@@ -17,6 +18,7 @@ import type { CommunityPost, Notification } from "@/types/domain";
 export function Providers({
   initialUser,
   initialBookmarkedSlugs,
+  initialBookmarkedPostIds,
   initialDislikedSlugs,
   initialCommunityPosts,
   initialFollowingIds,
@@ -29,6 +31,7 @@ export function Providers({
 }: {
   initialUser: User | null;
   initialBookmarkedSlugs: string[];
+  initialBookmarkedPostIds: string[];
   initialDislikedSlugs: string[];
   initialCommunityPosts: CommunityPost[];
   initialFollowingIds: string[];
@@ -44,23 +47,25 @@ export function Providers({
       <TooltipProvider delay={200}>
         <UserProvider initialUser={initialUser}>
           <BookmarksProvider initialSlugs={initialBookmarkedSlugs}>
-            <DislikesProvider initialSlugs={initialDislikedSlugs}>
-              <FollowsProvider initialFollowingIds={initialFollowingIds}>
-                <BlocksProvider initialBlockedIds={initialBlockedIds}>
-                  <PostsProvider initialPosts={initialCommunityPosts} myProfile={myProfile}>
-                    <NotificationsProvider
-                      initialNotifications={initialNotifications}
-                      initialUnreadCount={initialUnreadCount}
-                      signedIn={signedIn}
-                    >
-                      <PushRegistration signedIn={signedIn} />
-                      {children}
-                      <Toaster position="bottom-center" />
-                    </NotificationsProvider>
-                  </PostsProvider>
-                </BlocksProvider>
-              </FollowsProvider>
-            </DislikesProvider>
+            <PostBookmarksProvider initialPostIds={initialBookmarkedPostIds}>
+              <DislikesProvider initialSlugs={initialDislikedSlugs}>
+                <FollowsProvider initialFollowingIds={initialFollowingIds}>
+                  <BlocksProvider initialBlockedIds={initialBlockedIds}>
+                    <PostsProvider initialPosts={initialCommunityPosts} myProfile={myProfile}>
+                      <NotificationsProvider
+                        initialNotifications={initialNotifications}
+                        initialUnreadCount={initialUnreadCount}
+                        signedIn={signedIn}
+                      >
+                        <PushRegistration signedIn={signedIn} />
+                        {children}
+                        <Toaster position="bottom-center" />
+                      </NotificationsProvider>
+                    </PostsProvider>
+                  </BlocksProvider>
+                </FollowsProvider>
+              </DislikesProvider>
+            </PostBookmarksProvider>
           </BookmarksProvider>
         </UserProvider>
       </TooltipProvider>

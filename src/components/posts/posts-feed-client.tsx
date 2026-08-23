@@ -15,6 +15,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
 import { sortByRank } from "@/lib/posts/rank";
+import { communityPostToFeedPost } from "@/lib/posts/to-feed-post";
 
 export function PostsFeedClient({
   seedPosts,
@@ -42,29 +43,7 @@ export function PostsFeedClient({
   }
 
   const feed = useMemo<FeedPost[]>(() => {
-    const fromCommunity: FeedPost[] = communityPosts.map((p) => ({
-      id: p.id,
-      displayName: p.displayName,
-      authorUsername: p.username,
-      authorUserId: p.userId,
-      authorAvatarUrl: p.authorAvatarUrl,
-      content: p.content,
-      createdAt: p.createdAt,
-      likeCount: p.likeCount,
-      replyCount: p.commentCount,
-      story:
-        p.relatedStorySlug && p.relatedStoryTitle && p.relatedStoryCategory
-          ? {
-              slug: p.relatedStorySlug,
-              title: p.relatedStoryTitle,
-              category: p.relatedStoryCategory,
-            }
-          : undefined,
-      contributionTheme: p.contributionTheme,
-      communityPostId: p.id,
-      likedByMe: p.likedByMe,
-      mediaUrl: p.mediaUrl,
-    }));
+    const fromCommunity: FeedPost[] = communityPosts.map(communityPostToFeedPost);
 
     const fromSeed: FeedPost[] = seedPosts.map((p) => ({
       id: p.id,

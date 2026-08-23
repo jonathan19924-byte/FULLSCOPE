@@ -202,6 +202,18 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["community_post_likes"]["Row"]>;
         Relationships: [];
       };
+      post_bookmarks: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["post_bookmarks"]["Row"]> &
+          Pick<Database["public"]["Tables"]["post_bookmarks"]["Row"], "post_id" | "user_id">;
+        Update: Partial<Database["public"]["Tables"]["post_bookmarks"]["Row"]>;
+        Relationships: [];
+      };
       community_post_comments: {
         Row: {
           id: string;
