@@ -18,7 +18,7 @@ The mechanism that makes this a real product feature, not just a claim:
 - **A story needs 2+ independent sources before it's allowed to exist at all.** One outlet's report is never a "story" on its own.
 - **A story also needs a genuine, substantive dispute — not manufactured controversy.** A routine arrest or an uncontested final score doesn't get forced into a fake "two sides" format. This applies across every topic (politics, business, sports, science), not just politics.
 - **Perspectives are named by the stance, not the tribe.** "Restraint and de-escalation," not "the left." This is the actual neutrality lever — a group label is inherently more loaded than an argument label.
-- **Stories are alive, not static.** When new reporting comes in, it gets folded into the existing story (a visible "How this story developed" history) instead of spawning a disconnected duplicate. When several distinct readers independently make the same valid point, it gets folded into the story too, with credit.
+- **Stories are alive, not static.** When new reporting comes in, it gets folded into the existing story (a visible "How this story developed" history) instead of spawning a disconnected duplicate. When several distinct readers independently make the same valid point, it gets folded into the story too, with credit. Individual reader posts get classified onto the side they actually lean toward and show up in that side's own reactions — real reader sentiment, not just seeded/placeholder examples.
 
 ## 3. Who it's for
 
@@ -31,10 +31,10 @@ Everything below exists and works in the current app — useful for knowing what
 - **Two-sided story pages**: neutral summary, factual "what happened," an expandable timeline with per-fact confidence ratings (confirmed/reported/disputed/unknown), two full named perspectives with their own claims, a "why they differ" explainer, a sources list.
 - **"Developing" and "Updated" indicators** — a story actively unfolding right now (updated within the last ~6 hours) is visually flagged differently from one that was merely touched at some point in the last two days, so a reader following breaking news can tell the difference at a glance.
 - **"How this story developed"** — a visible, timestamped history of every real update to a story (new coverage folded in, or a reader-driven point credited), including highlighting for a returning reader of what's new since their last visit.
-- **A community layer**: real reader posts (with optional photos), likes, threaded comments, following other readers, a personal "Your Impact" record of posts that actually shaped a story.
+- **A community layer**: real reader posts (with optional photos), each with its own shareable page, likes, threaded comments/replies, a save-for-later bookmark, share, following other readers, a personal "Your Impact" record of posts that actually shaped a story.
 - **Push notifications** now exist and reach the lock screen — likes, comments, new followers, a bookmarked story getting a real update, and a twice-daily "trending story" alert. Each reader controls their own push preferences (a master on/off switch, plus separate toggles for social interactions vs. story-update alerts).
-- **Bookmarks, search, category browsing** (9 categories: Politics, Security & Defense, Law & Courts, Crime & Safety, World, Business & Economy, Technology, Science, Society & Religion), a "Trending now" module ranked by real 24h engagement, an archive/History tab for stories that aged out of the live feed.
-- **Post directly from a story you're reading** — not just from a separate "Create" tab.
+- **Bookmarks** (both saved stories and saved posts, in separate tabs), **search, category browsing** (9 categories: Politics, Security & Defense, Law & Courts, Crime & Safety, World, Business & Economy, Technology, Science, Society & Religion), a "Trending now" module ranked by real 24h engagement, an archive/History tab for stories that aged out of the live feed.
+- **Post directly from a story you're reading** — not just from a separate "Create" tab, including a persistent floating compose button so it's always reachable without scrolling.
 - **Full account safety/compliance layer**: self-service account deletion, blocking, reporting, a privacy policy page.
 - **Automated content moderation** — abuse/harassment/spam is filtered out; strong opinions and disagreement are explicitly left alone (moderation targets abuse, not viewpoint).
 - **Light/dark/system theme**, installable as a native iOS app.
@@ -51,7 +51,7 @@ Everything below exists and works in the current app — useful for knowing what
 - **Name**: FullScope. **Tagline** (Hebrew): "להבין את הסיפור, לא רק את הכותרת" — "Understand the story, not just the headline."
 - **Visual mark**: a two-circle "twin lens" symbol (two overlapping circles), evoking dual perspective/viewpoint literally.
 - **Palette**: dark-mode-first, a warm gold accent color (used for "trending"/premium signals), cool-vs-warm neutral gray pairing specifically for the two perspective sides (deliberately equal visual weight — neither side is ever the "brighter" or more prominent color).
-- **Typography**: an editorial serif for headlines (Frank Ruhl Libre in Hebrew mode) paired with a clean sans body font (Heebo) — a "real publication," not "tech startup," typographic feel.
+- **Typography**: one clean sans font (Heebo) for both headlines and body in Hebrew mode — a headline serif (Frank Ruhl Libre) was tried and dropped after readers found it hard to read, so the "real publication" feel currently comes from layout and restraint rather than a serif/sans pairing.
 - **Tone implied by the product itself**: calm, structural neutrality — the app's own design goes out of its way to avoid visually favoring one side (equal card weight, equal claim counts, mechanically randomized which side displays first). Marketing tone should probably match: confident about the *format* being fair, not strident or political in either direction.
 
 ## 7. Where things stand right now

@@ -44,7 +44,7 @@ The main landing page — FullScope wordmark/tagline, a live stats row (story/ca
 The reusable card/row shown across lists. Full variant: cover photo (or category-tinted icon placeholder), category chip, status badges ("Top Story" on the featured card, "Developing" for a story actively updating within ~6h, "Updated" for one touched within ~48h, "Added today" if generated the same calendar day in Israel time), title, summary, a perspective split-bar, a like toggle, publish/reading time. Compact variant (used in feed/history/bookmark lists): a smaller row with an 92px thumbnail and a dot-only "Developing" indicator to avoid adding text bulk.
 
 **Story page** (`src/app/story/[slug]/page.tsx`)
-The full reading experience — hero image/banner with title, "Developing" badge if applicable, like/dislike/share/map buttons; a reading-progress bar; "What happened" (neutral factual summary, occasionally with brief woven-in background context); an expandable, confidence-tagged timeline; the two named perspectives with supporting claims (collapsible); "Why they differ"; "How this story developed" (with "New" highlighting for entries since the reader's last visit); a reactions feed (seeded AI posts split by perspective); real community posts related to this story, with a "Write a post" button that opens the composer with this story pre-tagged; a collapsible source list; related stories.
+The full reading experience — hero image/banner with title, "Developing" badge if applicable, like/dislike/share/map buttons; a reading-progress bar; "What happened" (neutral factual summary, occasionally with brief woven-in background context); an expandable, confidence-tagged timeline; the two named perspectives with supporting claims (collapsible); "Why they differ"; "How this story developed" (with "New" highlighting for entries since the reader's last visit, and collapsed to the 5 most recent once there are more, with a "show more" toggle); a reactions feed split by perspective — seeded AI posts plus real community posts, once a real post is classified (see below) as leaning toward one side; real community posts related to this story in a flat "From readers" list, with a "Write a post" button that opens the composer with this story pre-tagged; a persistent floating "+" button, pinned above the tab bar for the whole time the reader is on the page, offering the same composer without needing to scroll down; a collapsible source list; related stories.
 Implemented in: `src/app/story/[slug]/page.tsx` and `src/components/story/*`.
 
 **"View on map"** — stories genuinely tied to one specific place (extracted at generation time) get a map-pin button in the hero that deep-links to a Google Maps search by name. Most stories (national policy, elections, court rulings) don't qualify and don't show it.
@@ -58,18 +58,20 @@ Top-3 rail ranked by real post activity in the last 24 hours (not lifetime count
 
 **History** — stories archived (not deleted) after aging out of the 60-story live cap, or consolidated as a duplicate. Posts, likes, and reader contributions stay fully intact; a story's own page is still directly viewable. New reporting on an archived story automatically revives it back into the live feed.
 
-**Bookmarks** — the signed-in reader's saved stories, embedded in the home tab bar and also available at `/bookmarks`. Requires sign-in.
+**Bookmarks** — the signed-in reader's saved stories and saved posts, embedded in the home tab bar and also available at `/bookmarks`, with a Stories/Posts tab toggle. Requires sign-in. Post bookmarks are a separate mechanism from story bookmarks (see §5) — the existing story-bookmark table is user-facing "Like," unrelated to saving a specific post for later.
 
 ### 3.3 Search (`/search`)
 Free-text search across every story's title, summary, category, full body, and source names, plus a separate "People" tab to find other readers by name/username.
 
-### 3.4 Posts (`/posts`, `src/components/posts/*`)
-A combined feed of AI-seeded reaction posts and real reader posts (optionally with a photo, moderated), optionally filtered to one story or to an "All"/"Following" toggle. Ranked by a time-decayed score so a good post surfaces without stale high-like-count posts burying everything newer. Each real post supports: like (persisted, one-per-user), threaded comments, and a "⋯" menu to report the post/comment or block its author. Replies to individual posts (distinct from comments) are a UI stub only — no backend exists for that specific interaction.
+### 3.4 Posts (`/posts`, `/posts/[id]`, `src/components/posts/*`)
+A combined feed of AI-seeded reaction posts and real reader posts (optionally with a photo, moderated), optionally filtered to one story or to an "All"/"Following" toggle. Ranked by a time-decayed score so a good post surfaces without stale high-like-count posts burying everything newer. Tapping a post navigates to its own page at `/posts/[id]` (server-rendered, shareable) rather than opening an in-feed dialog. Each real post supports: like (persisted, one-per-user), threaded comments/replies (persisted), a bookmark/save toggle, share (native share sheet, clipboard fallback), and a "⋯" menu to report the post/comment or block its author. The post detail page also shows a Follow button next to the author's name when the reader doesn't already follow them.
 
 ### 3.5 Create (`/create`, and directly from any story page)
 A signed-in reader can write a post (280-char limit, optional photo). Two ways a post ends up tagged to a story:
 - **Directly from a story page** — the composer opens in a dialog with that story already locked in (no picker shown), and posting keeps you on the page.
 - **From the standalone Create tab** — no manual story picker exists here anymore. On submit, the post's text is embedded (Voyage AI) and checked for a confident match against existing stories (`match_stories` similarity search, judged by a quick Claude call); if a match is found, the reader is asked to confirm linking it before the post is created. No confident match → posts immediately as standalone, no added friction. Fails open on any error (embedding/API failure just posts as standalone, same as no match found).
+
+Once a post's story link is settled (either way above), and before it's created, a second Claude call classifies which of the story's two perspectives the post leans toward. A confident result tags it silently. A genuinely unclear result (neutral, acknowledges both sides, or off-topic) shows an inline confirm step with the two perspective titles as choices, plus a "not sure / general" option — never forced into a side. Untagged posts still post normally; they just don't get a slot in the story's perspective-tabbed reactions feed (see §3.1). Also fails open: a classification error just leaves the post untagged.
 
 Rate-limited server-side (10 posts / rolling 10 minutes).
 
@@ -151,11 +153,11 @@ Full light/dark/system support via `next-themes`. In practice the app has mostly
 
 ## 5. Data Model
 
-All tables are Postgres/Supabase with Row Level Security enabled. 36 migrations as of this writing (`supabase/migrations/`). Rather than reproduce every column (see the migrations directly for exact schema), the tables in play by area:
+All tables are Postgres/Supabase with Row Level Security enabled. 39 migrations as of this writing (`supabase/migrations/`). Rather than reproduce every column (see the migrations directly for exact schema), the tables in play by area:
 
 - **Content**: `stories`, `posts` (AI-seeded reactions), `story_updates` (the "How this story developed" log), `raw_articles`/`pipeline_runs` (backend-only pipeline staging/audit, never exposed to clients).
-- **Community**: `community_posts`, `community_post_likes`, `community_post_comments`, `post_contributions` (what a reader-trend update changed and which posts drove it).
-- **Social**: `follows`, `bookmarks`, `story_dislikes`.
+- **Community**: `community_posts` (includes a nullable `perspective` column — `'A'`/`'B'`/null, see §3.5), `community_post_likes`, `community_post_comments`, `post_contributions` (what a reader-trend update changed and which posts drove it), `post_bookmarks` (a reader's saved posts — separate from `bookmarks` below).
+- **Social**: `follows`, `bookmarks` (story bookmarks, user-facing as "Like"), `story_dislikes`.
 - **Safety/compliance**: `user_blocks`, `content_reports`, `profiles.approval_status` (now always `approved` on signup — see §1).
 - **Notifications & analytics**: `notifications` (6 types — see §3.7), `device_tokens` (one row per registered device, not per user), `profiles.push_enabled`/`event_updates_enabled`/`post_interactions_enabled` (per-user push preferences, default true), `page_views` (insert-only from any client; a narrow policy lets a user read back their *own* rows, used to compute "new since last visit").
 - **Search infra**: `stories.embedding` (pgvector) for similarity-based related-story matching (also powers the Create composer's auto-detect — see §3.5), `stories.engagement_notified_at` (cooldown tracking for the trending-story broadcast — see §3.7).
@@ -181,7 +183,6 @@ All under `src/app/api/`, all gated by `CRON_SECRET` where relevant (cron routes
 ## 7. Known Limitations / Not Yet Built
 
 - **No Android app.** iOS only.
-- **Post replies (distinct from comments) are not persisted** — a UI stub shows a "coming soon" toast.
 - **No profile photo upload** — every avatar is a colored-circle initial.
 - **No desktop-optimized layout** — mobile-first and in practice mobile-only; a desktop visitor gets the same narrow column, not a real wide-screen design.
 - **No in-app admin UI for content reports** — reviewed directly via the Supabase dashboard.
