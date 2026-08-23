@@ -85,7 +85,7 @@ Six notification kinds, all sharing one in-app list (polled, not realtime) and o
 - **Someone likes your post**, **comments on it**, or **follows you** — the three interactive/social kinds.
 - **Your post gets credited into a story** via the trend-detection mechanism.
 - **A story you liked (bookmarked) gets a trend update** — fires only on a genuine content update (not a routine coverage merge), fanned out to everyone who bookmarked that story.
-- **A trending story** — picked automatically twice daily (GitHub Actions, `notify-trending`) from the most-discussed story of the last 24h, with a minimum-activity threshold and a 48h cooldown so the same story isn't repicked every run; sent to every approved user.
+- **A trending story** — picked automatically 4x daily (GitHub Actions, `notify-trending`, 09:40/12:40/16:40/19:40 UTC) from the most-discussed story of the last 24h, with a minimum-activity threshold and a 48h cooldown so the same story isn't repicked every run; sent to every approved user.
 
 Deliberately excludes dislikes (that signal is private) and self-actions. **Real per-user push preferences** exist (`Settings → Notifications`): a master push kill-switch, plus separate toggles for "event updates" (story credited/updated/trending) and "post interactions" (likes/comments/follows) — these only gate the *push* send; the in-app notification row is always created regardless, so nothing is ever silently lost, only the phone alert is suppressed. All defaults are on.
 
@@ -229,12 +229,12 @@ npm run process-articles             # Stage 2: cluster + generate/update storie
 npm run check-trends                 # Stage 3: moderate posts/comments + fold in reader trends
 npm run backfill-images              # maintenance: catch up missing story photos
 npm run backfill-story-embeddings    # one-time: embed existing stories for similarity search
-npm run notify-trending              # twice-daily: picks + notifies the most-discussed story (see §3.7)
+npm run notify-trending              # 4x daily: picks + notifies the most-discussed story (see §3.7)
 ```
 
 ### Production deployment topology
 
 - **App + 2 crons** (`fetch-rss`, `check-pipeline-health`, both daily) run on **Vercel**.
-- **3 higher-frequency crons** (`process-articles` every 3h, `check-trends` every 2h, `notify-trending` twice daily) run on **GitHub Actions**, since Vercel Hobby only supports daily cron frequency and a full pipeline run exceeds its serverless timeout.
+- **3 higher-frequency crons** (`process-articles` every 3h, `check-trends` every 2h, `notify-trending` 4x daily) run on **GitHub Actions**, since Vercel Hobby only supports daily cron frequency and a full pipeline run exceeds its serverless timeout.
 - The **native iOS app** loads the same Vercel-hosted production URL directly — no separate native deployment pipeline.
 - Both surfaces read from and write to the **same Supabase project** — no separate staging database.

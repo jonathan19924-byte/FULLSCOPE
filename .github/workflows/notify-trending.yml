@@ -1,13 +1,19 @@
 name: Notify Trending Story
 
-# Twice a day: picks the most-discussed story of the last 24h and notifies
-# every approved user, if it clears a minimum activity bar and hasn't been
-# picked again too recently — see src/lib/articles/trending-notifications.ts.
+# Four times a day: picks the most-discussed story of the last 24h and
+# notifies every approved user, if it clears a minimum activity bar and
+# hasn't been picked again too recently — see
+# src/lib/articles/trending-notifications.ts. The 48h per-story cooldown
+# there (not this schedule) is what stops the same story from being
+# re-picked on back-to-back runs.
+# Off the top of the hour on purpose, same reasoning as the other workflows
+# in this repo (process-articles.yml, check-trends.yml) — GitHub's own docs
+# warn exact-hour schedules are more likely to be delayed or dropped.
 # Runs on GitHub Actions rather than Vercel cron for the same reason as
 # check-trends.yml (Vercel Hobby plan only supports daily frequency).
 on:
   schedule:
-    - cron: "40 12,19 * * *"
+    - cron: "40 9,12,16,19 * * *"
   workflow_dispatch: {}
 
 jobs:

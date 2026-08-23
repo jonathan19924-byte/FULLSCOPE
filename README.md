@@ -42,10 +42,10 @@ npm run process-articles   # Stage 2: cluster + generate/update stories
 npm run check-trends       # Stage 3: moderate posts + fold in reader trends
 npm run backfill-images    # maintenance: catch up missing story photos only
 npm run backfill-story-embeddings  # one-time: embed existing stories for similarity search
-npm run notify-trending    # twice-daily: notifies users about the most-discussed story
+npm run notify-trending    # 4x daily: notifies users about the most-discussed story
 ```
 
-In production, `fetch-rss` and a pipeline health-check run on Vercel cron (daily); `process-articles` (every 3h), `check-trends` (every 2h), and `notify-trending` (twice daily) run on GitHub Actions, since Vercel's Hobby plan only supports daily cron frequency and a full pipeline run exceeds its serverless timeout.
+In production, `fetch-rss` and a pipeline health-check run on Vercel cron (daily); `process-articles` (every 3h), `check-trends` (every 2h), and `notify-trending` (4x daily) run on GitHub Actions, since Vercel's Hobby plan only supports daily cron frequency and a full pipeline run exceeds its serverless timeout.
 
 A static English seed set (`fullscope-seed-july23.md`, parsed by `scripts/parse-seed.mjs` into `src/lib/data/*.json`) still exists and is merged in — but only when `NEXT_PUBLIC_LOCALE` is *not* `he`. In the current Hebrew configuration, every story on the site is real, pipeline-generated content.
 

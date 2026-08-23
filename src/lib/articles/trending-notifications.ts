@@ -32,7 +32,7 @@ export type TrendingNotifyResult =
  * signal already shown to users client-side in most-discussed.tsx: recent
  * community-post count) and, if it clears a minimum activity bar and
  * hasn't been picked again too recently, notifies every approved user.
- * Run twice daily via scripts/notify-trending.ts — capped at that
+ * Run 4x daily via scripts/notify-trending.ts — capped at that
  * frequency by the cron schedule itself, not by extra rate-limit state.
  */
 export async function notifyTrendingStory(): Promise<TrendingNotifyResult> {
