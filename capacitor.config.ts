@@ -23,6 +23,15 @@ const config: CapacitorConfig = {
         twitter: false,
       },
     },
+    // Without this, iOS shows nothing at all (no banner, no sound) for a
+    // push that arrives while the app is open — Capacitor's own default is
+    // to swallow it silently and only fire the JS "pushNotificationReceived"
+    // event, which nothing in this app currently listens for. Confirmed via
+    // a real device test: identical push showed correctly once backgrounded,
+    // showed nothing while foregrounded, before this config existed.
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
   },
 };
 
