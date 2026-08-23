@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FollowListPageClient } from "@/components/profile/follow-list-page-client";
+import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { getMyProfile, getFollowers } from "@/lib/profile/profile-repository";
 import { t } from "@/lib/i18n";
 
@@ -10,11 +11,13 @@ export default async function MyFollowersPage() {
   const followers = myProfile ? await getFollowers(myProfile.userId) : [];
 
   return (
-    <FollowListPageClient
-      title={t.profile.followersPageTitle}
-      people={followers}
-      emptyTitle={t.profile.noFollowersTitle}
-      emptyDescription={t.profile.noFollowersDescription}
-    />
+    <PullToRefresh>
+      <FollowListPageClient
+        title={t.profile.followersPageTitle}
+        people={followers}
+        emptyTitle={t.profile.noFollowersTitle}
+        emptyDescription={t.profile.noFollowersDescription}
+      />
+    </PullToRefresh>
   );
 }

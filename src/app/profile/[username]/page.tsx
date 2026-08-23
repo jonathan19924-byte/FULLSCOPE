@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProfileByUsername } from "@/lib/profile/profile-repository";
 import { PublicProfilePageClient } from "@/components/profile/public-profile-page-client";
+import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 
 export async function generateMetadata({
   params,
@@ -22,5 +23,9 @@ export default async function PublicProfilePage({
   const profile = await getProfileByUsername(username);
   if (!profile) notFound();
 
-  return <PublicProfilePageClient profile={profile} />;
+  return (
+    <PullToRefresh>
+      <PublicProfilePageClient profile={profile} />
+    </PullToRefresh>
+  );
 }

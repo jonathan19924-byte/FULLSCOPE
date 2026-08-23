@@ -21,6 +21,7 @@ import { CommunityPosts } from "@/components/story/community-posts";
 import { SourcesList } from "@/components/story/sources-list";
 import { RelatedStories } from "@/components/story/related-stories";
 import { Separator } from "@/components/ui/separator";
+import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { t } from "@/lib/i18n";
 
 /** This route always renders dynamically anyway (the root layout reads
@@ -68,27 +69,29 @@ export default async function StoryPage({
   const isDeveloping = allStories.find((s) => s.id === story.id)?.isDeveloping ?? false;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-4 pt-6 pb-10">
-      <ReadingProgress />
-      <StoryHero story={story} isDeveloping={isDeveloping} />
-      <Separator />
-      <WhatHappened text={story.whatHappened} />
-      <Timeline facts={story.timeline} />
-      <PerspectiveBar perspectiveA={summary.perspectiveA} perspectiveB={summary.perspectiveB} />
-      <Perspectives perspectiveA={story.perspectiveA} perspectiveB={story.perspectiveB} />
-      <KeyDifferences cause={story.keyDifferencesCause} impact={story.keyDifferencesImpact} />
-      <StoryUpdates updates={updates} lastViewedAt={lastViewedAt} />
-      {story.posts.length > 0 && <Separator />}
-      <ReactionsFeed
-        posts={story.posts}
-        perspectiveAName={story.perspectiveA.name}
-        perspectiveBName={story.perspectiveB.name}
-        storySlug={story.slug}
-      />
-      <CommunityPosts story={{ slug: story.slug, title: story.title, category: story.category }} />
-      <SourcesList sources={story.sources} />
-      <Separator />
-      <RelatedStories stories={related} />
-    </div>
+    <PullToRefresh>
+      <div className="mx-auto flex max-w-2xl flex-col gap-8 px-4 pt-6 pb-10">
+        <ReadingProgress />
+        <StoryHero story={story} isDeveloping={isDeveloping} />
+        <Separator />
+        <WhatHappened text={story.whatHappened} />
+        <Timeline facts={story.timeline} />
+        <PerspectiveBar perspectiveA={summary.perspectiveA} perspectiveB={summary.perspectiveB} />
+        <Perspectives perspectiveA={story.perspectiveA} perspectiveB={story.perspectiveB} />
+        <KeyDifferences cause={story.keyDifferencesCause} impact={story.keyDifferencesImpact} />
+        <StoryUpdates updates={updates} lastViewedAt={lastViewedAt} />
+        {story.posts.length > 0 && <Separator />}
+        <ReactionsFeed
+          posts={story.posts}
+          perspectiveAName={story.perspectiveA.name}
+          perspectiveBName={story.perspectiveB.name}
+          storySlug={story.slug}
+        />
+        <CommunityPosts story={{ slug: story.slug, title: story.title, category: story.category }} />
+        <SourcesList sources={story.sources} />
+        <Separator />
+        <RelatedStories stories={related} />
+      </div>
+    </PullToRefresh>
   );
 }

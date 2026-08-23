@@ -1,7 +1,13 @@
-import { TrendingUp, GitMerge, Newspaper } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { TrendingUp, GitMerge, Newspaper, ChevronDown } from "lucide-react";
 import type { StoryUpdate } from "@/lib/services/get-story-updates";
 import { formatUpdatedAt } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
+
+const COLLAPSED_COUNT = 5;
 
 export function StoryUpdates({
   updates,
@@ -14,15 +20,32 @@ export function StoryUpdates({
    * that reader anyway. */
   lastViewedAt?: string | null;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   if (updates.length === 0) return null;
+
+  const hiddenCount = updates.length - COLLAPSED_COUNT;
+  const visibleUpdates = expanded || hiddenCount <= 0 ? updates : updates.slice(-COLLAPSED_COUNT);
 
   return (
     <section aria-labelledby="story-updates-heading" className="flex flex-col gap-3">
       <h2 id="story-updates-heading" className="font-serif text-lg font-semibold text-foreground">
         {t.story.howThisDeveloped}
       </h2>
+
+      {hiddenCount > 0 && !expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="flex w-fit items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDown className="size-3.5" strokeWidth={1.75} />
+          {t.story.showEarlierUpdates(hiddenCount)}
+        </button>
+      )}
+
       <ol className="flex flex-col gap-3">
-        {updates.map((update) => {
+        {visibleUpdates.map((update) => {
           const Icon =
             update.updateType === "trend" ? TrendingUp : update.updateType === "merge" ? GitMerge : Newspaper;
           const prefix =
@@ -55,6 +78,17 @@ export function StoryUpdates({
           );
         })}
       </ol>
+
+      {expanded && hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="flex w-fit items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDown className={cn("size-3.5 rotate-180")} strokeWidth={1.75} />
+          {t.story.hideEarlierUpdates}
+        </button>
+      )}
     </section>
   );
 }

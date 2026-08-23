@@ -4,32 +4,23 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Flag, Heart, MessageCircle, MoreHorizontal, Newspaper, Sparkles, Trash2, UserX } from "lucide-react";
+import { Flag, Heart, MessageCircle, MoreHorizontal, Newspaper, Sparkles, UserX } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { ReportDialog } from "@/components/safety/report-dialog";
 import { formatUpdatedAt, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Category, PostComment } from "@/types/domain";
+import type { Category } from "@/types/domain";
 import { t } from "@/lib/i18n";
 import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
 import { useBlocks } from "@/lib/safety/blocks-context";
-import { addCommentAction, deleteCommentAction, getPostCommentsAction } from "@/lib/posts/actions";
 import type { ReportTargetType } from "@/lib/safety/actions";
 
 function username(name: string) {
@@ -78,7 +69,6 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
   const isCommunityPost = post.communityPostId !== undefined;
   const [localLiked, setLocalLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(post.likeCount);
-  const [reply, setReply] = useState("");
   const [reportTarget, setReportTarget] = useState<{ type: ReportTargetType; id: string } | null>(null);
 
   function requireSignIn(message: string) {
@@ -106,17 +96,8 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
     });
   }
 
-  // Comments are fetched on demand (first time the dialog opens) rather
-  // than bundled into the main feed payload — see getPostComments.
-  const [comments, setComments] = useState<PostComment[]>([]);
-  const [commentsLoaded, setCommentsLoaded] = useState(false);
-  const [commentsLoading, setCommentsLoading] = useState(false);
-  const [commentCount, setCommentCount] = useState(post.replyCount);
-  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-
   const liked = isCommunityPost ? (post.likedByMe ?? false) : localLiked;
   const likeCount = isCommunityPost ? post.likeCount : localLikeCount;
-  const visibleCommentCount = isCommunityPost ? commentCount : post.replyCount;
 
   function toggleLike() {
     if (isCommunityPost) {
@@ -131,53 +112,6 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
 
     setLocalLiked((v) => !v);
     setLocalLikeCount((c) => (localLiked ? c - 1 : c + 1));
-  }
-
-  async function handleDialogOpenChange(open: boolean) {
-    if (!open || !isCommunityPost || commentsLoaded) return;
-    setCommentsLoading(true);
-    const result = await getPostCommentsAction(post.communityPostId!);
-    setComments(result);
-    setCommentsLoaded(true);
-    setCommentsLoading(false);
-  }
-
-  // Only rendered/reachable for real community posts (see the form's
-  // isCommunityPost guard below) — a seeded/AI post has no real thread to
-  // reply into, so there's nothing to reply to there.
-  async function handleReply(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = reply.trim();
-    if (!trimmed) return;
-
-    if (!user) {
-      toast(t.shared.signInToComment);
-      router.push(`/sign-in?next=${encodeURIComponent(pathname)}`);
-      return;
-    }
-
-    setIsSubmittingComment(true);
-    const result = await addCommentAction(post.communityPostId!, trimmed);
-    setIsSubmittingComment(false);
-
-    if ("error" in result) {
-      toast(t.posts.couldntComment, { description: result.error });
-      return;
-    }
-
-    setComments((current) => [...current, result.comment]);
-    setCommentCount((c) => c + 1);
-    setReply("");
-  }
-
-  async function handleDeleteComment(commentId: string) {
-    const result = await deleteCommentAction(commentId);
-    if ("error" in result) {
-      toast(t.posts.couldntComment, { description: result.error });
-      return;
-    }
-    setComments((current) => current.filter((c) => c.id !== commentId));
-    setCommentCount((c) => Math.max(0, c - 1));
   }
 
   const avatarEl = (
@@ -197,9 +131,17 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-start gap-1">
-          <Dialog onOpenChange={handleDialogOpenChange}>
-          <DialogTrigger
-            render={<div className="min-w-0 flex-1 cursor-pointer text-start" />}
+          <div
+            role="link"
+            tabIndex={0}
+            onClick={() => router.push(`/posts/${post.id}`)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                router.push(`/posts/${post.id}`);
+              }
+            }}
+            className="min-w-0 flex-1 cursor-pointer text-start"
           >
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
               {post.authorUsername ? (
@@ -251,139 +193,33 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
                 {t.story.shapedThisStory}
               </span>
             )}
-          </DialogTrigger>
+          </div>
 
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t.posts.postDialogTitle}</DialogTitle>
-            </DialogHeader>
-            <div className="flex gap-3">
-              <Avatar size="sm">
-                {post.authorAvatarUrl && <AvatarImage src={post.authorAvatarUrl} alt="" />}
-                <AvatarFallback>{initials(post.displayName)}</AvatarFallback>
-              </Avatar>
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                  <span className="text-sm font-medium text-foreground">{post.displayName}</span>
-                  {post.authorUsername ? (
-                    <span dir="ltr" className="inline-block text-xs text-muted-foreground">
-                      @{post.authorUsername}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">{username(post.displayName)}</span>
-                  )}
-                </div>
-                <p className="text-sm leading-relaxed text-foreground/90">{post.content}</p>
-                {post.story && (
-                  <Link
-                    href={`/story/${post.story.slug}`}
-                    className="mt-1 flex w-fit items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
-                  >
-                    <Newspaper className="size-3 shrink-0" strokeWidth={1.75} />
-                    {t.posts.seeRelatedStory}
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {isCommunityPost && (
-              <div className="flex max-h-64 flex-col gap-3 overflow-y-auto border-t border-border/60 pt-3">
-                {commentsLoading ? (
-                  <p className="text-xs text-muted-foreground">{t.posts.loadingComments}</p>
-                ) : comments.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">{t.posts.noCommentsYet}</p>
-                ) : (
-                  <ul className="flex flex-col gap-3">
-                    {comments.map((comment) => (
-                      <li key={comment.id} className="flex gap-2">
-                        <Avatar size="sm">
-                          {comment.avatarUrl && <AvatarImage src={comment.avatarUrl} alt="" />}
-                          <AvatarFallback>{initials(comment.displayName)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-medium text-foreground">
-                              {comment.displayName}
-                            </span>
-                            <span className="text-[11px] text-muted-foreground">
-                              · {formatUpdatedAt(comment.createdAt)}
-                            </span>
-                            {user?.id === comment.userId ? (
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteComment(comment.id)}
-                                aria-label={t.posts.deleteCommentAria}
-                                className="ms-auto text-muted-foreground hover:text-destructive"
-                              >
-                                <Trash2 className="size-3" strokeWidth={1.75} />
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleReport("comment", comment.id)}
-                                aria-label={t.safety.reportComment}
-                                className="ms-auto text-muted-foreground hover:text-foreground"
-                              >
-                                <Flag className="size-3" strokeWidth={1.75} />
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-sm text-foreground/90">{comment.content}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-
-            {isCommunityPost && (
-              <form onSubmit={handleReply} className="flex flex-col gap-2 border-t border-border/60 pt-3">
-                <textarea
-                  value={reply}
-                  onChange={(e) => setReply(e.target.value)}
-                  placeholder={t.posts.replyPlaceholder}
-                  rows={3}
-                  className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-[16px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-foreground/40"
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isSubmittingComment || !reply.trim()}
-                  className="self-end rounded-full"
-                >
-                  {isSubmittingComment ? t.posts.commenting : t.posts.reply}
-                </Button>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {isCommunityPost && post.authorUserId && post.authorUserId !== user?.id && (
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              aria-label={t.safety.moreOptionsAria}
-              render={
-                <button
-                  type="button"
-                  className="shrink-0 rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                />
-              }
-            >
-              <MoreHorizontal className="size-4" strokeWidth={1.75} />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleReport("post", post.communityPostId!)}>
-                <Flag className="size-3.5" strokeWidth={1.75} />
-                {t.safety.reportPost}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleBlock}>
-                <UserX className="size-3.5" strokeWidth={1.75} />
-                {t.safety.blockUser(post.authorUsername ?? post.displayName)}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+          {isCommunityPost && post.authorUserId && post.authorUserId !== user?.id && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label={t.safety.moreOptionsAria}
+                render={
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  />
+                }
+              >
+                <MoreHorizontal className="size-4" strokeWidth={1.75} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleReport("post", post.communityPostId!)}>
+                  <Flag className="size-3.5" strokeWidth={1.75} />
+                  {t.safety.reportPost}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleBlock}>
+                  <UserX className="size-3.5" strokeWidth={1.75} />
+                  {t.safety.blockUser(post.authorUsername ?? post.displayName)}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         <div className="flex items-center gap-4 pt-0.5 text-xs text-muted-foreground">
@@ -400,10 +236,13 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
             />
             {likeCount > 0 && likeCount}
           </button>
-          <span className="flex items-center gap-1">
+          <Link
+            href={`/posts/${post.id}`}
+            className="-m-1.5 flex items-center gap-1 rounded-full p-1.5 transition-colors hover:bg-muted hover:text-foreground"
+          >
             <MessageCircle className="size-3.5" strokeWidth={1.75} />
-            {visibleCommentCount > 0 && visibleCommentCount}
-          </span>
+            {post.replyCount > 0 && post.replyCount}
+          </Link>
         </div>
       </div>
 

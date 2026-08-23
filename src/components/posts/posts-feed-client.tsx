@@ -20,12 +20,10 @@ export function PostsFeedClient({
   seedPosts,
   standalonePosts,
   storyFilterSlug,
-  postFilterId,
 }: {
   seedPosts: SeedPostWithStory[];
   standalonePosts: StandaloneSeedPost[];
   storyFilterSlug?: string;
-  postFilterId?: string;
 }) {
   const { communityPosts, isReady } = usePosts();
   const { followingIds } = useFollows();
@@ -93,11 +91,10 @@ export function PostsFeedClient({
   const storyFiltered = storyFilterSlug
     ? feed.filter((post) => post.story?.slug === storyFilterSlug)
     : feed;
-  const postFiltered = postFilterId ? feed.filter((post) => post.id === postFilterId) : storyFiltered;
   const visibleFeed =
     tab === "following"
-      ? postFiltered.filter((post) => post.authorUserId && followingIds.includes(post.authorUserId))
-      : postFiltered;
+      ? storyFiltered.filter((post) => post.authorUserId && followingIds.includes(post.authorUserId))
+      : storyFiltered;
   const filteredStoryTitle = storyFilterSlug
     ? storyFiltered[0]?.story?.title
     : undefined;
@@ -117,7 +114,7 @@ export function PostsFeedClient({
         </Link>
       </div>
 
-      {!storyFilterSlug && !postFilterId ? (
+      {!storyFilterSlug ? (
         <div className="flex gap-2">
           {(["all", "following"] as const).map((option) => (
             <button
@@ -138,17 +135,7 @@ export function PostsFeedClient({
         </div>
       ) : null}
 
-      {postFilterId ? (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-2.5 text-sm">
-          <span className="text-muted-foreground">{t.posts.showingSinglePost}</span>
-          <Link
-            href="/posts"
-            className="shrink-0 text-xs font-medium text-foreground underline underline-offset-2"
-          >
-            {t.posts.viewAllPosts}
-          </Link>
-        </div>
-      ) : storyFilterSlug ? (
+      {storyFilterSlug ? (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-2.5 text-sm">
           <span className="min-w-0 truncate text-muted-foreground">
             {t.posts.showingReactionsTo}

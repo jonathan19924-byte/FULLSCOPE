@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProfileByUsername, getFollowingList } from "@/lib/profile/profile-repository";
 import { FollowListPageClient } from "@/components/profile/follow-list-page-client";
+import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { t } from "@/lib/i18n";
 
 export async function generateMetadata({
@@ -25,11 +26,13 @@ export default async function UserFollowingPage({
   const following = await getFollowingList(profile.userId);
 
   return (
-    <FollowListPageClient
-      title={t.profile.followingPageTitle}
-      people={following}
-      emptyTitle={t.profile.noFollowingTitle}
-      emptyDescription={t.profile.noFollowingDescription}
-    />
+    <PullToRefresh>
+      <FollowListPageClient
+        title={t.profile.followingPageTitle}
+        people={following}
+        emptyTitle={t.profile.noFollowingTitle}
+        emptyDescription={t.profile.noFollowingDescription}
+      />
+    </PullToRefresh>
   );
 }

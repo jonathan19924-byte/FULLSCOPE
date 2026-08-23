@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Source_Serif_4, Heebo, Frank_Ruhl_Libre } from "next/font/google";
+import { Geist, Geist_Mono, Source_Serif_4, Heebo } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SiteShell } from "@/components/layout/site-shell";
@@ -30,15 +30,17 @@ const sourceSerif = Source_Serif_4({
 
 // Hebrew/RTL fonts — same CSS variable names as above, so only one pair is
 // ever actually loaded/applied per locale (see the `<html>` className below).
+// Headings use Heebo too (bound to --font-serif, the variable the font-serif
+// utility reads) rather than a separate serif face — readers found the
+// previous Frank Ruhl Libre headline font hard to read.
 const heebo = Heebo({
   variable: "--font-sans",
   subsets: ["hebrew", "latin"],
 });
 
-const frankRuhlLibre = Frank_Ruhl_Libre({
+const heeboHeading = Heebo({
   variable: "--font-serif",
   subsets: ["hebrew", "latin"],
-  weight: ["400", "500", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -47,7 +49,7 @@ const geistMono = Geist_Mono({
 });
 
 const bodyFont = LOCALE === "he" ? heebo : geistSans;
-const headingFont = LOCALE === "he" ? frankRuhlLibre : sourceSerif;
+const headingFont = LOCALE === "he" ? heeboHeading : sourceSerif;
 
 export const metadata: Metadata = {
   title: {

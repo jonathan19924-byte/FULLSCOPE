@@ -29,7 +29,7 @@ export function linkFor(
   switch (n.type) {
     case "post_liked":
     case "post_commented":
-      return n.relatedPostId ? `/posts?post=${n.relatedPostId}` : "/posts";
+      return n.relatedPostId ? `/posts/${n.relatedPostId}` : "/posts";
     case "post_credited":
     case "story_updated":
     case "trending_story":
