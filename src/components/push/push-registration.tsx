@@ -33,12 +33,21 @@ export function PushRegistration({ signedIn }: { signedIn: boolean }) {
     const registrationListener = PushNotifications.addListener("registration", (token) => {
       registerDeviceTokenAction(token.value);
     });
+    // Without this, a registration failure (missing AppDelegate forwarding,
+    // a provisioning/entitlement mismatch, no network, etc.) fails
+    // completely silently — this was exactly how the AppDelegate bug went
+    // unnoticed. Just a console log for now: there's no user-facing surface
+    // where a push-setup failure would make sense to show.
+    const errorListener = PushNotifications.addListener("registrationError", (err) => {
+      console.error("Push registration failed:", err);
+    });
 
     register();
 
     return () => {
       cancelled = true;
       registrationListener.then((handle) => handle.remove());
+      errorListener.then((handle) => handle.remove());
     };
   }, [signedIn]);
 
