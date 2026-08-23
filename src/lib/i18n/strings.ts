@@ -284,7 +284,7 @@ export const strings = {
       storyUpdated: "A story you liked was updated",
       storyUpdatedTitled: (title: string) => `A story you liked was updated: ${title}`,
       trendingStory: "A story is trending — see what people are saying",
-      trendingStoryTitled: (title: string) => `Everyone's talking about: ${title} — come see why`,
+      trendingStoryTitled: (title: string) => `Everyone's talking about ${title}, come see why`,
     },
     settings: {
       title: "Settings",
@@ -774,7 +774,7 @@ export const strings = {
       storyUpdated: "כתבה שאהבתם עודכנה",
       storyUpdatedTitled: (title: string) => `כתבה שאהבתם עודכנה: ${title}`,
       trendingStory: "כתבה חמה כרגע — ראו מה אומרים עליה",
-      trendingStoryTitled: (title: string) => `כולם מדברים על: ${title} — בואו לראות למה`,
+      trendingStoryTitled: (title: string) => `כולם מדברים על ${title}, בואו לראות למה`,
     },
     settings: {
       title: "הגדרות",
