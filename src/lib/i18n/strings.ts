@@ -445,7 +445,7 @@ export const strings = {
     },
     privacy: {
       title: "Privacy Policy",
-      lastUpdated: "Last updated: August 12, 2026",
+      lastUpdated: "Last updated: August 23, 2026",
       intro:
         "This policy explains what information FullScope collects, why, and how you can control it — whether you're using the website or the iOS app (which shows the same site inside a native shell). FullScope is currently a small, invite-only preview run by a single developer, not a company.",
       sections: [
@@ -458,12 +458,12 @@ export const strings = {
           body: "To create and secure your account, show your posts and profile to other users as intended, respond to support requests, review reported content, and understand which parts of the app people actually use so we can improve it. We do not sell your information, and we do not use it for advertising.",
         },
         {
-          heading: "Photo review",
-          body: "Photos you attach to a post are automatically checked by an AI model (Anthropic's Claude) before they're shown to anyone else, to catch content that shouldn't be posted publicly. This check happens once, at upload time.",
+          heading: "Automated content review",
+          body: "Photos you attach to a post, and the text of your posts and comments, are automatically checked by an AI model (Anthropic's Claude) before they're shown to anyone else, to catch content that shouldn't be posted publicly. Claude is also used to detect whether a post is about a specific news story on FullScope, and, for posts linked to a story, which of that story's two perspectives it leans toward — both are automated judgments about the post's content, used to organize what's shown where, not to profile you personally.",
         },
         {
           heading: "Third parties we rely on",
-          body: "Supabase (account creation, sign-in, and our database), Vercel (hosting), Anthropic (the photo check above), Cloudflare Turnstile (a bot check shown on the website's sign-in form only — it does not run inside the iOS app), and Resend (a one-line internal email to the developer when someone signs up, so we know to review the account). Each only receives the data it needs to do its job.",
+          body: "Supabase (account creation, sign-in, and our database), Vercel (hosting), Anthropic (the automated content checks above), Cloudflare Turnstile (a bot check shown on the website's sign-in form only — it does not run inside the iOS app), and Resend (a one-line internal email to the developer when someone signs up, so we know to review the account). Each only receives the data it needs to do its job.",
         },
         {
           heading: "Data retention and deletion",
@@ -946,7 +946,7 @@ export const strings = {
     },
     privacy: {
       title: "מדיניות פרטיות",
-      lastUpdated: "עודכן לאחרונה: 12 באוגוסט 2026",
+      lastUpdated: "עודכן לאחרונה: 23 באוגוסט 2026",
       intro:
         "מדיניות זו מסבירה אילו מידע FullScope אוספת, למה, ואיך תוכלו לשלוט בו — בין אם אתם משתמשים באתר או באפליקציית ה-iOS (שמציגה את אותו אתר בתוך מעטפת טבעית). FullScope היא כרגע תצוגה מקדימה קטנה בהזמנה בלבד, המופעלת על ידי מפתח יחיד, לא חברה.",
       sections: [
@@ -959,12 +959,12 @@ export const strings = {
           body: "כדי ליצור ולאבטח את החשבון שלכם, להציג את הפוסטים והפרופיל שלכם למשתמשים אחרים כמתוכנן, להגיב לפניות תמיכה, לבדוק תוכן שדווח, ולהבין אילו חלקים באפליקציה אנשים באמת משתמשים בהם כדי שנוכל לשפר אותה. אנחנו לא מוכרים את המידע שלכם, ולא משתמשים בו לפרסום.",
         },
         {
-          heading: "בדיקת תמונות",
-          body: "תמונות שאתם מצרפים לפוסט נבדקות אוטומטית על ידי מודל בינה מלאכותית (Claude של Anthropic) לפני שהן מוצגות למישהו אחר, כדי לאתר תוכן שאסור לפרסם באופן ציבורי. הבדיקה הזו מתבצעת פעם אחת, בזמן ההעלאה.",
+          heading: "בדיקת תוכן אוטומטית",
+          body: "תמונות שאתם מצרפים לפוסט, וגם הטקסט של הפוסטים והתגובות שלכם, נבדקים אוטומטית על ידי מודל בינה מלאכותית (Claude של Anthropic) לפני שהם מוצגים למישהו אחר, כדי לאתר תוכן שאסור לפרסם באופן ציבורי. Claude משמש גם כדי לזהות האם פוסט קשור לכתבה מסוימת ב-FullScope, ועבור פוסטים המקושרים לכתבה — לאיזה מבין שני הצדדים של הכתבה הוא נוטה. אלו הערכות אוטומטיות על תוכן הפוסט, המשמשות לארגון מה מוצג היכן, ולא לפרופיל אישי שלכם.",
         },
         {
           heading: "צדדים שלישיים שאנו נעזרים בהם",
-          body: "Supabase (יצירת חשבון, התחברות, ומסד הנתונים שלנו), Vercel (אחסון), Anthropic (בדיקת התמונות שלמעלה), Cloudflare Turnstile (בדיקת בוט המוצגת בטופס ההתחברות של האתר בלבד — היא לא פועלת בתוך אפליקציית ה-iOS), ו-Resend (הודעת אימייל פנימית קצרה למפתח כשמישהו נרשם, כדי שנדע לבדוק את החשבון). כל אחד מקבל רק את המידע שהוא צריך כדי לבצע את תפקידו.",
+          body: "Supabase (יצירת חשבון, התחברות, ומסד הנתונים שלנו), Vercel (אחסון), Anthropic (בדיקות התוכן האוטומטיות שלמעלה), Cloudflare Turnstile (בדיקת בוט המוצגת בטופס ההתחברות של האתר בלבד — היא לא פועלת בתוך אפליקציית ה-iOS), ו-Resend (הודעת אימייל פנימית קצרה למפתח כשמישהו נרשם, כדי שנדע לבדוק את החשבון). כל אחד מקבל רק את המידע שהוא צריך כדי לבצע את תפקידו.",
         },
         {
           heading: "שמירת מידע ומחיקתו",

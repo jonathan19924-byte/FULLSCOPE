@@ -63,7 +63,7 @@ Apple also asks who else can access the data. The truthful list, matching
 
 - **Supabase** — auth, database, storage (photos)
 - **Vercel** — hosting
-- **Anthropic** — receives uploaded photos once, for the automated content check ([media-moderation.ts](src/lib/posts/media-moderation.ts))
+- **Anthropic** — receives uploaded photos, for the automated content check ([media-moderation.ts](src/lib/posts/media-moderation.ts)); also receives post/comment text for automated content moderation ([moderation.ts](src/lib/articles/moderation.ts), pre-existing but missing from this list until now), for the story-link auto-detect feature ([detect-related-story.ts](src/lib/posts/detect-related-story.ts)), and for classifying which side of a story's two perspectives a post leans toward ([classify-post-perspective.ts](src/lib/posts/classify-post-perspective.ts)). All are automated judgments about a post's content, not third-party profiling of the user.
 - **Resend** — sends one internal email to the developer's own inbox when someone signs up; never emails end users
 
 ## Sign in with Apple / Google (added 2026-08)
