@@ -18,6 +18,7 @@ import { getStoryUpdates } from "@/lib/services/get-story-updates";
 import { getLastViewedAt } from "@/lib/analytics/get-last-viewed";
 import { ReactionsFeed } from "@/components/story/reactions-feed";
 import { CommunityPosts } from "@/components/story/community-posts";
+import { WritePostFab } from "@/components/story/write-post-fab";
 import { SourcesList } from "@/components/story/sources-list";
 import { RelatedStories } from "@/components/story/related-stories";
 import { Separator } from "@/components/ui/separator";
@@ -92,6 +93,7 @@ export default async function StoryPage({
         <Separator />
         <RelatedStories stories={related} />
       </div>
+      <WritePostFab story={{ slug: story.slug, title: story.title, category: story.category }} />
     </PullToRefresh>
   );
 }
