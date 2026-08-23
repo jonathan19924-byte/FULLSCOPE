@@ -3,7 +3,9 @@ import { t } from "@/lib/i18n";
 
 /** Shared with the push-notification webhook (send-push/route.ts) so the
  * push body text always matches what the in-app notification list shows. */
-export function messageFor(n: Pick<Notification, "type" | "actorDisplayName" | "actorUsername">): string {
+export function messageFor(
+  n: Pick<Notification, "type" | "actorDisplayName" | "actorUsername" | "relatedStoryTitle">,
+): string {
   const name = n.actorDisplayName || n.actorUsername || t.notifications.someone;
   switch (n.type) {
     case "post_liked":
@@ -15,17 +17,19 @@ export function messageFor(n: Pick<Notification, "type" | "actorDisplayName" | "
     case "post_credited":
       return t.notifications.postCredited;
     case "story_updated":
-      return t.notifications.storyUpdated;
+      return n.relatedStoryTitle ? t.notifications.storyUpdatedTitled(n.relatedStoryTitle) : t.notifications.storyUpdated;
     case "trending_story":
-      return t.notifications.trendingStory;
+      return n.relatedStoryTitle ? t.notifications.trendingStoryTitled(n.relatedStoryTitle) : t.notifications.trendingStory;
   }
 }
 
-export function linkFor(n: Pick<Notification, "type" | "relatedStorySlug" | "actorUsername">): string | undefined {
+export function linkFor(
+  n: Pick<Notification, "type" | "relatedStorySlug" | "relatedPostId" | "actorUsername">,
+): string | undefined {
   switch (n.type) {
     case "post_liked":
     case "post_commented":
-      return n.relatedStorySlug ? `/story/${n.relatedStorySlug}` : "/posts";
+      return n.relatedPostId ? `/posts?post=${n.relatedPostId}` : "/posts";
     case "post_credited":
     case "story_updated":
     case "trending_story":

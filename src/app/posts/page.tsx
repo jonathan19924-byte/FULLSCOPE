@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: t.posts.pageTitle };
 export default async function PostsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ story?: string }>;
+  searchParams: Promise<{ story?: string; post?: string }>;
 }) {
   const params = await searchParams;
   const [seedPosts, standalonePosts] = await Promise.all([
@@ -22,6 +22,7 @@ export default async function PostsPage({
         seedPosts={seedPosts}
         standalonePosts={standalonePosts}
         storyFilterSlug={params.story}
+        postFilterId={params.post}
       />
     </PullToRefresh>
   );

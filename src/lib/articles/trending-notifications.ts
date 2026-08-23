@@ -64,7 +64,7 @@ export async function notifyTrendingStory(): Promise<TrendingNotifyResult> {
 
   const { data: candidateStories, error: storiesError } = await supabase
     .from("stories")
-    .select("id, slug, engagement_notified_at")
+    .select("id, slug, title, engagement_notified_at")
     .in("slug", candidateSlugs);
   if (storiesError) throw new Error(`Error fetching candidate stories: ${storiesError.message}`);
 
@@ -94,6 +94,7 @@ export async function notifyTrendingStory(): Promise<TrendingNotifyResult> {
     user_id: u.user_id as string,
     type: "trending_story",
     related_story_slug: winnerSlug,
+    related_story_title: winnerStory.title as string,
   }));
 
   if (rows.length > 0) {

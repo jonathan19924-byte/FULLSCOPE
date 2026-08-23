@@ -18,7 +18,7 @@ export async function getNotifications(): Promise<Notification[]> {
 
   const { data: rows } = await supabase
     .from("notifications")
-    .select("id, type, actor_user_id, related_post_id, related_story_slug, created_at, read_at")
+    .select("id, type, actor_user_id, related_post_id, related_story_slug, related_story_title, created_at, read_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(NOTIFICATION_LIMIT);
@@ -49,7 +49,7 @@ export async function getNotifications(): Promise<Notification[]> {
       actorUsername: actor?.username ?? undefined,
       relatedPostId: row.related_post_id ?? undefined,
       relatedStorySlug: row.related_story_slug ?? post?.related_story_slug ?? undefined,
-      relatedStoryTitle: post?.related_story_title ?? undefined,
+      relatedStoryTitle: row.related_story_title ?? post?.related_story_title ?? undefined,
       createdAt: row.created_at,
       readAt: row.read_at ?? undefined,
     };

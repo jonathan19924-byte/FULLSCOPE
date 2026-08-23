@@ -250,10 +250,11 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          type: "post_liked" | "post_commented" | "new_follower" | "post_credited";
+          type: "post_liked" | "post_commented" | "new_follower" | "post_credited" | "story_updated" | "trending_story";
           actor_user_id: string | null;
           related_post_id: string | null;
           related_story_slug: string | null;
+          related_story_title: string | null;
           created_at: string;
           read_at: string | null;
         };

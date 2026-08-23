@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
   const { data: notification } = await supabase
     .from("notifications")
-    .select("id, user_id, type, actor_user_id, related_post_id, related_story_slug")
+    .select("id, user_id, type, actor_user_id, related_post_id, related_story_slug, related_story_title")
     .eq("id", notificationId)
     .single();
 
@@ -74,10 +74,12 @@ export async function POST(request: NextRequest) {
     type: notification.type,
     actorDisplayName: actor?.displayName ?? undefined,
     actorUsername: actor?.username ?? undefined,
+    relatedStoryTitle: notification.related_story_title ?? undefined,
   });
   const path = linkFor({
     type: notification.type,
     relatedStorySlug: notification.related_story_slug ?? undefined,
+    relatedPostId: notification.related_post_id ?? undefined,
     actorUsername: actor?.username ?? undefined,
   });
 

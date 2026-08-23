@@ -42,6 +42,7 @@ interface UncreditedPost {
 interface StoryRow {
   id: string;
   slug: string;
+  title: string;
   key_differences_cause: string;
   key_differences_impact: string;
   perspective_a: { name: string; summary: string; claims: string[] };
@@ -128,7 +129,7 @@ export async function checkStoryTrends(): Promise<TrendCheckResult> {
   for (const [slug, candidatePosts] of candidateSlugs) {
     const { data: story, error: storyError } = await supabase
       .from("stories")
-      .select("id, slug, key_differences_cause, key_differences_impact, perspective_a, perspective_b, last_trend_check_at")
+      .select("id, slug, title, key_differences_cause, key_differences_impact, perspective_a, perspective_b, last_trend_check_at")
       .eq("slug", slug)
       .is("archived_at", null)
       .maybeSingle();
@@ -247,6 +248,7 @@ async function applyTrend(
       user_id: l.user_id,
       type: "story_updated",
       related_story_slug: story.slug,
+      related_story_title: story.title,
     }));
     const { error: notifyError } = await supabase.from("notifications").insert(rows);
     if (notifyError) console.error(`Error notifying likers of "${story.slug}":`, notifyError.message);

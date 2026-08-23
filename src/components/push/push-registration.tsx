@@ -41,6 +41,18 @@ export function PushRegistration({ signedIn }: { signedIn: boolean }) {
     const errorListener = PushNotifications.addListener("registrationError", (err) => {
       console.error("Push registration failed:", err);
     });
+    // Tapping a notification does nothing without this — send-push/route.ts
+    // already computes the right destination per notification type
+    // (linkFor) and includes it as a custom top-level "url" field in the
+    // APNs payload (apns.ts), but nothing was ever listening for the tap
+    // itself. A full navigation (not the Next.js router) since this fires
+    // outside any particular page's router context.
+    const actionListener = PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+      const url = action.notification.data?.url;
+      if (typeof url === "string" && url) {
+        window.location.href = url;
+      }
+    });
 
     register();
 
@@ -48,6 +60,7 @@ export function PushRegistration({ signedIn }: { signedIn: boolean }) {
       cancelled = true;
       registrationListener.then((handle) => handle.remove());
       errorListener.then((handle) => handle.remove());
+      actionListener.then((handle) => handle.remove());
     };
   }, [signedIn]);
 
