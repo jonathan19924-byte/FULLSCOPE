@@ -23,6 +23,7 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
     return (
       <Link
         href={`/story/${story.slug}`}
+        prefetch={false}
         className={cn(
           "flex items-center gap-3.5 rounded-xl border border-border/60 p-4 transition-colors hover:bg-muted/60",
           className,
@@ -66,6 +67,7 @@ export function StoryCard({ story, variant = "standard", className }: StoryCardP
   return (
     <Link
       href={`/story/${story.slug}`}
+      prefetch={false}
       className={cn(
         "group/story-card relative flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
         isFeatured ? "border-border" : "border-border/60 hover:border-border",

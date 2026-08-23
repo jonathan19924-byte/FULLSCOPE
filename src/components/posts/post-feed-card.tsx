@@ -123,7 +123,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
   return (
     <li className="flex gap-3 px-4 py-4">
       {post.authorUsername ? (
-        <Link href={`/profile/${post.authorUsername}`} className="shrink-0">
+        <Link href={`/profile/${post.authorUsername}`} prefetch={false} className="shrink-0">
           {avatarEl}
         </Link>
       ) : (
@@ -147,6 +147,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
               {post.authorUsername ? (
                 <Link
                   href={`/profile/${post.authorUsername}`}
+                  prefetch={false}
                   onClick={(e) => e.stopPropagation()}
                   className="text-sm font-medium text-foreground hover:underline"
                 >
@@ -177,6 +178,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
             {post.story && (
               <Link
                 href={`/story/${post.story.slug}`}
+                prefetch={false}
                 onClick={(e) => e.stopPropagation()}
                 className="flex w-fit min-w-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:underline"
               >
@@ -238,6 +240,7 @@ export function PostFeedCard({ post }: { post: FeedPost }) {
           </button>
           <Link
             href={`/posts/${post.id}`}
+            prefetch={false}
             className="-m-1.5 flex items-center gap-1 rounded-full p-1.5 transition-colors hover:bg-muted hover:text-foreground"
           >
             <MessageCircle className="size-3.5" strokeWidth={1.75} />

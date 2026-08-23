@@ -25,6 +25,7 @@ export function FeedTabs({ active }: FeedTabsProps) {
           <Link
             key={tab.key}
             href={tab.href}
+            prefetch={false}
             aria-current={isActive ? "true" : undefined}
             className={cn(
               "relative flex-1 px-4 py-3 text-center text-sm font-medium transition-colors hover:bg-muted/40",

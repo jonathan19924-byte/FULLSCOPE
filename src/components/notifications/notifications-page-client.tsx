@@ -73,7 +73,7 @@ export function NotificationsPageClient() {
               </div>
             );
 
-            return <li key={n.id}>{href ? <Link href={href}>{row}</Link> : row}</li>;
+            return <li key={n.id}>{href ? <Link href={href} prefetch={false}>{row}</Link> : row}</li>;
           })}
         </ul>
       )}

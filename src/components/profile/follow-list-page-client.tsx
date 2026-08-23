@@ -57,7 +57,7 @@ export function FollowListPageClient({
                     </div>
                   );
                   return href ? (
-                    <Link href={href} className="shrink-0">
+                    <Link href={href} prefetch={false} className="shrink-0">
                       {avatar}
                     </Link>
                   ) : (
@@ -66,7 +66,7 @@ export function FollowListPageClient({
                 })()}
                 <div className="min-w-0 flex-1">
                   {href ? (
-                    <Link href={href} className="block min-w-0">
+                    <Link href={href} prefetch={false} className="block min-w-0">
                       <p className="truncate font-medium text-foreground">{displayName}</p>
                       {person.username && (
                         <p className="truncate text-sm text-muted-foreground">

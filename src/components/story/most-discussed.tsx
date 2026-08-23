@@ -66,6 +66,7 @@ export function MostDiscussed({ stories }: { stories: StorySummary[] }) {
             <Link
               key={story.id}
               href={`/story/${story.slug}`}
+              prefetch={false}
               className="flex items-center gap-3.5 rounded-xl p-4 transition-colors hover:bg-muted/60"
               style={{
                 background: "color-mix(in oklch, var(--brand-gold) 4%, var(--card))",

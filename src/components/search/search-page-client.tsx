@@ -134,7 +134,7 @@ export function SearchPageClient({
         <ul className="flex flex-col divide-y divide-border/60 border-t border-border/60" aria-live="polite">
           {peopleResults.map((profile) => (
             <li key={profile.userId} className="flex items-center gap-3 py-3">
-              <Link href={`/profile/${profile.username}`} className="shrink-0">
+              <Link href={`/profile/${profile.username}`} prefetch={false} className="shrink-0">
                 {profile.avatarUrl ? (
                   <div className="relative size-10 overflow-hidden rounded-full bg-muted">
                     <Image src={profile.avatarUrl} alt="" fill sizes="40px" className="object-cover" />
@@ -145,7 +145,7 @@ export function SearchPageClient({
                   </div>
                 )}
               </Link>
-              <Link href={`/profile/${profile.username}`} className="min-w-0 flex-1">
+              <Link href={`/profile/${profile.username}`} prefetch={false} className="min-w-0 flex-1">
                 <p className="truncate font-medium text-foreground">{profile.displayName || profile.username}</p>
                 <p className="truncate text-sm text-muted-foreground">
                   <span dir="ltr" className="inline-block">@{profile.username}</span>
