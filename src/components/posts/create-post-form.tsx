@@ -11,6 +11,7 @@ import { usePosts } from "@/lib/posts/posts-context";
 import { useUser } from "@/components/auth/user-provider";
 import { createClient } from "@/lib/supabase/client";
 import { detectRelatedStory } from "@/lib/posts/detect-related-story";
+import { classifyPostPerspective } from "@/lib/posts/classify-post-perspective";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import {
@@ -45,6 +46,7 @@ export function CreatePostForm({
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [isClassifying, setIsClassifying] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
@@ -55,6 +57,15 @@ export function CreatePostForm({
   const [pendingCandidate, setPendingCandidate] = useState<{ candidate: RelatedStory; mediaUrl?: string } | null>(
     null,
   );
+  // Set when a post linked to a story comes back from classification as
+  // genuinely unclear which side it leans toward — shows a confirm step
+  // with the two perspective titles instead of guessing or forcing a side.
+  const [pendingPerspective, setPendingPerspective] = useState<{
+    relatedStory: RelatedStory;
+    mediaUrl?: string;
+    perspectiveATitle: string;
+    perspectiveBTitle: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const remaining = MAX_LENGTH - content.length;
@@ -104,17 +115,23 @@ export function CreatePostForm({
     setPhotoPreviewUrl(null);
   }
 
-  async function finalizePost(relatedStory: RelatedStory | undefined, mediaUrl: string | undefined) {
+  async function finalizePost(
+    relatedStory: RelatedStory | undefined,
+    mediaUrl: string | undefined,
+    perspective?: "A" | "B",
+  ) {
     const result = await addPost({
       content: trimmed,
       relatedStorySlug: relatedStory?.slug,
       relatedStoryTitle: relatedStory?.title,
       relatedStoryCategory: relatedStory?.category,
       mediaUrl,
+      perspective,
     });
 
     setIsSubmitting(false);
     setPendingCandidate(null);
+    setPendingPerspective(null);
 
     if ("error" in result) {
       toast(t.posts.couldntPost, { description: result.error });
@@ -134,6 +151,35 @@ export function CreatePostForm({
     } else {
       router.push("/posts");
     }
+  }
+
+  /** Runs once a post's story link is settled (locked from the start, or
+   * just confirmed via the auto-detect suggestion below) — classifies which
+   * side it leans toward before posting, so the reactions tabs on the story
+   * page never have to guess after the fact. A post with no story skips
+   * this entirely and posts immediately. */
+  async function resolveStoryAndPost(relatedStory: RelatedStory | undefined, mediaUrl: string | undefined) {
+    if (!relatedStory) {
+      await finalizePost(undefined, mediaUrl);
+      return;
+    }
+
+    setIsClassifying(true);
+    const result = await classifyPostPerspective(trimmed, relatedStory.slug).catch(() => null);
+    setIsClassifying(false);
+
+    if (result && "uncertain" in result) {
+      setPendingPerspective({
+        relatedStory,
+        mediaUrl,
+        perspectiveATitle: result.perspectiveATitle,
+        perspectiveBTitle: result.perspectiveBTitle,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    await finalizePost(relatedStory, mediaUrl, result?.perspective);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -163,7 +209,7 @@ export function CreatePostForm({
     }
 
     if (lockedStory) {
-      await finalizePost(lockedStory, mediaUrl);
+      await resolveStoryAndPost(lockedStory, mediaUrl);
       return;
     }
 
@@ -281,18 +327,20 @@ export function CreatePostForm({
               type="button"
               size="sm"
               className="flex-1 rounded-full"
+              disabled={isClassifying}
               onClick={() => {
                 setIsSubmitting(true);
-                finalizePost(pendingCandidate.candidate, pendingCandidate.mediaUrl);
+                resolveStoryAndPost(pendingCandidate.candidate, pendingCandidate.mediaUrl);
               }}
             >
-              {t.posts.linkToStory}
+              {isClassifying ? t.posts.checkingSide : t.posts.linkToStory}
             </Button>
             <Button
               type="button"
               variant="outline"
               size="sm"
               className="flex-1 rounded-full"
+              disabled={isClassifying}
               onClick={() => {
                 setIsSubmitting(true);
                 finalizePost(undefined, pendingCandidate.mediaUrl);
@@ -302,20 +350,62 @@ export function CreatePostForm({
             </Button>
           </div>
         </div>
+      ) : pendingPerspective ? (
+        <div className="flex flex-col gap-3 rounded-2xl border border-border bg-muted/40 p-4">
+          <p className="text-sm text-foreground">{t.posts.whichSideQuestion}</p>
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              size="sm"
+              className="rounded-full"
+              onClick={() => {
+                setIsSubmitting(true);
+                finalizePost(pendingPerspective.relatedStory, pendingPerspective.mediaUrl, "A");
+              }}
+            >
+              {pendingPerspective.perspectiveATitle}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="rounded-full"
+              onClick={() => {
+                setIsSubmitting(true);
+                finalizePost(pendingPerspective.relatedStory, pendingPerspective.mediaUrl, "B");
+              }}
+            >
+              {pendingPerspective.perspectiveBTitle}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={() => {
+                setIsSubmitting(true);
+                finalizePost(pendingPerspective.relatedStory, pendingPerspective.mediaUrl);
+              }}
+            >
+              {t.posts.notSureGeneral}
+            </Button>
+          </div>
+        </div>
       ) : (
         <Button
           type="submit"
           size="lg"
-          disabled={!user || !trimmed || remaining < 0 || isSubmitting || isDetecting}
+          disabled={!user || !trimmed || remaining < 0 || isSubmitting || isDetecting || isClassifying}
           className="h-12 w-full rounded-full"
         >
           {isUploadingPhoto
             ? t.posts.uploadingPhoto
             : isDetecting
               ? t.posts.checkingForStory
-              : isSubmitting
-                ? t.posts.posting
-                : t.posts.post}
+              : isClassifying
+                ? t.posts.checkingSide
+                : isSubmitting
+                  ? t.posts.posting
+                  : t.posts.post}
         </Button>
       )}
       <p className="text-center text-xs text-muted-foreground">{t.posts.visibleToEveryone}</p>

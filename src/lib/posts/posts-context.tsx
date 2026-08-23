@@ -14,6 +14,7 @@ interface PostsContextValue {
     relatedStoryTitle?: string;
     relatedStoryCategory?: Category;
     mediaUrl?: string;
+    perspective?: "A" | "B";
   }) => Promise<{ success: true; mediaRejected: boolean } | { error: string }>;
   toggleLike: (postId: string) => Promise<{ success: true } | { error: string }>;
   isReady: boolean;
@@ -63,6 +64,7 @@ export function PostsProvider({
         likedByMe: false,
         mediaUrl: input.mediaUrl,
         commentCount: 0,
+        perspective: input.perspective,
       };
 
       setCommunityPosts((current) => [optimisticPost, ...current]);

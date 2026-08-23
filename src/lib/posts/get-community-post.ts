@@ -55,5 +55,6 @@ export async function getCommunityPostById(id: string): Promise<CommunityPost | 
     mediaUrl: row.media_status === "approved" ? (row.media_url ?? undefined) : undefined,
     commentCount: commentCount ?? 0,
     likedByMe: user ? Boolean(myLike.data) : undefined,
+    perspective: (row.perspective ?? undefined) as CommunityPost["perspective"],
   };
 }

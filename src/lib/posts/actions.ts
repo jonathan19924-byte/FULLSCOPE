@@ -16,6 +16,7 @@ export async function createCommunityPostAction(input: {
   relatedStoryTitle?: string;
   relatedStoryCategory?: Category;
   mediaUrl?: string;
+  perspective?: "A" | "B";
 }): Promise<{ success: true; mediaRejected: boolean } | { error: string }> {
   const supabase = await createClient();
   const {
@@ -50,6 +51,7 @@ export async function createCommunityPostAction(input: {
       related_story_category: input.relatedStoryCategory ?? null,
       media_url: input.mediaUrl ?? null,
       media_status: input.mediaUrl ? "pending" : null,
+      perspective: input.perspective ?? null,
     })
     .select("id")
     .single();

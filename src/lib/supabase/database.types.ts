@@ -184,6 +184,7 @@ export interface Database {
           flagged_reason: string | null;
           media_url: string | null;
           media_status: string | null;
+          perspective: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["community_posts"]["Row"]> &
           Pick<Database["public"]["Tables"]["community_posts"]["Row"], "user_id" | "content">;

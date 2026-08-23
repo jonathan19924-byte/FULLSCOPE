@@ -80,6 +80,7 @@ const getCommunityPostsBase = unstable_cache(
         likeCount: likeCountByPostId.get(row.id) ?? 0,
         mediaUrl: row.media_status === "approved" ? (row.media_url ?? undefined) : undefined,
         commentCount: commentCountByPostId.get(row.id) ?? 0,
+        perspective: (row.perspective ?? undefined) as CommunityPost["perspective"],
       };
     });
   },

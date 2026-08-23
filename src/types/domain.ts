@@ -210,6 +210,11 @@ export interface CommunityPost {
    * on demand per-post (see getPostComments) rather than bundled in here —
    * this is just the count for the feed's badge. */
   commentCount: number;
+  /** Which side of the linked story's two perspectives this post leans
+   * toward, classified at creation time (see classify-post-perspective.ts).
+   * Undefined for posts with no linked story, and for linked posts that
+   * genuinely don't fit either side — never forced into A or B. */
+  perspective?: "A" | "B";
 }
 
 /** A single comment on a community post. Fetched on demand when a post's
