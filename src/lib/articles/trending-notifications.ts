@@ -27,13 +27,61 @@ export type TrendingNotifyResult =
   | { sent: false; reason: "no_candidates" | "all_in_cooldown" }
   | { sent: true; slug: string; notifiedCount: number };
 
+/** Falls back through weaker "top story" signals when there's no real
+ * community-post activity to rank by — meant for the pre-launch/no-real-users
+ * stage, so the feature still fires on something rather than going silent
+ * indefinitely. Once there's real post activity again, notifyTrendingStory's
+ * post-count ranking above always wins first; this only ever runs when that
+ * comes up completely empty. Tier 2 (page views) still reflects genuine,
+ * if thin, reader interest; tier 3 (most recent live story) is a last resort
+ * that guarantees a pick as long as any live story exists at all. */
+async function fallbackTopStorySlug(
+  supabase: ReturnType<typeof createClient>,
+  windowStart: string,
+): Promise<string | null> {
+  const { data: recentViews, error: viewsError } = await supabase
+    .from("page_views")
+    .select("path")
+    .like("path", "/story/%")
+    .gte("created_at", windowStart);
+  if (viewsError) throw new Error(`Error fetching recent page views: ${viewsError.message}`);
+
+  const viewCountBySlug = new Map<string, number>();
+  for (const view of recentViews ?? []) {
+    const rawSlug = (view.path as string).replace(/^\/story\//, "").split("?")[0];
+    if (!rawSlug) continue;
+    // Hebrew slugs land in page_views.path percent-encoded (unlike
+    // stories.slug, which is stored decoded) — without this, the slug
+    // here would never match a real story row below.
+    const slug = decodeURIComponent(rawSlug);
+    viewCountBySlug.set(slug, (viewCountBySlug.get(slug) ?? 0) + 1);
+  }
+
+  const byViews = [...viewCountBySlug.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  if (byViews) return byViews;
+
+  const { data: mostRecent, error: recentError } = await supabase
+    .from("stories")
+    .select("slug")
+    .is("archived_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (recentError) throw new Error(`Error fetching most recent story: ${recentError.message}`);
+
+  return mostRecent?.slug ?? null;
+}
+
 /**
  * Picks the single most-discussed story in the last 24h (same trending
  * signal already shown to users client-side in most-discussed.tsx: recent
  * community-post count) and, if it clears a minimum activity bar and
  * hasn't been picked again too recently, notifies every approved user.
- * Run 4x daily via scripts/notify-trending.ts — capped at that
- * frequency by the cron schedule itself, not by extra rate-limit state.
+ * Falls back to weaker signals (page views, then just the newest live
+ * story) when there's no real post activity at all — see
+ * fallbackTopStorySlug. Run 4x daily via scripts/notify-trending.ts —
+ * capped at that frequency by the cron schedule itself, not by extra
+ * rate-limit state.
  */
 export async function notifyTrendingStory(): Promise<TrendingNotifyResult> {
   const supabase = createClient();
@@ -53,10 +101,15 @@ export async function notifyTrendingStory(): Promise<TrendingNotifyResult> {
     countBySlug.set(slug, (countBySlug.get(slug) ?? 0) + 1);
   }
 
-  const candidateSlugs = [...countBySlug.entries()]
+  let candidateSlugs = [...countBySlug.entries()]
     .filter(([, count]) => count >= MIN_RECENT_POSTS)
     .sort((a, b) => b[1] - a[1])
     .map(([slug]) => slug);
+
+  if (candidateSlugs.length === 0) {
+    const fallbackSlug = await fallbackTopStorySlug(supabase, windowStart);
+    if (fallbackSlug) candidateSlugs = [fallbackSlug];
+  }
 
   if (candidateSlugs.length === 0) {
     return { sent: false, reason: "no_candidates" };
