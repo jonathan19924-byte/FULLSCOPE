@@ -2,7 +2,7 @@
 
 *A plain-language briefing document for marketing/strategy work — not a technical spec. Written to be handed to a person or another AI assistant with zero prior context on the product. Reflects the app as it actually exists today, verified against the live codebase and production app, not aspirational copy.*
 
-*Last verified: 2026-08-19. Status: version 1.1 submitted to the App Store, awaiting approval — version 1.0 is already live/approved.*
+*Last verified: 2026-08-25. Status: version 1.2 (build 3) is live and approved on the App Store — no version currently pending.*
 
 ---
 
@@ -56,11 +56,11 @@ Everything below exists and works in the current app — useful for knowing what
 
 ## 7. Where things stand right now
 
-Version 1.0 is live and approved. Version 1.1 (push notifications, Sign in with Apple/Google, a camera fix, a new app icon) is submitted and awaiting approval. No public launch/marketing push has happened yet. Signups are auto-approved (no manual review gate), specifically to make onboarding frictionless at launch.
+Version 1.2 is live and approved — includes everything from 1.1 (push notifications, Sign in with Apple/Google, a camera fix, a new app icon) plus two push-notification reliability fixes that shipped in 1.2 (device tokens weren't being registered at all before this, and foreground pushes were showing nothing). No version is currently pending. No public launch/marketing push has happened yet. Signups are auto-approved (no manual review gate), specifically to make onboarding frictionless at launch.
 
 ## 8. Open questions for marketing strategy (not answered here — for the strategy conversation itself)
 
 - Primary acquisition channel(s) for a Hebrew-speaking Israeli audience specifically.
 - How explicitly to lead with the "two-sided/neutral" positioning vs. a softer "understand the full picture" framing — the two-sided format is the real differentiator but could also read as "about politics" to someone skimming, when it's explicitly topic-agnostic.
 - Whether/how to address the "AI-generated" nature of stories proactively in messaging, versus letting the sourcing-transparency (real named sources, visible confidence ratings) speak for itself.
-- Timing: launch messaging now (pre-1.1-approval) vs. holding until 1.1 (push notifications, social sign-in) is approved and live.
+- Timing: the version-approval blocker is now cleared (1.2, which includes push notifications and social sign-in, is live and approved) — the open question is just when to actually start launch messaging, not what to wait for.

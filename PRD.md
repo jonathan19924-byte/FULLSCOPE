@@ -1,6 +1,6 @@
 # FullScope — Product Requirements Document
 
-*This document describes the app as it actually exists in the codebase today — not the original plan. Verified directly against the code, database migrations, and a live production app. Last verified: 2026-08-19.*
+*This document describes the app as it actually exists in the codebase today — not the original plan. Verified directly against the code, database migrations, and a live production app. Last verified: 2026-08-25.*
 
 ---
 
@@ -12,7 +12,7 @@
 
 **Who it's for:** the product is currently running as a live pilot for **Hebrew-speaking Israeli news readers** — a deliberately narrow, well-defined market chosen because Israeli political and social splits (security vs. rights, religious vs. secular, coalition vs. opposition, hawkish vs. dovish) are a better test of the "genuine multi-perspective" idea than a generic international feed, where the framing tends to collapse into a US-style left/right binary. The pivot is built as a reversible configuration toggle (`NEXT_PUBLIC_LOCALE`), not a rewrite — the original English/international version, English source list, and English perspective-framing logic all still exist in the codebase, gated behind the toggle, so the product can return to an English/international audience later without rebuilding anything. There is no live English deployment today.
 
-**Launch status:** version 1.1 (build 2) submitted to the App Store; awaiting approval as of this writing. Version 1.0 was already approved and live — 1.1 adds push notifications, Sign in with Apple/Google, a camera fix, and a new app icon, none of which need to wait on review to reach existing users, since only the native-code pieces (push entitlement, social-login plugin) require the App Store build at all — everything else in this release is a web change that was already live before 1.1 was even submitted. Signups are auto-approved (no manual review gate), a deliberate choice made ahead of launch so onboarding has no friction.
+**Launch status:** version 1.2 (build 3) is live and approved as of this writing — includes everything from 1.1 (push notifications, Sign in with Apple/Google, a camera fix, a new app icon) plus two push-notification reliability fixes that shipped in 1.2: device tokens weren't being registered at all before this fix (confirmed via a 0-row `device_tokens` table), and foreground pushes were showing nothing at all. No version is currently pending. As with 1.1, none of the native-code pieces need to wait on review to reach existing users for *future* web-only changes — only genuinely native changes (entitlements, a new Capacitor plugin) require a fresh App Store build. Signups are auto-approved (no manual review gate), a deliberate choice made ahead of launch so onboarding has no friction.
 
 ---
 
