@@ -1,6 +1,6 @@
 # FullScope — Product Requirements Document
 
-*This document describes the app as it actually exists in the codebase today — not the original plan. Verified directly against the code, database migrations, and a live production app. Last verified: 2026-08-25.*
+*This document describes the app as it actually exists in the codebase today — not the original plan. Verified directly against the code, database migrations, and a live production app. Last verified: 2026-08-25 (afternoon).*
 
 ---
 
@@ -85,7 +85,7 @@ Six notification kinds, all sharing one in-app list (polled, not realtime) and o
 - **Someone likes your post**, **comments on it**, or **follows you** — the three interactive/social kinds.
 - **Your post gets credited into a story** via the trend-detection mechanism.
 - **A story you liked (bookmarked) gets a trend update** — fires only on a genuine content update (not a routine coverage merge), fanned out to everyone who bookmarked that story.
-- **A trending story** — picked automatically 4x daily (GitHub Actions, `notify-trending`, 09:40/12:40/16:40/19:40 UTC) from the most-discussed story of the last 24h, with a minimum-activity threshold and a 48h cooldown so the same story isn't repicked every run; sent to every approved user.
+- **A trending story** — picked automatically 4x daily (GitHub Actions, `notify-trending`, 09:40/12:40/16:40/19:40 UTC) from the most-discussed story of the last 24h (3+ distinct readers posting about it), with a 48h per-story cooldown so the same story isn't repicked every run; sent to every approved user. When there's no real post activity to rank by (true pre-launch, with no organic readers yet), falls back to the story with the most page views in the last 24h, then to just the most recently created live story as a last resort — so the feature still fires on something rather than going silent indefinitely; real post activity always wins first the moment it exists.
 
 Deliberately excludes dislikes (that signal is private) and self-actions. **Real per-user push preferences** exist (`Settings → Notifications`): a master push kill-switch, plus separate toggles for "event updates" (story credited/updated/trending) and "post interactions" (likes/comments/follows) — these only gate the *push* send; the in-app notification row is always created regardless, so nothing is ever silently lost, only the phone alert is suppressed. All defaults are on.
 
@@ -141,7 +141,7 @@ Full light/dark/system support via `next-themes`. In practice the app has mostly
 | AI / content generation | **Anthropic Claude** (`claude-sonnet-5`), via raw `fetch()` | Clustering, story generation, dedup, coverage/trend-update detection, moderation, image-keyword derivation, vision-based photo moderation |
 | Embeddings | **Voyage AI** (`voyage-3-lite`), via raw `fetch()` | Similarity-based related-story retrieval (see §2) |
 | RSS ingestion | **`fast-xml-parser`** | RSS/Atom/RDF feeds from Hebrew/Israeli sources (plus several Telegram channels) |
-| Stock photography | **Pexels API** | One photo per story, vision-checked to reject images with legible signage/text |
+| Stock photography | **Pexels API** + **Unsplash API** | One photo per story (tried against both sources for multiple search phrases before falling back to a generic category search), vision-checked to reject images with legible signage/text |
 | Transactional email | **Resend** | Pipeline summary/alert emails, new-signup notification, moderation alerts |
 | Bot protection | **Cloudflare Turnstile** | CAPTCHA on sign-up/sign-in/password-reset |
 | Hosting | **Vercel** | App hosting + lower-frequency cron jobs |
@@ -206,7 +206,8 @@ Copy `.env.local.example` to `.env.local` and fill in:
 | `ANTHROPIC_API_KEY` | console.anthropic.com | Story generation, clustering, dedup, trend detection, moderation |
 | `VOYAGE_API_KEY` | voyageai.com | Related-story similarity search (see §2) — degrades gracefully to a recency-based fallback if unset |
 | `RESEND_API_KEY` + `NOTIFICATION_EMAIL` | resend.com (free tier) | Pipeline/signup/moderation emails — both must be set or emails are silently skipped |
-| `PEXELS_API_KEY` | pexels.com/api (free) | Story photos — falls back to a category icon placeholder if unset |
+| `PEXELS_API_KEY` | pexels.com/api (free) | Story photos, primary source — falls back to a category icon placeholder if unset (and Unsplash is also unset) |
+| `UNSPLASH_ACCESS_KEY` | unsplash.com/developers (free) | Story photos, second source tried alongside Pexels — reduces duplicate photos across stories; optional, degrades to Pexels-only if unset |
 | `GITHUB_ACTIONS_PAT` | Fine-grained GitHub PAT (Actions: read-and-write) | Lets the health-check cron re-trigger the pipeline workflow |
 | `NEXT_PUBLIC_LOCALE` | — | `"he"` for Hebrew/RTL (current live config); anything else → English/LTR |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile | Sign-up works without a CAPTCHA if unset |
