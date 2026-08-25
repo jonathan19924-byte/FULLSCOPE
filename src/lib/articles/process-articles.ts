@@ -124,7 +124,7 @@ interface StoryGenerationResponse {
   key_differences_cause: string;
   key_differences_impact: string;
   sources: string;
-  image_keywords: string;
+  image_keywords: string[];
   entities: { people: string[]; companies: string[]; countries: string[] };
   location_name: string;
 }
@@ -383,7 +383,7 @@ Return ONLY valid JSON with this exact structure:
   "key_differences_cause": "One sentence explaining why people disagree on the cause",
   "key_differences_impact": "One sentence explaining why people disagree on the impact",
   "sources": "comma separated list of source names used",
-  "image_keywords": "2-5 word phrase in ENGLISH (regardless of what language the rest of this response is in) describing a concrete, photographable visual scene for this story — e.g. 'soldier military funeral', 'wildfire forest smoke', 'stock market trading floor'. This is used to search a stock photo library, which only understands English, so it must always be English even when everything else is Hebrew.",
+  "image_keywords": ["2-4 DISTINCT 2-5 word phrases in ENGLISH (regardless of what language the rest of this response is in), each describing a different concrete, photographable visual scene for this story — e.g. ['soldier military funeral', 'IDF honor guard ceremony', 'grieving family cemetery']. Give genuinely different angles/scenes, not just synonyms of the same phrase — each is tried in turn against stock photo libraries, which only understand English, so every phrase must always be English even when everything else is Hebrew."],
   "location_name": "the single most specific real-world place this story is genuinely centered on — a city, town, region, or named landmark (e.g. 'Khan Younis', 'the Knesset', 'Ashkelon'). Empty string if the story isn't tied to one specific place — a story about national policy, an election, or a court ruling with no single physical location does NOT qualify just because a country was mentioned. This is used to link out to a map, so only fill it in when a reader would genuinely want to see where this happened."
 }${LOCALE === "he" ? HEBREW_OUTPUT_INSTRUCTION : ""}`;
 }
@@ -892,7 +892,7 @@ async function backfillMissingImages(supabase: SupabaseAdmin): Promise<number> {
   const results = await Promise.all(
     rows.map(async (row) => {
       const keywords = await deriveImageKeywords(row.title, row.summary);
-      const imageUrl = await findStoryImage(keywords ?? row.title, row.category, usedImageUrls);
+      const imageUrl = await findStoryImage(keywords ? [keywords] : [row.title], row.category, usedImageUrls);
       if (!imageUrl) return false;
       usedImageUrls.add(imageUrl);
 
@@ -1208,7 +1208,11 @@ async function runProcessArticles(): Promise<ProcessArticlesResult> {
           const fallbackSources = [...new Set(clusterArticles.map((a) => a.source_name))].join(", ");
           const storySources = story.sources || fallbackSources;
 
-          const imageUrl = await findStoryImage(story.image_keywords || story.title, story.category, usedImageUrls);
+          const imageUrl = await findStoryImage(
+            story.image_keywords?.length ? story.image_keywords : [story.title],
+            story.category,
+            usedImageUrls,
+          );
           if (imageUrl) usedImageUrls.add(imageUrl);
 
           // Best-effort background context (see wikipedia.ts): only touches

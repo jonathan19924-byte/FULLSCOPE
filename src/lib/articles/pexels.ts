@@ -10,9 +10,19 @@ interface PexelsSearchResponse {
   photos: PexelsPhoto[];
 }
 
-const CANDIDATES_PER_SEARCH = 5;
+interface UnsplashPhoto {
+  urls: {
+    regular: string;
+  };
+}
 
-async function searchMany(query: string, apiKey: string): Promise<string[]> {
+interface UnsplashSearchResponse {
+  results: UnsplashPhoto[];
+}
+
+const CANDIDATES_PER_SEARCH = 20;
+
+async function searchManyPexels(query: string, apiKey: string): Promise<string[]> {
   const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${CANDIDATES_PER_SEARCH}&orientation=landscape`;
   const res = await fetch(url, { headers: { Authorization: apiKey } });
 
@@ -23,6 +33,23 @@ async function searchMany(query: string, apiKey: string): Promise<string[]> {
 
   const data = (await res.json()) as PexelsSearchResponse;
   return data.photos.map((p) => p.src.large);
+}
+
+/** Second stock source, tried alongside Pexels for every query — same
+ * free-to-use (Unsplash License) terms, just a different library, so a
+ * query with a thin Pexels result set has a real second pool to draw from
+ * instead of immediately falling back to an even more generic query. */
+async function searchManyUnsplash(query: string, accessKey: string): Promise<string[]> {
+  const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=${CANDIDATES_PER_SEARCH}&orientation=landscape`;
+  const res = await fetch(url, { headers: { Authorization: `Client-ID ${accessKey}` } });
+
+  if (!res.ok) {
+    console.error(`Unsplash search error for "${query}": HTTP ${res.status}`);
+    return [];
+  }
+
+  const data = (await res.json()) as UnsplashSearchResponse;
+  return data.results.map((p) => p.urls.regular);
 }
 
 const VISION_QUESTION =
@@ -63,11 +90,21 @@ async function isImageClean(imageUrl: string): Promise<boolean> {
  * call) and clean of legible text/signage (checked via vision, one photo at
  * a time — only escalates to the next candidate if the current one fails
  * one of those checks, so the common case costs at most one vision call).
+ * Pulls from both stock sources for this one query before the caller moves
+ * on to a different query — a thin result from one source shouldn't force
+ * a whole new (and more generic) search when the other source might still
+ * have a good, unused match for the same query.
  */
-async function pickCleanCandidate(query: string, apiKey: string, usedImageUrls: Set<string>): Promise<string | null> {
-  const candidates = await searchMany(query, apiKey);
+async function pickCleanCandidate(query: string, usedImageUrls: Set<string>): Promise<string | null> {
+  const pexelsKey = process.env.PEXELS_API_KEY;
+  const unsplashKey = process.env.UNSPLASH_ACCESS_KEY;
 
-  for (const candidate of candidates) {
+  const [pexelsCandidates, unsplashCandidates] = await Promise.all([
+    pexelsKey ? searchManyPexels(query, pexelsKey) : Promise.resolve([]),
+    unsplashKey ? searchManyUnsplash(query, unsplashKey) : Promise.resolve([]),
+  ]);
+
+  for (const candidate of [...pexelsCandidates, ...unsplashCandidates]) {
     if (usedImageUrls.has(candidate)) continue;
     if (await isImageClean(candidate)) return candidate;
   }
@@ -76,30 +113,32 @@ async function pickCleanCandidate(query: string, apiKey: string, usedImageUrls: 
 }
 
 /**
- * Best-effort — never throws. Tries the story title first (most specific),
- * then falls back to the category name if that comes up empty (a very
- * specific headline sometimes has no photo match; a category name almost
- * always does). Returns null if no key is set or both searches fail.
+ * Best-effort — never throws. Tries each keyword phrase in order (most
+ * specific first), then falls back to the category name if every phrase
+ * comes up empty — a very specific headline sometimes has no photo match
+ * across either source; a category name almost always does. Returns null
+ * if neither stock source has a key configured, or everything fails.
  *
  * usedImageUrls is the set of image URLs already assigned to other live
  * stories — candidates already in that set are skipped so two different
  * stories don't end up with the same photo.
  */
 export async function findStoryImage(
-  title: string,
+  keywordPhrases: string[],
   category: string,
   usedImageUrls: Set<string>,
 ): Promise<string | null> {
-  const apiKey = process.env.PEXELS_API_KEY;
-  if (!apiKey) return null;
+  if (!process.env.PEXELS_API_KEY && !process.env.UNSPLASH_ACCESS_KEY) return null;
 
   try {
-    const byTitle = await pickCleanCandidate(title, apiKey, usedImageUrls);
-    if (byTitle) return byTitle;
+    for (const phrase of keywordPhrases) {
+      const found = await pickCleanCandidate(phrase, usedImageUrls);
+      if (found) return found;
+    }
 
-    return await pickCleanCandidate(category, apiKey, usedImageUrls);
+    return await pickCleanCandidate(category, usedImageUrls);
   } catch (err) {
-    console.error("Error searching Pexels:", err instanceof Error ? err.message : String(err));
+    console.error("Error searching for story image:", err instanceof Error ? err.message : String(err));
     return null;
   }
 }
